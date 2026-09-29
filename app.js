@@ -1,14 +1,27 @@
 // ==========================================
 // CONFIGURACIÓN DE SUPABASE
 // ==========================================
+// ⚠️ Coloca aquí tu URL y ANON KEY reales de Supabase
 const SUPABASE_URL = "https://YOUR_SUPABASE_PROJECT_URL.supabase.co"; 
 const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY"; 
 
-// Reemplaza estas constantes con las de tu proyecto de Supabase si aplica
-const supabaseClient = window.supabase ? window.supabase.createClient(
-  window.SUPABASE_URL || SUPABASE_URL,
-  window.SUPABASE_ANON_KEY || SUPABASE_ANON_KEY
-) : null;
+function inicializarSupabase() {
+  const url = (window.SUPABASE_URL && !window.SUPABASE_URL.includes("YOUR_SUPABASE_PROJECT_URL")) 
+    ? window.SUPABASE_URL 
+    : SUPABASE_URL;
+
+  const key = (window.SUPABASE_ANON_KEY && !window.SUPABASE_ANON_KEY.includes("YOUR_SUPABASE_ANON_KEY")) 
+    ? window.SUPABASE_ANON_KEY 
+    : SUPABASE_ANON_KEY;
+
+  if (!url || !key || url.includes("YOUR_SUPABASE_PROJECT_URL") || key.includes("YOUR_SUPABASE_ANON_KEY")) {
+    return null;
+  }
+
+  return window.supabase ? window.supabase.createClient(url, key) : null;
+}
+
+const supabaseClient = inicializarSupabase();
 
 // ==========================================
 // ESTADO GLOBAL DE LA APLICACIÓN
@@ -31,6 +44,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await obtenerSiguienteFolioVenta();
   actualizarFechaTicket();
   renderCarrito();
+  cargarHistorial();
 });
 
 // ==========================================
@@ -39,8 +53,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function obtenerSiguienteFolioVenta() {
   const defaultFolio = 'V-0001';
   if (!supabaseClient) {
-    document.getElementById('display-folio').innerText = defaultFolio;
-    document.getElementById('t-folio').innerText = 'FOLIO: ' + defaultFolio;
+    const elDisplay = document.getElementById('display-folio');
+    const elTicket = document.getElementById('t-folio');
+    if (elDisplay) elDisplay.innerText = defaultFolio;
+    if (elTicket) elTicket.innerText = 'FOLIO: ' + defaultFolio;
     return defaultFolio;
   }
 
@@ -64,8 +80,10 @@ async function obtenerSiguienteFolioVenta() {
     }
 
     const nuevoFolio = 'V-' + String(num).padStart(4, '0');
-    document.getElementById('display-folio').innerText = nuevoFolio;
-    document.getElementById('t-folio').innerText = 'FOLIO: ' + nuevoFolio;
+    const elDisplay = document.getElementById('display-folio');
+    const elTicket = document.getElementById('t-folio');
+    if (elDisplay) elDisplay.innerText = nuevoFolio;
+    if (elTicket) elTicket.innerText = 'FOLIO: ' + nuevoFolio;
     return nuevoFolio;
   } catch (e) {
     console.error("Error obteniendo siguiente folio V:", e);
@@ -113,23 +131,29 @@ function setModo(modo) {
   const vistaAlumno = document.getElementById('modoAlumnoView');
 
   if (modo === 'alumno') {
-    btnAlumno.classList.add('active', 'btn-outline-primary');
-    btnAlumno.classList.remove('btn-secondary');
-    btnExterno.classList.add('btn-outline-secondary');
-    btnExterno.classList.remove('active', 'btn-primary');
-    vistaAlumno.style.display = 'block';
+    if (btnAlumno) {
+      btnAlumno.classList.add('active', 'btn-outline-primary');
+      btnAlumno.classList.remove('btn-secondary');
+    }
+    if (btnExterno) {
+      btnExterno.classList.add('btn-outline-secondary');
+      btnExterno.classList.remove('active', 'btn-primary');
+    }
+    if (vistaAlumno) vistaAlumno.style.display = 'block';
     
-    // Bloquear campos editables directos para alumno
     document.getElementById('nombre').readOnly = true;
     document.getElementById('familia').readOnly = true;
   } else {
-    btnExterno.classList.add('active', 'btn-primary');
-    btnExterno.classList.remove('btn-outline-secondary');
-    btnAlumno.classList.add('btn-outline-primary');
-    btnAlumno.classList.remove('active');
-    vistaAlumno.style.display = 'none';
+    if (btnExterno) {
+      btnExterno.classList.add('active', 'btn-primary');
+      btnExterno.classList.remove('btn-outline-secondary');
+    }
+    if (btnAlumno) {
+      btnAlumno.classList.add('btn-outline-primary');
+      btnAlumno.classList.remove('active');
+    }
+    if (vistaAlumno) vistaAlumno.style.display = 'none';
 
-    // Desbloquear campos editables directos para persona externa
     document.getElementById('matricula').value = 'EXTERNO';
     document.getElementById('nombre').readOnly = false;
     document.getElementById('nombre').value = '';
@@ -212,7 +236,6 @@ function agregarAlRecibo() {
 
   renderCarrito();
   
-  // Limpiar campos individuales manteniendo el modo
   if (modoPaciente === 'alumno') {
     document.getElementById('matricula').value = '';
     document.getElementById('nombre').value = '';
@@ -235,7 +258,9 @@ function renderCarrito() {
   const countItems = document.getElementById('count-items');
   const tTotal = document.getElementById('t-total');
 
-  countItems.innerText = `${carrito.length} Pacientes`;
+  if (countItems) countItems.innerText = `${carrito.length} Pacientes`;
+
+  if (!tbody || !tLista || !tTotal) return;
 
   if (carrito.length === 0) {
     tbody.innerHTML = `<tr><td colspan="7" class="text-muted py-3">No hay pacientes agregados al recibo aún.</td></tr>`;
@@ -292,12 +317,18 @@ function actualizarFechaTicket() {
 
 function actualizarFormaPagoTicket() {
   const fp = document.getElementById('forma_pago').value;
-  document.getElementById('t-pago').innerText = fp;
+  const elPago = document.getElementById('t-pago');
+  if (elPago) elPago.innerText = fp;
 }
 
 async function confirmarGuardarRecibo() {
   if (carrito.length === 0) {
     Swal.fire('Atención', 'El recibo está vacío. Agregue al menos una vacuna.', 'warning');
+    return;
+  }
+
+  if (!supabaseClient) {
+    Swal.fire('Atención', 'Configura tu URL y ANON KEY reales de Supabase en las líneas 5 y 6 de app.js.', 'warning');
     return;
   }
 
@@ -322,13 +353,6 @@ async function confirmarGuardarRecibo() {
     monto_reembolsado: 0.00
   }));
 
-  if (!supabaseClient) {
-    Swal.fire('Modo Demo', `Se guardaría el Folio ${folioVenta} con ${carrito.length} registros.`, 'info');
-    carrito = [];
-    renderCarrito();
-    return;
-  }
-
   try {
     const { error } = await supabaseClient.from('historial_cobros').insert(inserts);
     if (error) throw error;
@@ -337,9 +361,10 @@ async function confirmarGuardarRecibo() {
     carrito = [];
     renderCarrito();
     await obtenerSiguienteFolioVenta();
+    cargarHistorial();
   } catch (e) {
     console.error("Error al guardar recibo:", e);
-    Swal.fire('Error', 'No se pudo guardar el registro en la base de datos.', 'error');
+    Swal.fire('Error al Guardar', e.message || 'No se pudo guardar el registro en Supabase.', 'error');
   }
 }
 
@@ -356,14 +381,22 @@ function confirmarImprimirRecibo() {
 }
 
 // ==========================================
-// MODULO DE HISTORIAL Y AUDITORÍA DE REEMBOLSOS
+// MÓDULO DE HISTORIAL Y AUDITORÍA DE REEMBOLSOS
 // ==========================================
 async function cargarHistorial() {
   const tbody = document.getElementById('historialBody');
+  if (!tbody) return;
+
   tbody.innerHTML = `<tr><td colspan="14" class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm text-primary me-2"></div>Cargando registros desde Supabase...</td></tr>`;
 
   if (!supabaseClient) {
-    tbody.innerHTML = `<tr><td colspan="14" class="text-center py-4 text-muted">Configura las claves de Supabase en app.js para ver los registros.</td></tr>`;
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="14" class="text-center py-4 text-warning">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>
+          <strong>Configuración requerida:</strong> Reemplaza <code>YOUR_SUPABASE_PROJECT_URL</code> y <code>YOUR_SUPABASE_ANON_KEY</code> en las líneas 5 y 6 de <code>app.js</code> con tus credenciales reales.
+        </td>
+      </tr>`;
     return;
   }
 
@@ -379,12 +412,20 @@ async function cargarHistorial() {
     renderTablaHistorial(historialMemoria);
   } catch (e) {
     console.error("Error al cargar historial:", e);
-    tbody.innerHTML = `<tr><td colspan="14" class="text-center py-4 text-danger">Error al obtener el historial de registros.</td></tr>`;
+    const detalleError = e.message || e.details || JSON.stringify(e);
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="14" class="text-center py-4 text-danger">
+          <i class="bi bi-x-circle-fill me-2"></i>
+          <strong>Error devuelto por Supabase:</strong> ${detalleError}
+        </td>
+      </tr>`;
   }
 }
 
 function renderTablaHistorial(lista) {
   const tbody = document.getElementById('historialBody');
+  if (!tbody) return;
   tbody.innerHTML = '';
 
   let ingresoBruto = 0;
@@ -397,7 +438,7 @@ function renderTablaHistorial(lista) {
 
   if (lista.length === 0) {
     tbody.innerHTML = `<tr><td colspan="14" class="text-center py-4 text-muted">No se encontraron registros.</td></tr>`;
-    actualizarKPIs(0, 0, 0, 0, 0, 0, 0);
+    actualizarKPIs(0, 0, 0, 0, 0, 0, 0, 0);
     return;
   }
 
@@ -411,7 +452,6 @@ function renderTablaHistorial(lista) {
     const importe = item.importe || 0;
     const subtotal = cantidad * importe;
 
-    // Métricas
     if (!esCancelado) {
       if (esEgreso) {
         totalReembolsadoSum += Math.abs(subtotal);
@@ -434,25 +474,23 @@ function renderTablaHistorial(lista) {
       }
     }
 
-    // Fila CSS
     let claseFila = '';
     if (esCancelado) claseFila = 'fila-cancelada';
     else if (esEgreso) claseFila = 'fila-reembolso-egreso';
     else if (esReembolsadoTotal) claseFila = 'fila-reembolsada-total';
     else if (esReembolsadoParcial) claseFila = 'fila-reembolsada-parcial';
 
-    // Fecha formateada
     const fObj = new Date(item.fecha);
-    const fechaTxt = fObj.toLocaleDateString('es-MX') + ' ' + fObj.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+    const fechaTxt = isNaN(fObj.getTime()) 
+      ? '—' 
+      : fObj.toLocaleDateString('es-MX') + ' ' + fObj.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
 
-    // Badge de Estado
     let badgeEstado = `<span class="badge bg-success">Activo</span>`;
     if (esCancelado) badgeEstado = `<span class="badge bg-danger">Cancelado</span>`;
     else if (esEgreso) badgeEstado = `<span class="badge bg-warning text-dark">Egreso (R)</span>`;
     else if (esReembolsadoTotal) badgeEstado = `<span class="badge bg-secondary">Reembolsado</span>`;
     else if (esReembolsadoParcial) badgeEstado = `<span class="badge bg-warning text-dark">Parcial (-$${item.monto_reembolsado})</span>`;
 
-    // Botones de acción
     let accionesHtml = '';
     if (!esCancelado && !esEgreso && !esReembolsadoTotal) {
       accionesHtml = `
@@ -467,7 +505,7 @@ function renderTablaHistorial(lista) {
     }
 
     const tr = document.createElement('tr');
-    tr.className = claseFila;
+    if (claseFila) tr.className = claseFila;
     tr.innerHTML = `
       <td>${fechaTxt}</td>
       <td><strong class="${esEgreso ? 'text-warning-emphasis' : 'text-dark'}">${item.folio}</strong></td>
@@ -492,14 +530,23 @@ function renderTablaHistorial(lista) {
 }
 
 function actualizarKPIs(neto, bruto, reembolsado, devCount, vacunasCount, foliosCount, efectivo, otros) {
-  document.getElementById('kpi-total').innerText = `$${neto.toFixed(2)}`;
-  document.getElementById('kpi-bruto-sub').innerText = `Bruto: $${bruto.toFixed(2)}`;
-  document.getElementById('kpi-reembolsos').innerText = `$${reembolsado.toFixed(2)}`;
-  document.getElementById('kpi-reembolsos-cant').innerText = `${devCount} Devoluciones`;
-  document.getElementById('kpi-count').innerText = vacunasCount;
-  document.getElementById('kpi-folios').innerText = foliosCount;
-  document.getElementById('kpi-efectivo').innerText = `$${efectivo.toFixed(2)}`;
-  document.getElementById('kpi-otros').innerText = `$${otros.toFixed(2)}`;
+  const elNeto = document.getElementById('kpi-total');
+  const elBruto = document.getElementById('kpi-bruto-sub');
+  const elReembolsos = document.getElementById('kpi-reembolsos');
+  const elReembolsosCant = document.getElementById('kpi-reembolsos-cant');
+  const elCount = document.getElementById('kpi-count');
+  const elFolios = document.getElementById('kpi-folios');
+  const elEfectivo = document.getElementById('kpi-efectivo');
+  const elOtros = document.getElementById('kpi-otros');
+
+  if (elNeto) elNeto.innerText = `$${neto.toFixed(2)}`;
+  if (elBruto) elBruto.innerText = `Bruto: $${bruto.toFixed(2)}`;
+  if (elReembolsos) elReembolsos.innerText = `$${reembolsado.toFixed(2)}`;
+  if (elReembolsosCant) elReembolsosCant.innerText = `${devCount} Devoluciones`;
+  if (elCount) elCount.innerText = vacunasCount;
+  if (elFolios) elFolios.innerText = foliosCount;
+  if (elEfectivo) elEfectivo.innerText = `$${efectivo.toFixed(2)}`;
+  if (elOtros) elOtros.innerText = `$${otros.toFixed(2)}`;
 }
 
 // ==========================================
@@ -577,7 +624,6 @@ async function ejecutarReembolsoAuditado() {
   const acumuladoReembolsado = (parseFloat(itemOriginal.monto_reembolsado) || 0) + montoReembolso;
 
   try {
-    // 1. Actualizar el registro original en Supabase
     const { error: errUpdate } = await supabaseClient
       .from('historial_cobros')
       .update({
@@ -590,7 +636,6 @@ async function ejecutarReembolsoAuditado() {
 
     if (errUpdate) throw errUpdate;
 
-    // 2. Insertar el asiento de egreso auditado (Folio R-XXXX) vinculado al Folio de Cobro V-XXXX
     const registroEgreso = {
       folio: folioEgreso,
       folio_referencia: folioOrigen,
@@ -712,11 +757,11 @@ function reimprimirFolio(folio) {
   });
 
   const fObj = new Date(primerItem.fecha);
-  const fechaStr = fObj.toLocaleDateString('es-MX') + ' ' + fObj.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+  const fechaStr = isNaN(fObj.getTime()) ? '' : fObj.toLocaleDateString('es-MX') + ' ' + fObj.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
 
   const printArea = document.getElementById('print-area');
   printArea.innerHTML = `
-    <div class="ticket-paper mb-3 style="max-width:350px; margin:auto;">
+    <div class="ticket-paper mb-3" style="max-width:350px; margin:auto;">
       <div class="text-center mb-2">
         <h5 class="fw-bold text-dark ticket-header-title">COLEGIO CIUDAD DE MÉXICO</h5>
         <p class="text-muted ticket-header-sub">Comprobante de Vacunación</p>
@@ -743,7 +788,7 @@ function exportarExcel() {
     return;
   }
 
-  let csvContent = "data:text/csv;charset=utf-8,";
+  let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
   csvContent += "Fecha,Folio,Folio Referencia,Matricula,Paciente,Familia,Seccion,Grupo,Concepto,Cantidad,Importe,Total,Forma Pago,Estado,Tipo Movimiento,Motivo Reembolso\n";
 
   historialMemoria.forEach(row => {
