@@ -276,7 +276,7 @@ function limpiarCamposPaciente() {
   if (searchInp) searchInp.value = '';
 }
 
-// BÚSQUEDA PREDICTIVA ADAPTADA EXACTAMENTE A LA TABLA "personas"
+// BÚSQUEDA PREDICTIVA DIRECTA Y EFICIENTE
 function buscarPersona() {
   const q = document.getElementById('searchInput').value.trim();
   const resultsDiv = document.getElementById('results');
@@ -290,11 +290,10 @@ function buscarPersona() {
 
   searchTimeout = setTimeout(async () => {
     try {
-      // Uso explícito de comillas dobles para respetar mayúsculas en PostgreSQL
       const { data, error } = await db
         .from('personas')
         .select('*')
-        .or(`"Nombre".ilike.%${q}%,"Familia".ilike.%${q}%,"Matricula".ilike.%${q}%`)
+        .or(`nombre.ilike.%${q}%,familia.ilike.%${q}%,matricula.ilike.%${q}%`)
         .limit(8);
 
       if (error) {
@@ -310,11 +309,10 @@ function buscarPersona() {
       }
 
       data.forEach(p => {
-        // Mapeo exacto según columnas de Supabase
-        const mat = p.Matricula || 'S/N';
-        const nom = p.Nombre || '';
-        const fam = p.Familia || '';
-        const sec = p['Sección'] || p.Seccion || '';
+        const mat = p.matricula || 'S/N';
+        const nom = p.nombre || '';
+        const fam = p.familia || '';
+        const sec = p.seccion || '';
 
         const btn = document.createElement('button');
         btn.type = 'button';
@@ -342,11 +340,11 @@ function buscarPersona() {
 }
 
 function seleccionarPersona(p) {
-  document.getElementById('matricula').value = p.Matricula || '';
-  document.getElementById('nombre').value = p.Nombre || '';
-  document.getElementById('familia').value = p.Familia || '';
-  document.getElementById('seccion').value = p['Sección'] || p.Seccion || '';
-  document.getElementById('grupo').value = p.Grupo || '';
+  document.getElementById('matricula').value = p.matricula || '';
+  document.getElementById('nombre').value = p.nombre || '';
+  document.getElementById('familia').value = p.familia || '';
+  document.getElementById('seccion').value = p.seccion || '';
+  document.getElementById('grupo').value = p.grupo || '';
 
   document.getElementById('results').innerHTML = '';
   document.getElementById('searchInput').value = '';
