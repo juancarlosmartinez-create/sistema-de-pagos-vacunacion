@@ -1,27 +1,13 @@
 // ==========================================
 // CONFIGURACIÓN DE SUPABASE
 // ==========================================
-// ⚠️ Coloca aquí tu URL y ANON KEY reales de Supabase
-const SUPABASE_URL = "https://YOUR_SUPABASE_PROJECT_URL.supabase.co"; 
-const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY"; 
+const SUPABASE_URL = "https://uvyazxprytgdwwrisnih.supabase.co"; 
+const SUPABASE_ANON_KEY = "sb_publishable_g277uGIxebvELJ5EZju2bQ_tquT0CI7"; 
 
-function inicializarSupabase() {
-  const url = (window.SUPABASE_URL && !window.SUPABASE_URL.includes("YOUR_SUPABASE_PROJECT_URL")) 
-    ? window.SUPABASE_URL 
-    : SUPABASE_URL;
-
-  const key = (window.SUPABASE_ANON_KEY && !window.SUPABASE_ANON_KEY.includes("YOUR_SUPABASE_ANON_KEY")) 
-    ? window.SUPABASE_ANON_KEY 
-    : SUPABASE_ANON_KEY;
-
-  if (!url || !key || url.includes("YOUR_SUPABASE_PROJECT_URL") || key.includes("YOUR_SUPABASE_ANON_KEY")) {
-    return null;
-  }
-
-  return window.supabase ? window.supabase.createClient(url, key) : null;
-}
-
-const supabaseClient = inicializarSupabase();
+const supabaseClient = window.supabase ? window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
+) : null;
 
 // ==========================================
 // ESTADO GLOBAL DE LA APLICACIÓN
@@ -44,7 +30,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await obtenerSiguienteFolioVenta();
   actualizarFechaTicket();
   renderCarrito();
-  cargarHistorial();
+  cargarHistorial(); // Cargar registros al iniciar
 });
 
 // ==========================================
@@ -327,11 +313,6 @@ async function confirmarGuardarRecibo() {
     return;
   }
 
-  if (!supabaseClient) {
-    Swal.fire('Atención', 'Configura tu URL y ANON KEY reales de Supabase en las líneas 5 y 6 de app.js.', 'warning');
-    return;
-  }
-
   const folioVenta = await obtenerSiguienteFolioVenta();
   const formaPago = document.getElementById('forma_pago').value;
   const fechaActual = new Date().toISOString();
@@ -353,6 +334,13 @@ async function confirmarGuardarRecibo() {
     monto_reembolsado: 0.00
   }));
 
+  if (!supabaseClient) {
+    Swal.fire('Modo Demo', `Se guardaría el Folio ${folioVenta} con ${carrito.length} registros.`, 'info');
+    carrito = [];
+    renderCarrito();
+    return;
+  }
+
   try {
     const { error } = await supabaseClient.from('historial_cobros').insert(inserts);
     if (error) throw error;
@@ -364,7 +352,7 @@ async function confirmarGuardarRecibo() {
     cargarHistorial();
   } catch (e) {
     console.error("Error al guardar recibo:", e);
-    Swal.fire('Error al Guardar', e.message || 'No se pudo guardar el registro en Supabase.', 'error');
+    Swal.fire('Error', 'No se pudo guardar el registro en la base de datos.', 'error');
   }
 }
 
@@ -390,13 +378,7 @@ async function cargarHistorial() {
   tbody.innerHTML = `<tr><td colspan="14" class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm text-primary me-2"></div>Cargando registros desde Supabase...</td></tr>`;
 
   if (!supabaseClient) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="14" class="text-center py-4 text-warning">
-          <i class="bi bi-exclamation-triangle-fill me-2"></i>
-          <strong>Configuración requerida:</strong> Reemplaza <code>YOUR_SUPABASE_PROJECT_URL</code> y <code>YOUR_SUPABASE_ANON_KEY</code> en las líneas 5 y 6 de <code>app.js</code> con tus credenciales reales.
-        </td>
-      </tr>`;
+    tbody.innerHTML = `<tr><td colspan="14" class="text-center py-4 text-muted">Configura las claves de Supabase en app.js para ver los registros.</td></tr>`;
     return;
   }
 
@@ -412,14 +394,8 @@ async function cargarHistorial() {
     renderTablaHistorial(historialMemoria);
   } catch (e) {
     console.error("Error al cargar historial:", e);
-    const detalleError = e.message || e.details || JSON.stringify(e);
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="14" class="text-center py-4 text-danger">
-          <i class="bi bi-x-circle-fill me-2"></i>
-          <strong>Error devuelto por Supabase:</strong> ${detalleError}
-        </td>
-      </tr>`;
+    const mensajeError = e.message || e.details || 'Verifique conexión o permisos de la tabla historial_cobros';
+    tbody.innerHTML = `<tr><td colspan="14" class="text-center py-4 text-danger">Error al obtener el historial de registros: ${mensajeError}</td></tr>`;
   }
 }
 
