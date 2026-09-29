@@ -8,7 +8,6 @@ let reciboActual = [];
 let cobrosGuardados = [];
 let searchTimeout = null;
 let esSuperUsuario = false;
-let personasCache = null;
 
 document.addEventListener('DOMContentLoaded', () => {
   actualizarFechaTicket();
@@ -25,14 +24,14 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-// CONTROL DE ROL SUPERUSUARIO
+// CONTROL DE MODO SUPERUSUARIO
 function toggleSuperUsuario(activo) {
   esSuperUsuario = activo;
   renderTablaHistorial(cobrosGuardados);
 }
 
-// FUNCIÓN DE IMPRESIÓN AISLADA
-function ejecutarImpresionAislada(callbackAlTerminar) {
+// EJECUCIÓN DE IMPRESIÓN EN VENTANA AISLADA
+function ejecutarImpresionAisolada(callbackAlTerminar) {
   const ticketOriginal = document.getElementById('ticketPrint');
   const printArea = document.getElementById('print-area');
 
@@ -70,7 +69,7 @@ function ejecutarImpresionAislada(callbackAlTerminar) {
   }, 300);
 }
 
-// REIMPRIMIR RECIBO COMPLETO POR FOLIO DESDE EL HISTORIAL
+// REIMPRIMIR FOLIO COMPLETO DESDE HISTORIAL
 function reimprimirFolio(folio) {
   if (!folio) return;
 
@@ -79,7 +78,7 @@ function reimprimirFolio(folio) {
   if (!itemsFolio || itemsFolio.length === 0) {
     Swal.fire({
       icon: 'warning',
-      title: 'Sin elementos para imprimir',
+      title: 'Sin elementos activos',
       text: 'Todos los registros de este folio han sido cancelados o eliminados.',
       confirmButtonColor: '#1e3a8a'
     });
@@ -131,7 +130,7 @@ function reimprimirFolio(folio) {
   }
 
   const ticketHtml = `
-    <div class="ticket-paper ${densityClass}" style="max-width: 380px; margin: 0 auto;">
+    <div class="ticket-paper ${densityClass}">
       <div class="text-center mb-2">
         <h5 class="fw-bold text-dark ticket-header-title">COLEGIO CIUDAD DE MÉXICO</h5>
         <p class="text-muted ticket-header-sub">Comprobante de Vacunación</p>
@@ -187,7 +186,6 @@ function actualizarFormaPagoTicket() {
   }
 }
 
-// OBTENER FOLIO CONSECUTIVO DESDE SUPABASE
 async function obtenerSiguienteFolio() {
   try {
     const { data, error } = await db
@@ -215,14 +213,13 @@ async function obtenerSiguienteFolio() {
     console.error("Excepción al obtener folio:", e);
     currentFolio = 'V-0001';
   }
-  
+
   const tFolio = document.getElementById('t-folio');
   const dFolio = document.getElementById('display-folio');
   if (tFolio) tFolio.innerText = `FOLIO: ${currentFolio}`;
   if (dFolio) dFolio.innerText = currentFolio;
 }
 
-// CAMBIAR ENTRE MODO ALUMNO Y EXTERNO
 function setModo(modo) {
   modoActual = modo;
   const btnA = document.getElementById('btnModeAlumno');
@@ -242,9 +239,9 @@ function setModo(modo) {
     btnA.classList.remove('active', 'btn-outline-primary');
     btnA.classList.add('btn-outline-secondary');
     searchView.style.display = 'none';
-    
+
     document.getElementById('matricula').value = 'EXTERNO';
-    
+
     const nomEl = document.getElementById('nombre');
     nomEl.removeAttribute('readonly');
     nomEl.value = '';
@@ -262,7 +259,7 @@ function setModo(modo) {
 
 function limpiarCamposPaciente() {
   document.getElementById('matricula').value = '';
-  
+
   const nomEl = document.getElementById('nombre');
   nomEl.value = '';
   nomEl.setAttribute('readonly', 'true');
@@ -275,29 +272,15 @@ function limpiarCamposPaciente() {
 
   document.getElementById('seccion').value = '';
   document.getElementById('grupo').value = '';
-  document.getElementById('searchInput').value = '';
+  const searchInp = document.getElementById('searchInput');
+  if (searchInp) searchInp.value = '';
 }
 
-// CARGA ÚNICA Y CACHÉ DE PACIENTES PARA EVITAR ERRORES DE SQL EN SUPABASE
-async function obtenerPersonas() {
-  if (personasCache) return personasCache;
-  try {
-    const { data, error } = await db.from('personas').select('*');
-    if (!error && data) {
-      personasCache = data;
-      return personasCache;
-    }
-  } catch (e) {
-    console.error("Error al cargar lista de personas:", e);
-  }
-  return [];
-}
-
-// BÚSQUEDA PREDICTIVA TOLERANTE Y ROBUSTA EN MEMORIA
-async function buscarPersona() {
-  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+// BÚSQUEDA PREDICTIVA DE COMPRADORES EN SUPABASE
+function buscarPersona() {
+  const q = document.getElementById('searchInput').value.trim();
   const resultsDiv = document.getElementById('results');
-  
+
   if (searchTimeout) clearTimeout(searchTimeout);
 
   if (q.length < 2) {
@@ -306,52 +289,61 @@ async function buscarPersona() {
   }
 
   searchTimeout = setTimeout(async () => {
-    const lista = await obtenerPersonas();
-    resultsDiv.innerHTML = '';
+    try {
+      const { data, error } = await db
+        .from('personas')
+        .select('*')
+        .or(`Nombre.ilike.%${q}%,Familia.ilike.%${q}%,Matricula.ilike.%${q}%`)
+        .limit(8);
 
-    const filtrados = lista.filter(p => {
-      const nom = (p.Nombre || p.nombre || '').toString().toLowerCase();
-      const fam = (p.Familia || p.familia || '').toString().toLowerCase();
-      const mat = (p.Matricula || p['Matrícula'] || p.matricula || '').toString().toLowerCase();
-      return nom.includes(q) || fam.includes(q) || mat.includes(q);
-    }).slice(0, 8);
+      if (error) {
+        resultsDiv.innerHTML = `<div class="list-group-item text-danger small py-2 bg-light"><i class="bi bi-exclamation-triangle me-1"></i> Error de consulta: ${error.message}</div>`;
+        return;
+      }
 
-    if (filtrados.length === 0) {
-      resultsDiv.innerHTML = `<div class="list-group-item text-muted small py-2"><i class="bi bi-exclamation-circle me-1"></i> No se encontraron registros para "${q}".</div>`;
-      return;
+      resultsDiv.innerHTML = '';
+
+      if (!data || data.length === 0) {
+        resultsDiv.innerHTML = `<div class="list-group-item text-muted small py-2"><i class="bi bi-exclamation-circle me-1"></i> No se encontraron registros para "${q}".</div>`;
+        return;
+      }
+
+      data.forEach(p => {
+        const mat = p['Matricula'] || p['matricula'] || 'S/N';
+        const nom = p['Nombre'] || p['nombre'] || '';
+        const fam = p['Familia'] || p['familia'] || '';
+        const sec = p['Sección'] || p['seccion'] || '';
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center py-2';
+        btn.innerHTML = `
+          <div>
+            <div class="fw-bold text-dark" style="font-size: 0.9rem;">${nom}</div>
+            <div class="text-muted small" style="font-size: 0.8rem;">
+              Matrícula: <strong>${mat}</strong> 
+              ${fam ? ` | Familia: <strong>${fam}</strong>` : ''}
+            </div>
+          </div>
+          <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill">${sec}</span>
+        `;
+        
+        btn.onclick = () => seleccionarPersona(p);
+        resultsDiv.appendChild(btn);
+      });
+
+    } catch (err) {
+      console.error("Error en búsqueda predictiva:", err);
     }
 
-    filtrados.forEach(p => {
-      const mat = p['Matricula'] || p['Matrícula'] || p['matricula'] || 'S/N';
-      const nom = p['Nombre'] || p['nombre'] || '';
-      const fam = p['Familia'] || p['familia'] || '';
-      const sec = p['Sección'] || p['Seccion'] || p['seccion'] || '';
-
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center py-2';
-      btn.innerHTML = `
-        <div>
-          <div class="fw-bold text-dark" style="font-size: 0.9rem;">${nom}</div>
-          <div class="text-muted small" style="font-size: 0.8rem;">
-            Matrícula: <strong>${mat}</strong> 
-            ${fam ? ` | Familia: <strong>${fam}</strong>` : ''}
-          </div>
-        </div>
-        <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill">${sec}</span>
-      `;
-      
-      btn.onclick = () => seleccionarPersona(p);
-      resultsDiv.appendChild(btn);
-    });
-  }, 150);
+  }, 300);
 }
 
 function seleccionarPersona(p) {
-  document.getElementById('matricula').value = p['Matricula'] || p['Matrícula'] || p['matricula'] || '';
+  document.getElementById('matricula').value = p['Matricula'] || p['matricula'] || '';
   document.getElementById('nombre').value = p['Nombre'] || p['nombre'] || '';
   document.getElementById('familia').value = p['Familia'] || p['familia'] || '';
-  document.getElementById('seccion').value = p['Sección'] || p['Seccion'] || p['seccion'] || '';
+  document.getElementById('seccion').value = p['Sección'] || p['seccion'] || '';
   document.getElementById('grupo').value = p['Grupo'] || p['grupo'] || '';
 
   document.getElementById('results').innerHTML = '';
@@ -359,7 +351,6 @@ function seleccionarPersona(p) {
   document.getElementById('importe').focus();
 }
 
-// AGREGAR PACIENTE AL RECIBO
 function agregarAlRecibo() {
   const nom = document.getElementById('nombre').value.trim();
   const mat = document.getElementById('matricula').value || 'EXTERNO';
@@ -371,30 +362,15 @@ function agregarAlRecibo() {
   const imp = parseFloat(document.getElementById('importe').value) || 0;
 
   if (!nom) {
-    Swal.fire({
-      icon: 'warning',
-      title: 'Paciente Requerido',
-      text: 'Por favor seleccione un alumno o escriba el nombre del paciente.',
-      confirmButtonColor: '#1e3a8a'
-    });
+    Swal.fire({ icon: 'warning', title: 'Paciente Requerido', text: 'Por favor seleccione un alumno o escriba el nombre del paciente.', confirmButtonColor: '#1e3a8a' });
     return;
   }
   if (!con) {
-    Swal.fire({
-      icon: 'warning',
-      title: 'Concepto Requerido',
-      text: 'Por favor ingrese o seleccione la vacuna o concepto.',
-      confirmButtonColor: '#1e3a8a'
-    });
+    Swal.fire({ icon: 'warning', title: 'Concepto Requerido', text: 'Por favor ingrese o seleccione la vacuna o concepto.', confirmButtonColor: '#1e3a8a' });
     return;
   }
   if (cant <= 0 || imp <= 0) {
-    Swal.fire({
-      icon: 'warning',
-      title: 'Monto Inválido',
-      text: 'La cantidad e importe deben ser mayores a cero.',
-      confirmButtonColor: '#1e3a8a'
-    });
+    Swal.fire({ icon: 'warning', title: 'Monto Inválido', text: 'La cantidad e importe deben ser mayores a cero.', confirmButtonColor: '#1e3a8a' });
     return;
   }
 
@@ -478,7 +454,7 @@ function renderizarRecibo() {
     tbody.appendChild(tr);
 
     const divT = document.createElement('div');
-    divT.className = 'ticket-item d-flex justify-content-between text-start border-bottom';
+    divT.className = 'ticket-item d-flex justify-content-between text-start border-bottom py-1';
     divT.innerHTML = `
       <div>
         <strong class="text-dark ticket-nombre">${item.nombre}</strong> <small class="text-muted">(${item.familia})</small><br>
@@ -492,15 +468,9 @@ function renderizarRecibo() {
   document.getElementById('t-total').innerText = granTotal.toFixed(2);
 }
 
-// GUARDAR REGISTRO EN SUPABASE
 async function confirmarGuardarRecibo() {
   if (reciboActual.length === 0) {
-    Swal.fire({
-      icon: 'warning',
-      title: 'Recibo Vacío',
-      text: 'Agregue al menos un paciente antes de guardar el registro.',
-      confirmButtonColor: '#1e3a8a'
-    });
+    Swal.fire({ icon: 'warning', title: 'Recibo Vacío', text: 'Agregue al menos un paciente antes de guardar el registro.', confirmButtonColor: '#1e3a8a' });
     return;
   }
 
@@ -514,7 +484,7 @@ async function confirmarGuardarRecibo() {
     showCancelButton: true,
     confirmButtonColor: '#059669',
     cancelButtonColor: '#6b7280',
-    confirmButtonText: '<i class="bi bi-check-circle-fill me-1"></i> Sí, guardar registro',
+    confirmButtonText: 'Sí, guardar registro',
     cancelButtonText: 'Cancelar',
     reverseButtons: true
   });
@@ -538,8 +508,7 @@ async function ejecutarGuardado(formaPago) {
     cantidad: item.cantidad,
     importe: item.importe,
     forma_pago: formaPago,
-    estado: 'Activo',
-    monto_reembolsado: 0
+    estado: 'Activo'
   }));
 
   Swal.fire({
@@ -553,12 +522,7 @@ async function ejecutarGuardado(formaPago) {
     const { error } = await db.from('historial_cobros').insert(registrosAInsertar);
 
     if (error) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Error al Guardar',
-        text: `Error de la base de datos: ${error.message}`,
-        confirmButtonColor: '#dc2626'
-      });
+      Swal.fire({ icon: 'error', title: 'Error al Guardar', text: `Error de la base de datos: ${error.message}`, confirmButtonColor: '#dc2626' });
       return;
     }
 
@@ -581,30 +545,19 @@ async function ejecutarGuardado(formaPago) {
     });
 
     if (askPrint.isConfirmed) {
-      ejecutarImpresionAislada(finalizarYLimpiar);
+      ejecutarImpresionAisolada(finalizarYLimpiar);
     } else {
       await finalizarYLimpiar();
     }
 
   } catch (err) {
-    Swal.fire({
-      icon: 'error',
-      title: 'Error de Conexión',
-      text: 'Ocurrió un error inesperado al conectar con Supabase.',
-      confirmButtonColor: '#dc2626'
-    });
+    Swal.fire({ icon: 'error', title: 'Error de Conexión', text: 'Ocurrió un error inesperado al conectar con Supabase.', confirmButtonColor: '#dc2626' });
   }
 }
 
-// IMPRESIÓN DIRECTA
 async function confirmarImprimirRecibo() {
   if (reciboActual.length === 0) {
-    Swal.fire({
-      icon: 'warning',
-      title: 'Recibo Vacío',
-      text: 'No hay elementos o pacientes en la vista previa para imprimir.',
-      confirmButtonColor: '#1e3a8a'
-    });
+    Swal.fire({ icon: 'warning', title: 'Recibo Vacío', text: 'No hay elementos o pacientes en la vista previa para imprimir.', confirmButtonColor: '#1e3a8a' });
     return;
   }
 
@@ -615,26 +568,26 @@ async function confirmarImprimirRecibo() {
     showCancelButton: true,
     confirmButtonColor: '#2563eb',
     cancelButtonColor: '#6b7280',
-    confirmButtonText: '<i class="bi bi-printer-fill me-1"></i> Imprimir',
+    confirmButtonText: 'Imprimir',
     cancelButtonText: 'Cancelar',
     reverseButtons: true
   });
 
   if (result.isConfirmed) {
-    ejecutarImpresionAislada();
+    ejecutarImpresionAisolada();
   }
 }
 
-// CARGAR HISTORIAL DESDE SUPABASE
 async function cargarHistorial() {
   const tbody = document.getElementById('historialBody');
-  tbody.innerHTML = '<tr><td colspan="13" class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm me-2 text-primary" role="status"></div>Cargando registros desde la base de datos...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="13" class="text-center py-4 text-muted">Cargando registros recientes desde la base de datos...</td></tr>';
 
   try {
     const { data, error } = await db
       .from('historial_cobros')
       .select('*')
-      .order('id', { ascending: false });
+      .order('id', { ascending: false })
+      .limit(100);
 
     if (error) {
       tbody.innerHTML = `<tr><td colspan="13" class="text-danger text-center py-4"><i class="bi bi-exclamation-octagon me-2"></i>Error al consultar la base de datos: ${error.message}</td></tr>`;
@@ -643,260 +596,21 @@ async function cargarHistorial() {
 
     cobrosGuardados = data || [];
     renderTablaHistorial(cobrosGuardados);
-  } catch (err) {
-    tbody.innerHTML = `<tr><td colspan="13" class="text-danger text-center py-4">Error de conexión al cargar historial.</td></tr>`;
-  }
-}
-
-// MÓDULO DE REEMBOLSO
-async function abrirModalReembolso(id) {
-  const item = cobrosGuardados.find(c => c.id === id);
-  if (!item) return;
-
-  if (item.estado === 'Cancelado') {
-    Swal.fire({
-      icon: 'warning',
-      title: 'Registro Cancelado',
-      text: 'No se puede realizar un reembolso a una vacuna que ya está cancelada.',
-      confirmButtonColor: '#d97706'
-    });
-    return;
-  }
-
-  const totalOriginal = (item.cantidad || 1) * (item.importe || 0);
-  const yaDevuelto = parseFloat(item.monto_reembolsado) || 0;
-  const saldoDisponible = totalOriginal - yaDevuelto;
-
-  if (saldoDisponible <= 0.001) {
-    Swal.fire({
-      icon: 'info',
-      title: 'Reembolso Completo',
-      text: `Este registro (Folio ${item.folio}) ya ha sido reembolsado en su totalidad ($${totalOriginal.toFixed(2)}).`,
-      confirmButtonColor: '#2563eb'
-    });
-    return;
-  }
-
-  const { value: formValues } = await Swal.fire({
-    title: '<i class="bi bi-arrow-counterclockwise text-warning me-2"></i> Procesar Reembolso',
-    html: `
-      <div class="text-start fs-6 mb-3 p-3 bg-light rounded border">
-        <div class="d-flex justify-content-between mb-1">
-          <span><strong>Folio Original:</strong></span>
-          <span class="badge bg-dark">${item.folio || 'N/A'}</span>
-        </div>
-        <div><strong>Paciente:</strong> ${item.nombre}</div>
-        <div><strong>Concepto:</strong> ${item.concepto} (x${item.cantidad})</div>
-        <div class="border-top pt-2 mt-2">
-          <div class="d-flex justify-content-between">
-            <span>Cobro Original:</span>
-            <strong class="text-success">$${totalOriginal.toFixed(2)}</strong>
-          </div>
-          ${yaDevuelto > 0 ? `
-          <div class="d-flex justify-content-between text-danger">
-            <span>Reembolsado Previamente:</span>
-            <strong>-$${yaDevuelto.toFixed(2)}</strong>
-          </div>` : ''}
-          <div class="d-flex justify-content-between text-primary fw-bold fs-6 mt-1 border-top pt-1">
-            <span>Saldo Máximo Reembolsable:</span>
-            <span>$${saldoDisponible.toFixed(2)}</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="text-start mb-3">
-        <label class="form-label fw-bold small text-muted">Tipo de Reembolso</label>
-        <select id="swal-tipo-reembolso" class="form-select" onchange="
-          const saldo = ${saldoDisponible};
-          const inp = document.getElementById('swal-monto-reembolso');
-          if(this.value === 'total'){
-            inp.value = saldo.toFixed(2);
-            inp.readOnly = true;
-          } else {
-            inp.readOnly = false;
-            inp.value = '';
-            inp.focus();
-          }
-        ">
-          <option value="total">Reembolso Total ($${saldoDisponible.toFixed(2)})</option>
-          <option value="parcial">Reembolso Parcial (Monto Personalizado)</option>
-        </select>
-      </div>
-
-      <div class="text-start mb-3">
-        <label class="form-label fw-bold small text-muted">Monto a Reembolsar ($)</label>
-        <input id="swal-monto-reembolso" type="number" step="0.01" class="form-control fw-bold text-danger fs-5" value="${saldoDisponible.toFixed(2)}" readonly max="${saldoDisponible}">
-      </div>
-
-      <div class="text-start mb-3">
-        <label class="form-label fw-bold small text-muted">Forma de Devolución del Dinero</label>
-        <select id="swal-forma-devolucion" class="form-select">
-          <option value="Efectivo">Efectivo</option>
-          <option value="Transferencia">Transferencia Electrónica</option>
-          <option value="Tarjeta">Ajuste / Reversión en Tarjeta</option>
-        </select>
-      </div>
-
-      <div class="text-start mb-2">
-        <label class="form-label fw-bold small text-muted">Motivo o Justificación (Obligatorio)</label>
-        <textarea id="swal-motivo-reembolso" class="form-control" rows="2" placeholder="Ej. Cancelación por prescripción médica, cobro indebido, reajuste..."></textarea>
-      </div>
-    `,
-    focusConfirm: false,
-    showCancelButton: true,
-    confirmButtonText: '<i class="bi bi-check-circle-fill me-1"></i> Aplicar Reembolso',
-    cancelButtonText: 'Cancelar',
-    confirmButtonColor: '#d97706',
-    preConfirm: () => {
-      const montoInput = parseFloat(document.getElementById('swal-monto-reembolso').value);
-      const formaDev = document.getElementById('swal-forma-devolucion').value;
-      const motivo = document.getElementById('swal-motivo-reembolso').value.trim();
-
-      if (isNaN(montoInput) || montoInput <= 0) {
-        Swal.showValidationMessage('Ingrese un monto válido mayor a $0.00');
-        return false;
-      }
-      if (montoInput > saldoDisponible + 0.01) {
-        Swal.showValidationMessage(`El monto no puede superar el saldo disponible ($${saldoDisponible.toFixed(2)})`);
-        return false;
-      }
-      if (!motivo) {
-        Swal.showValidationMessage('Es obligatorio escribir el motivo del reembolso.');
-        return false;
-      }
-
-      return {
-        montoDevolver: montoInput,
-        formaDevolucion: formaDev,
-        motivo: motivo
-      };
-    }
-  });
-
-  if (!formValues) return;
-
-  const { montoDevolver, formaDevolucion, motivo } = formValues;
-  const nuevoMontoReembolsado = yaDevuelto + montoDevolver;
-  const nuevoEstado = (nuevoMontoReembolsado >= totalOriginal - 0.01) ? 'Reembolsado Total' : 'Reembolso Parcial';
-
-  Swal.fire({
-    title: 'Registrando Reembolso...',
-    text: 'Actualizando registro en Supabase.',
-    allowOutsideClick: false,
-    didOpen: () => Swal.showLoading()
-  });
-
-  try {
-    const { error } = await db
-      .from('historial_cobros')
-      .update({
-        monto_reembolsado: nuevoMontoReembolsado,
-        motivo_reembolso: motivo,
-        estado: nuevoEstado
-      })
-      .eq('id', id);
-
-    if (error) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Error al Procesar',
-        text: error.message
-      });
-      return;
-    }
-
-    const resImprimir = await Swal.fire({
-      icon: 'success',
-      title: '¡Reembolso Aplicado!',
-      html: `Se registraron <strong>-$${montoDevolver.toFixed(2)}</strong> devueltos para el Folio <strong>${item.folio}</strong>.<br>Estado actual: <strong>${nuevoEstado}</strong>.`,
-      showCancelButton: true,
-      confirmButtonText: '<i class="bi bi-printer-fill me-1"></i> Imprimir Nota de Crédito',
-      cancelButtonText: 'Cerrar',
-      confirmButtonColor: '#2563eb'
-    });
-
-    if (resImprimir.isConfirmed) {
-      imprimirNotaCreditoReembolso(item, montoDevolver, motivo, formaDevolucion, nuevoEstado);
-    }
-
-    cargarHistorial();
 
   } catch (err) {
-    Swal.fire({
-      icon: 'error',
-      title: 'Error Inesperado',
-      text: 'Fallo de comunicación con la base de datos.'
-    });
+    tbody.innerHTML = '<tr><td colspan="13" class="text-danger text-center py-4">Error de conexión al cargar historial.</td></tr>';
   }
 }
 
-// IMPRIMIR COMPROBANTE DE REEMBOLSO
-function imprimirNotaCreditoReembolso(item, montoDevuelto, motivo, formaDevolucion, nuevoEstado) {
-  const printArea = document.getElementById('print-area');
-  if (!printArea) return;
-
-  const fechaAhora = new Date().toLocaleString('es-MX', {
-    day: '2-digit', month: '2-digit', year: 'numeric',
-    hour: '2-digit', minute: '2-digit', hour12: true
-  });
-
-  const totalOriginal = (item.cantidad || 1) * (item.importe || 0);
-  const totalReembolsadoAcum = (item.monto_reembolsado || 0) + montoDevuelto;
-  const saldoRestante = Math.max(0, totalOriginal - totalReembolsadoAcum);
-
-  const ticketHtml = `
-    <div class="ticket-paper" style="max-width: 380px; margin: 0 auto; border: 2px dashed #d97706; background: #fffdfa;">
-      <div class="text-center mb-2">
-        <h5 class="fw-bold text-dark ticket-header-title">COLEGIO CIUDAD DE MÉXICO</h5>
-        <p class="text-warning-emphasis fw-bold ticket-header-sub mb-1"><i class="bi bi-arrow-return-left"></i> COMPROBANTE DE REEMBOLSO</p>
-        <span class="badge bg-dark text-white fw-bold px-3 py-1">FOLIO ORIG: ${item.folio || 'N/A'}</span>
-      </div>
-
-      <div class="border-top border-bottom py-2 my-2 small text-secondary ticket-info-block">
-        <div class="d-flex justify-content-between"><span>Fecha Reembolso:</span><strong class="text-dark">${fechaAhora}</strong></div>
-        <div class="d-flex justify-content-between"><span>Paciente:</span><strong class="text-dark">${item.nombre || '---'}</strong></div>
-        <div class="d-flex justify-content-between"><span>Familia / ID:</span><strong class="text-dark">${item.familia || '---'} (${item.matricula || '---'})</strong></div>
-        <div class="d-flex justify-content-between"><span>Concepto:</span><strong class="text-dark">${item.concepto || '---'} x${item.cantidad || 1}</strong></div>
-      </div>
-
-      <div class="py-2 border-bottom small">
-        <div class="d-flex justify-content-between text-muted"><span>Monto Cobro Original:</span><span>$${totalOriginal.toFixed(2)}</span></div>
-        <div class="d-flex justify-content-between text-danger fw-bold fs-6"><span>MONTO DEVUELTO:</span><span>-$${montoDevuelto.toFixed(2)}</span></div>
-        <div class="d-flex justify-content-between text-primary fw-bold mt-1"><span>Saldo Restante Neto:</span><span>$${saldoRestante.toFixed(2)}</span></div>
-      </div>
-
-      <div class="pt-2 small">
-        <div class="mb-1"><strong>Forma Devolución:</strong> ${formaDevolucion}</div>
-        <div class="mb-1"><strong>Estado del Registro:</strong> ${nuevoEstado}</div>
-        <div class="text-muted fst-italic"><strong>Motivo:</strong> "${motivo}"</div>
-      </div>
-    </div>
-  `;
-
-  if (typeof Swal !== 'undefined' && Swal.isVisible()) Swal.close();
-  document.body.classList.remove('swal2-shown', 'swal2-height-auto', 'modal-open');
-  document.body.style.overflow = 'auto';
-
-  printArea.innerHTML = ticketHtml;
-
-  setTimeout(() => {
-    window.print();
-    setTimeout(() => {
-      printArea.innerHTML = '';
-    }, 300);
-  }, 250);
-}
-
-// CANCELAR REGISTRO
 async function cancelarRegistro(id, nombrePaciente) {
   const confirm = await Swal.fire({
     title: '¿Deseas cancelar esta vacuna?',
-    html: `El registro de <strong>${nombrePaciente}</strong> cambiará a estado <strong>Cancelado</strong>.<br><small class="text-muted">Este registro se excluirá automáticamente de los tickets de impresión y reportes.</small>`,
+    html: `El registro de <strong>${nombrePaciente}</strong> cambiará a estado <strong>Cancelado</strong>.<br><small class="text-muted">Se excluirá de tickets de reimpresión y reportes acumulados.</small>`,
     icon: 'warning',
     showCancelButton: true,
     confirmButtonColor: '#d97706',
     cancelButtonColor: '#6b7280',
-    confirmButtonText: '<i class="bi bi-x-circle-fill me-1"></i> Sí, cancelar vacuna',
+    confirmButtonText: 'Sí, cancelar vacuna',
     cancelButtonText: 'Regresar',
     reverseButtons: true
   });
@@ -909,22 +623,11 @@ async function cancelarRegistro(id, nombrePaciente) {
         .eq('id', id);
 
       if (error) {
-        Swal.fire({
-          icon: 'error',
-          title: 'Error al cancelar',
-          text: error.message
-        });
+        Swal.fire({ icon: 'error', title: 'Error al cancelar', text: error.message });
         return;
       }
 
-      Swal.fire({
-        icon: 'success',
-        title: 'Registro Cancelado',
-        text: 'La vacuna ha sido cancelada exitosamente.',
-        timer: 1500,
-        showConfirmButton: false
-      });
-
+      Swal.fire({ icon: 'success', title: 'Registro Cancelado', timer: 1400, showConfirmButton: false });
       cargarHistorial();
     } catch (e) {
       Swal.fire({ icon: 'error', title: 'Error', text: 'Error al comunicarse con la base de datos.' });
@@ -932,25 +635,20 @@ async function cancelarRegistro(id, nombrePaciente) {
   }
 }
 
-// ELIMINAR DEFINITIVAMENTE (EXCLUSIVO SUPERUSUARIO)
 async function eliminarRegistro(id, nombrePaciente) {
   if (!esSuperUsuario) {
-    Swal.fire({
-      icon: 'error',
-      title: 'Acceso Denegado',
-      text: 'Solo el superusuario tiene permisos para borrar registros permanentemente.'
-    });
+    Swal.fire({ icon: 'error', title: 'Acceso Denegado', text: 'Permiso exclusivo de superusuario.' });
     return;
   }
 
   const confirm = await Swal.fire({
     title: '¡ADVERTENCIA DE ELIMINACIÓN!',
-    html: `¿Estás completamente seguro de <strong>ELIMINAR DEFINITIVAMENTE</strong> la vacuna de <strong>${nombrePaciente}</strong> de la base de datos?<br><strong class="text-danger">Esta acción NO se puede deshacer.</strong>`,
+    html: `¿Estás seguro de <strong>ELIMINAR DEFINITIVAMENTE</strong> la vacuna de <strong>${nombrePaciente}</strong> de la base de datos?<br><strong class="text-danger">Esta acción NO se puede deshacer.</strong>`,
     icon: 'error',
     showCancelButton: true,
     confirmButtonColor: '#dc2626',
     cancelButtonColor: '#6b7280',
-    confirmButtonText: '<i class="bi bi-trash-fill me-1"></i> Eliminar de la BD',
+    confirmButtonText: 'Eliminar de BD',
     cancelButtonText: 'Cancelar',
     reverseButtons: true
   });
@@ -963,22 +661,11 @@ async function eliminarRegistro(id, nombrePaciente) {
         .eq('id', id);
 
       if (error) {
-        Swal.fire({
-          icon: 'error',
-          title: 'Error al eliminar',
-          text: error.message
-        });
+        Swal.fire({ icon: 'error', title: 'Error al eliminar', text: error.message });
         return;
       }
 
-      Swal.fire({
-        icon: 'success',
-        title: 'Registro Borrado',
-        text: 'El registro ha sido eliminado permanentemente de la base de datos.',
-        timer: 1500,
-        showConfirmButton: false
-      });
-
+      Swal.fire({ icon: 'success', title: 'Registro Borrado', timer: 1400, showConfirmButton: false });
       cargarHistorial();
     } catch (e) {
       Swal.fire({ icon: 'error', title: 'Error', text: 'Error al comunicarse con la base de datos.' });
@@ -986,7 +673,6 @@ async function eliminarRegistro(id, nombrePaciente) {
   }
 }
 
-// RENDERIZAR TABLA DE HISTORIAL CON KPIS
 function renderTablaHistorial(lista) {
   const tbody = document.getElementById('historialBody');
   tbody.innerHTML = '';
@@ -994,9 +680,6 @@ function renderTablaHistorial(lista) {
   if (lista.length === 0) {
     tbody.innerHTML = '<tr><td colspan="13" class="text-center py-4 text-muted">No se encontraron registros de cobros.</td></tr>';
     document.getElementById('kpi-total').innerText = '$0.00';
-    document.getElementById('kpi-bruto-sub').innerText = 'Bruto: $0.00';
-    document.getElementById('kpi-reembolsos').innerText = '$0.00';
-    document.getElementById('kpi-reembolsos-cant').innerText = '0 Devoluciones';
     document.getElementById('kpi-count').innerText = '0';
     document.getElementById('kpi-folios').innerText = '0';
     document.getElementById('kpi-efectivo').innerText = '$0.00';
@@ -1004,27 +687,22 @@ function renderTablaHistorial(lista) {
     return;
   }
 
-  let totalBruto = 0, vacunasG = 0, efectivoG = 0, otrosG = 0, totalReembolsos = 0, cantReembolsos = 0;
+  let totalG = 0, vacunasG = 0, efectivoG = 0, otrosG = 0;
   const foliosUnicos = new Set();
 
   lista.forEach(item => {
     const esCancelado = item.estado === 'Cancelado';
     const cant = item.cantidad || 1;
     const imp = item.importe || 0;
-    const totalOriginal = cant * imp;
-    const reemb = parseFloat(item.monto_reembolsado) || 0;
-    
-    if (!esCancelado) {
-      totalBruto += totalOriginal;
-      totalReembolsos += reemb;
-      if (reemb > 0) cantReembolsos++;
+    const total = cant * imp;
 
+    if (!esCancelado) {
+      totalG += total;
       vacunasG += cant;
       if (item.folio) foliosUnicos.add(item.folio);
 
-      const netoItem = totalOriginal - reemb;
-      if (item.forma_pago === 'Efectivo') efectivoG += netoItem;
-      else otrosG += netoItem;
+      if (item.forma_pago === 'Efectivo') efectivoG += total;
+      else otrosG += total;
     }
 
     const rawFecha = item.created_at || item.fecha || item.fecha_hora || item.timestamp;
@@ -1033,82 +711,46 @@ function renderTablaHistorial(lista) {
       const d = new Date(rawFecha);
       if (!isNaN(d.getTime())) {
         fechaTxt = d.toLocaleString('es-MX', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: true
+          day: '2-digit', month: '2-digit', year: 'numeric',
+          hour: '2-digit', minute: '2-digit', hour12: true
         });
       }
     }
 
     const tr = document.createElement('tr');
-    
-    let badgeEstado = '<span class="badge bg-success-subtle text-success border border-success-subtle">Activo</span>';
-    if (esCancelado) {
-      tr.className = 'fila-cancelada';
-      badgeEstado = '<span class="badge bg-danger-subtle text-danger border border-danger-subtle">Cancelado</span>';
-    } else if (item.estado === 'Reembolsado Total') {
-      tr.className = 'fila-reembolsada-total';
-      badgeEstado = `<span class="badge bg-purple-subtle text-purple border border-purple-subtle" style="background:#f3e8ff; color:#6b21a8; border-color:#e9d5ff !important;">Reembolsado Total</span>`;
-    } else if (item.estado === 'Reembolso Parcial' || reemb > 0) {
-      tr.className = 'fila-reembolsada-parcial';
-      badgeEstado = `<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Parcial (-$${reemb.toFixed(2)})</span>`;
-    }
-
-    const nombreSeguro = (item.nombre || '').replace(/'/g, "\\'");
-
-    const btnReembolso = (esCancelado || item.estado === 'Reembolsado Total')
-      ? `<button class="btn btn-sm btn-outline-secondary" disabled title="No disponible para reembolso"><i class="bi bi-arrow-return-left"></i></button>`
-      : `<button class="btn btn-sm btn-outline-warning text-dark fw-semibold" onclick="abrirModalReembolso(${item.id})" title="Procesar reembolso total o parcial"><i class="bi bi-arrow-return-left me-1"></i>Reembolso</button>`;
-
-    const btnCancelar = esCancelado
-      ? `<button class="btn btn-sm btn-outline-secondary" disabled title="Registro ya cancelado"><i class="bi bi-x-circle"></i></button>`
-      : `<button class="btn btn-sm btn-outline-danger fw-semibold ms-1" onclick="cancelarRegistro(${item.id}, '${nombreSeguro}')" title="Cancelar esta vacuna"><i class="bi bi-x-circle-fill"></i></button>`;
-
-    const btnEliminarSuper = esSuperUsuario
-      ? `<button class="btn btn-sm btn-danger ms-1" onclick="eliminarRegistro(${item.id}, '${nombreSeguro}')" title="Eliminar definitivamente de la BD"><i class="bi bi-trash-fill"></i></button>`
-      : '';
-
-    const saldoNetoFila = totalOriginal - reemb;
+    if (esCancelado) tr.className = 'row-cancelado';
 
     tr.innerHTML = `
       <td class="small text-muted">${fechaTxt}</td>
       <td><span class="badge bg-dark text-white fw-bold">${item.folio || 'N/A'}</span></td>
       <td><strong>${item.matricula || '---'}</strong></td>
-      <td>${item.nombre || '---'}</td>
+      <td>
+        <span class="fw-semibold">${item.nombre || '---'}</span>
+        ${!esCancelado ? `<button class="btn btn-sm btn-link text-danger p-0 ms-1" onclick="cancelarRegistro(${item.id}, '${item.nombre}')" title="Cancelar esta vacuna"><i class="bi bi-x-circle-fill"></i></button>` : ''}
+      </td>
       <td>${item.familia || '---'}</td>
       <td><span class="badge bg-light text-dark border">${item.seccion || ''} ${item.grupo || ''}</span></td>
       <td>${item.concepto || '---'}</td>
       <td>${cant}</td>
       <td>$${parseFloat(imp).toFixed(2)}</td>
-      <td class="fw-bold ${esCancelado ? 'text-muted text-decoration-line-through' : (reemb > 0 ? 'text-primary' : 'text-success')}">
-        $${saldoNetoFila.toFixed(2)}
-        ${reemb > 0 && !esCancelado ? `<div class="small text-danger fw-normal" style="font-size:0.72rem;">Dev: -$${reemb.toFixed(2)}</div>` : ''}
-      </td>
-      <td><span class="badge ${item.forma_pago === 'Efectivo' ? 'bg-warning-subtle text-warning-emphasis border' : 'bg-primary-subtle text-primary border'}">${item.forma_pago || 'Efectivo'}</span></td>
-      <td class="text-center">${badgeEstado}</td>
+      <td class="fw-bold ${esCancelado ? 'text-muted' : 'text-success'}">$${total.toFixed(2)}</td>
+      <td><span class="badge ${item.forma_pago === 'Efectivo' ? 'bg-warning-subtle text-warning border' : 'bg-primary-subtle text-primary border'}">${item.forma_pago || 'Efectivo'}</span></td>
       <td class="text-center">
-        <div class="btn-group btn-group-sm" role="group">
-          <button class="btn btn-sm btn-outline-primary fw-semibold" onclick="reimprimirFolio('${item.folio}')" title="Reimprimir recibo activo del folio ${item.folio}">
-            <i class="bi bi-printer-fill me-1"></i>Reimprimir
-          </button>
-          ${btnReembolso}
-          ${btnCancelar}
-          ${btnEliminarSuper}
+        <span class="badge ${esCancelado ? 'bg-danger-subtle text-danger border border-danger-subtle' : 'bg-success-subtle text-success border border-success-subtle'}">
+          ${item.estado || 'Activo'}
+        </span>
+      </td>
+      <td class="text-center">
+        <div class="btn-group btn-group-sm">
+          ${!esCancelado ? `<button class="btn btn-outline-primary fw-semibold" onclick="reimprimirFolio('${item.folio}')" title="Reimprimir recibo del folio"><i class="bi bi-printer-fill"></i></button>` : ''}
+          ${esSuperUsuario ? `<button class="btn btn-outline-danger" onclick="eliminarRegistro(${item.id}, '${item.nombre}')" title="Borrar de la BD (Superusuario)"><i class="bi bi-trash-fill"></i></button>` : ''}
         </div>
       </td>
     `;
     tbody.appendChild(tr);
   });
 
-  const totalNetoReal = totalBruto - totalReembolsos;
-
-  document.getElementById('kpi-total').innerText = `$${totalNetoReal.toFixed(2)}`;
-  document.getElementById('kpi-bruto-sub').innerText = `Bruto: $${totalBruto.toFixed(2)}`;
-  document.getElementById('kpi-reembolsos').innerText = `$${totalReembolsos.toFixed(2)}`;
-  document.getElementById('kpi-reembolsos-cant').innerText = `${cantReembolsos} Devoluciones`;
+  document.getElementById('kpi-total').innerText = `$${totalG.toFixed(2)}`;
   document.getElementById('kpi-count').innerText = vacunasG;
   document.getElementById('kpi-folios').innerText = foliosUnicos.size;
   document.getElementById('kpi-efectivo').innerText = `$${efectivoG.toFixed(2)}`;
@@ -1132,19 +774,13 @@ function filtrarTabla() {
   renderTablaHistorial(filtrados);
 }
 
-// EXPORTAR A EXCEL
 function exportarExcel() {
   if (cobrosGuardados.length === 0) {
-    Swal.fire({
-      icon: 'info',
-      title: 'Sin datos',
-      text: 'No hay registros disponibles para exportar.',
-      confirmButtonColor: '#1e3a8a'
-    });
+    Swal.fire({ icon: 'info', title: 'Sin datos', text: 'No hay registros disponibles para exportar.', confirmButtonColor: '#1e3a8a' });
     return;
   }
 
-  let csvContent = "\uFEFFFecha_Hora,Folio,Matricula,Nombre_Paciente,Familia,Seccion,Grupo,Concepto_Vacuna,Cantidad,Importe_Unitario,Total_Original,Monto_Reembolsado,Neto_Real,Forma_Pago,Estado,Motivo_Reembolso\n";
+  let csvContent = "\uFEFFFecha_Hora,Folio,Matricula,Nombre_Paciente,Familia,Seccion,Grupo,Concepto_Vacuna,Cantidad,Importe_Unitario,Total,Forma_Pago,Estado\n";
 
   cobrosGuardados.forEach(c => {
     const rawFecha = c.created_at || c.fecha || c.fecha_hora || c.timestamp;
@@ -1155,16 +791,12 @@ function exportarExcel() {
         fecha = d.toLocaleString('es-MX');
       }
     }
-    const totalOrig = (c.cantidad || 1) * (c.importe || 0);
-    const reemb = parseFloat(c.monto_reembolsado) || 0;
-    const neto = c.estado === 'Cancelado' ? 0 : (totalOrig - reemb);
-
+    const total = (c.cantidad || 1) * (c.importe || 0);
     const nom = (c.nombre || '').replace(/"/g, '""');
     const fam = (c.familia || '').replace(/"/g, '""');
     const con = (c.concepto || '').replace(/"/g, '""');
-    const mot = (c.motivo_reembolso || '').replace(/"/g, '""');
-    
-    csvContent += `"${fecha}","${c.folio || ''}","${c.matricula || ''}","${nom}","${fam}","${c.seccion || ''}","${c.grupo || ''}","${con}",${c.cantidad || 1},${c.importe || 0},${totalOrig},${reemb},${neto},"${c.forma_pago || ''}","${c.estado || 'Activo'}","${mot}"\n`;
+
+    csvContent += `"${fecha}","${c.folio || ''}","${c.matricula || ''}","${nom}","${fam}","${c.seccion || ''}","${c.grupo || ''}","${con}",${c.cantidad || 1},${c.importe || 0},${total},"${c.forma_pago || ''}","${c.estado || 'Activo'}"\n`;
   });
 
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
