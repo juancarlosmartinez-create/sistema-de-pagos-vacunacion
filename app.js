@@ -1,10 +1,10 @@
 // ==========================================
-// CONFIGURACIÓN DE SUPABASE
+// CONFIGURACIÓN DE SUPABASE (Desde config.js)
 // ==========================================
-const SUPABASE_URL = "https://uvyazxprytgdwwrisnih.supabase.co"; 
-const SUPABASE_ANON_KEY = "sb_publishable_g277uGIxebvELJ5EZju2bQ_tquT0CI7"; 
+const SUPABASE_URL = window.CONFIG?.SUPABASE_URL || ""; 
+const SUPABASE_ANON_KEY = window.CONFIG?.SUPABASE_ANON_KEY || ""; 
 
-const supabaseClient = window.supabase ? window.supabase.createClient(
+const supabaseClient = (window.supabase && SUPABASE_URL && SUPABASE_ANON_KEY) ? window.supabase.createClient(
   SUPABASE_URL,
   SUPABASE_ANON_KEY
 ) : null;
@@ -378,7 +378,7 @@ async function cargarHistorial() {
   tbody.innerHTML = `<tr><td colspan="14" class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm text-primary me-2"></div>Cargando registros desde Supabase...</td></tr>`;
 
   if (!supabaseClient) {
-    tbody.innerHTML = `<tr><td colspan="14" class="text-center py-4 text-muted">Configura las claves de Supabase en app.js para ver los registros.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="14" class="text-center py-4 text-muted">Configura las claves de Supabase en config.js para ver los registros.</td></tr>`;
     return;
   }
 
