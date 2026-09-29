@@ -13,6 +13,15 @@ document.addEventListener('DOMContentLoaded', () => {
   actualizarFechaTicket();
   actualizarFormaPagoTicket();
   obtenerSiguienteFolio();
+
+  // Ocultar resultados de búsqueda al hacer clic fuera del buscador
+  document.addEventListener('click', (e) => {
+    const searchInput = document.getElementById('searchInput');
+    const resultsDiv = document.getElementById('results');
+    if (resultsDiv && searchInput && !searchInput.contains(e.target) && !resultsDiv.contains(e.target)) {
+      resultsDiv.innerHTML = '';
+    }
+  });
 });
 
 // CONTROL DE ROL SUPERUSUARIO
@@ -268,7 +277,7 @@ function limpiarCamposPaciente() {
   document.getElementById('searchInput').value = '';
 }
 
-// BÚSQUEDA PREDICTIVA
+// BÚSQUEDA PREDICTIVA CORREGIDA
 function buscarPersona() {
   const q = document.getElementById('searchInput').value.trim();
   const resultsDiv = document.getElementById('results');
@@ -282,13 +291,15 @@ function buscarPersona() {
 
   searchTimeout = setTimeout(async () => {
     try {
+      // Corrección de columna Matricula (sin acento) para coincidir exactamente con Supabase
       const { data, error } = await db
         .from('personas')
         .select('*')
-        .or(`Nombre.ilike.%${q}%,Familia.ilike.%${q}%,"Matrícula".ilike.%${q}%`)
+        .or(`Nombre.ilike.%${q}%,Familia.ilike.%${q}%,Matricula.ilike.%${q}%`)
         .limit(8);
 
       if (error) {
+        console.error("Error Supabase:", error);
         resultsDiv.innerHTML = `<div class="list-group-item text-danger small py-2 bg-light"><i class="bi bi-exclamation-triangle me-1"></i> Error de consulta: ${error.message}</div>`;
         return;
       }
@@ -301,10 +312,10 @@ function buscarPersona() {
       }
 
       data.forEach(p => {
-        const mat = p['Matrícula'] || p['matricula'] || 'S/N';
+        const mat = p['Matricula'] || p['Matrícula'] || p['matricula'] || 'S/N';
         const nom = p['Nombre'] || p['nombre'] || '';
         const fam = p['Familia'] || p['familia'] || '';
-        const sec = p['Sección'] || p['seccion'] || '';
+        const sec = p['Sección'] || p['Seccion'] || p['seccion'] || '';
 
         const btn = document.createElement('button');
         btn.type = 'button';
@@ -331,10 +342,10 @@ function buscarPersona() {
 }
 
 function seleccionarPersona(p) {
-  document.getElementById('matricula').value = p['Matrícula'] || p['matricula'] || '';
+  document.getElementById('matricula').value = p['Matricula'] || p['Matrícula'] || p['matricula'] || '';
   document.getElementById('nombre').value = p['Nombre'] || p['nombre'] || '';
   document.getElementById('familia').value = p['Familia'] || p['familia'] || '';
-  document.getElementById('seccion').value = p['Sección'] || p['seccion'] || '';
+  document.getElementById('seccion').value = p['Sección'] || p['Seccion'] || p['seccion'] || '';
   document.getElementById('grupo').value = p['Grupo'] || p['grupo'] || '';
 
   document.getElementById('results').innerHTML = '';
