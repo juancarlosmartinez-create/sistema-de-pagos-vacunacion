@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
   actualizarFormaPagoTicket();
   obtenerSiguienteFolio();
 
-  // Ocultar resultados de búsqueda al hacer clic fuera del buscador
+  // Ocultar resultados de búsqueda al hacer clic fuera
   document.addEventListener('click', (e) => {
     const searchInput = document.getElementById('searchInput');
     const resultsDiv = document.getElementById('results');
@@ -276,7 +276,7 @@ function limpiarCamposPaciente() {
   if (searchInp) searchInp.value = '';
 }
 
-// BÚSQUEDA PREDICTIVA DE COMPRADORES EN SUPABASE
+// BÚSQUEDA PREDICTIVA ADAPTADA EXACTAMENTE A LA TABLA "personas"
 function buscarPersona() {
   const q = document.getElementById('searchInput').value.trim();
   const resultsDiv = document.getElementById('results');
@@ -290,10 +290,11 @@ function buscarPersona() {
 
   searchTimeout = setTimeout(async () => {
     try {
+      // Uso explícito de comillas dobles para respetar mayúsculas en PostgreSQL
       const { data, error } = await db
         .from('personas')
         .select('*')
-        .or(`Nombre.ilike.%${q}%,Familia.ilike.%${q}%,Matricula.ilike.%${q}%`)
+        .or(`"Nombre".ilike.%${q}%,"Familia".ilike.%${q}%,"Matricula".ilike.%${q}%`)
         .limit(8);
 
       if (error) {
@@ -309,10 +310,11 @@ function buscarPersona() {
       }
 
       data.forEach(p => {
-        const mat = p['Matricula'] || p['matricula'] || 'S/N';
-        const nom = p['Nombre'] || p['nombre'] || '';
-        const fam = p['Familia'] || p['familia'] || '';
-        const sec = p['Sección'] || p['seccion'] || '';
+        // Mapeo exacto según columnas de Supabase
+        const mat = p.Matricula || 'S/N';
+        const nom = p.Nombre || '';
+        const fam = p.Familia || '';
+        const sec = p['Sección'] || p.Seccion || '';
 
         const btn = document.createElement('button');
         btn.type = 'button';
@@ -340,11 +342,11 @@ function buscarPersona() {
 }
 
 function seleccionarPersona(p) {
-  document.getElementById('matricula').value = p['Matricula'] || p['matricula'] || '';
-  document.getElementById('nombre').value = p['Nombre'] || p['nombre'] || '';
-  document.getElementById('familia').value = p['Familia'] || p['familia'] || '';
-  document.getElementById('seccion').value = p['Sección'] || p['seccion'] || '';
-  document.getElementById('grupo').value = p['Grupo'] || p['grupo'] || '';
+  document.getElementById('matricula').value = p.Matricula || '';
+  document.getElementById('nombre').value = p.Nombre || '';
+  document.getElementById('familia').value = p.Familia || '';
+  document.getElementById('seccion').value = p['Sección'] || p.Seccion || '';
+  document.getElementById('grupo').value = p.Grupo || '';
 
   document.getElementById('results').innerHTML = '';
   document.getElementById('searchInput').value = '';
