@@ -8,6 +8,7 @@ let reciboActual = [];
 let cobrosGuardados = [];
 let searchTimeout = null;
 let esSuperUsuario = false;
+let personasCache = null;
 
 document.addEventListener('DOMContentLoaded', () => {
   actualizarFechaTicket();
@@ -277,9 +278,24 @@ function limpiarCamposPaciente() {
   document.getElementById('searchInput').value = '';
 }
 
-// BÚSQUEDA PREDICTIVA CORREGIDA
-function buscarPersona() {
-  const q = document.getElementById('searchInput').value.trim();
+// CARGA ÚNICA Y CACHÉ DE PACIENTES PARA EVITAR ERRORES DE SQL EN SUPABASE
+async function obtenerPersonas() {
+  if (personasCache) return personasCache;
+  try {
+    const { data, error } = await db.from('personas').select('*');
+    if (!error && data) {
+      personasCache = data;
+      return personasCache;
+    }
+  } catch (e) {
+    console.error("Error al cargar lista de personas:", e);
+  }
+  return [];
+}
+
+// BÚSQUEDA PREDICTIVA TOLERANTE Y ROBUSTA EN MEMORIA
+async function buscarPersona() {
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
   const resultsDiv = document.getElementById('results');
   
   if (searchTimeout) clearTimeout(searchTimeout);
@@ -290,55 +306,45 @@ function buscarPersona() {
   }
 
   searchTimeout = setTimeout(async () => {
-    try {
-      // Corrección de columna Matricula (sin acento) para coincidir exactamente con Supabase
-      const { data, error } = await db
-        .from('personas')
-        .select('*')
-        .or(`Nombre.ilike.%${q}%,Familia.ilike.%${q}%,Matricula.ilike.%${q}%`)
-        .limit(8);
+    const lista = await obtenerPersonas();
+    resultsDiv.innerHTML = '';
 
-      if (error) {
-        console.error("Error Supabase:", error);
-        resultsDiv.innerHTML = `<div class="list-group-item text-danger small py-2 bg-light"><i class="bi bi-exclamation-triangle me-1"></i> Error de consulta: ${error.message}</div>`;
-        return;
-      }
+    const filtrados = lista.filter(p => {
+      const nom = (p.Nombre || p.nombre || '').toString().toLowerCase();
+      const fam = (p.Familia || p.familia || '').toString().toLowerCase();
+      const mat = (p.Matricula || p['Matrícula'] || p.matricula || '').toString().toLowerCase();
+      return nom.includes(q) || fam.includes(q) || mat.includes(q);
+    }).slice(0, 8);
 
-      resultsDiv.innerHTML = '';
-
-      if (!data || data.length === 0) {
-        resultsDiv.innerHTML = `<div class="list-group-item text-muted small py-2"><i class="bi bi-exclamation-circle me-1"></i> No se encontraron registros para "${q}".</div>`;
-        return;
-      }
-
-      data.forEach(p => {
-        const mat = p['Matricula'] || p['Matrícula'] || p['matricula'] || 'S/N';
-        const nom = p['Nombre'] || p['nombre'] || '';
-        const fam = p['Familia'] || p['familia'] || '';
-        const sec = p['Sección'] || p['Seccion'] || p['seccion'] || '';
-
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center py-2';
-        btn.innerHTML = `
-          <div>
-            <div class="fw-bold text-dark" style="font-size: 0.9rem;">${nom}</div>
-            <div class="text-muted small" style="font-size: 0.8rem;">
-              Matrícula: <strong>${mat}</strong> 
-              ${fam ? ` | Familia: <strong>${fam}</strong>` : ''}
-            </div>
-          </div>
-          <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill">${sec}</span>
-        `;
-        
-        btn.onclick = () => seleccionarPersona(p);
-        resultsDiv.appendChild(btn);
-      });
-
-    } catch (err) {
-      console.error("Error en búsqueda predictiva:", err);
+    if (filtrados.length === 0) {
+      resultsDiv.innerHTML = `<div class="list-group-item text-muted small py-2"><i class="bi bi-exclamation-circle me-1"></i> No se encontraron registros para "${q}".</div>`;
+      return;
     }
-  }, 200);
+
+    filtrados.forEach(p => {
+      const mat = p['Matricula'] || p['Matrícula'] || p['matricula'] || 'S/N';
+      const nom = p['Nombre'] || p['nombre'] || '';
+      const fam = p['Familia'] || p['familia'] || '';
+      const sec = p['Sección'] || p['Seccion'] || p['seccion'] || '';
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center py-2';
+      btn.innerHTML = `
+        <div>
+          <div class="fw-bold text-dark" style="font-size: 0.9rem;">${nom}</div>
+          <div class="text-muted small" style="font-size: 0.8rem;">
+            Matrícula: <strong>${mat}</strong> 
+            ${fam ? ` | Familia: <strong>${fam}</strong>` : ''}
+          </div>
+        </div>
+        <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill">${sec}</span>
+      `;
+      
+      btn.onclick = () => seleccionarPersona(p);
+      resultsDiv.appendChild(btn);
+    });
+  }, 150);
 }
 
 function seleccionarPersona(p) {
