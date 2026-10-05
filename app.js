@@ -50,6 +50,84 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
+// ==========================================
+// FUNCIÓN DE INICIO DE SESIÓN
+// ==========================================
+async function iniciarSesion() {
+  const emailInput = document.getElementById('correo') || 
+                     document.getElementById('email') || 
+                     document.getElementById('correoInstitucional') || 
+                     document.querySelector('input[type="email"]');
+                     
+  const passwordInput = document.getElementById('password') || 
+                        document.getElementById('contrasena') || 
+                        document.getElementById('passwordInput') || 
+                        document.querySelector('input[type="password"]');
+
+  if (!emailInput || !passwordInput) {
+    if (typeof Swal !== 'undefined') {
+      Swal.fire('Error', 'No se encontraron los campos de correo o contraseña.', 'error');
+    } else {
+      alert('No se encontraron los campos de correo o contraseña.');
+    }
+    return;
+  }
+
+  const email = emailInput.value.trim();
+  const password = passwordInput.value.trim();
+
+  if (!email || !password) {
+    if (typeof Swal !== 'undefined') {
+      Swal.fire('Atención', 'Por favor ingresa tu correo y contraseña.', 'warning');
+    } else {
+      alert('Por favor ingresa tu correo y contraseña.');
+    }
+    return;
+  }
+
+  if (!supabaseClient) {
+    if (typeof Swal !== 'undefined') {
+      Swal.fire('Error de Configuración', 'No se pudo conectar con Supabase.', 'error');
+    } else {
+      alert('Error de conexión con Supabase.');
+    }
+    return;
+  }
+
+  try {
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
+      email: email,
+      password: password
+    });
+
+    if (error) {
+      if (typeof Swal !== 'undefined') {
+        Swal.fire('Error de Acceso', error.message === 'Invalid login credentials' ? 'Correo o contraseña incorrectos.' : error.message, 'error');
+      } else {
+        alert('Error: ' + error.message);
+      }
+    } else if (data && data.user) {
+      mostrarAplicacion(data.user);
+    }
+  } catch (err) {
+    if (typeof Swal !== 'undefined') {
+      Swal.fire('Error inesperado', err.message, 'error');
+    } else {
+      alert('Error inesperado: ' + err.message);
+    }
+  }
+}
+
+async function cerrarSesion() {
+  if (supabaseClient) {
+    await supabaseClient.auth.signOut();
+  }
+  mostrarLogin();
+}
+
+window.iniciarSesion = iniciarSesion;
+window.cerrarSesion = cerrarSesion;
+
 function mostrarAplicacion(user) {
   const loginOverlay = document.getElementById('loginOverlay');
   const appContent = document.getElementById('appContent');
@@ -203,7 +281,7 @@ async function buscarPersona() {
     const { data, error } = await supabaseClient
       .from('personas')
       .select('*')
-      .or(`nombre.ilike.%${query}%,matricula.ilike.%${query}\%,familia.ilike.\%${query}%`)
+      .or(`nombre.ilike.%${query}%,matricula.ilike.%${query}%,familia.ilike.%${query}%`)
       .limit(6);
 
     if (error) throw error;
@@ -212,7 +290,7 @@ async function buscarPersona() {
     data.forEach(p => {
       const a = document.createElement('a');
       a.className = 'list-group-item list-group-item-action cursor-pointer';
-      a.innerHTML = `<strong>${p.nombre}</strong> <small class="text-muted">(${p.matricula} -${p.familia})</small>`;
+      a.innerHTML = `<strong>${p.nombre}</strong> <small class="text-muted">(${p.matricula} - ${p.familia})</small>`;
       a.onclick = () => seleccionarPersona(p);
       listContainer.appendChild(a);
     });
@@ -306,7 +384,8 @@ function renderCarrito() {
         <td class="text-start"><strong>${item.nombre}</strong><br><small class="text-muted">${item.familia}</small></td>
         <td>${item.concepto}</td>
         <td>${item.cantidad}</td>
-        <td>$${item.importe.toFixed(2)}</td>         <td class="fw-bold">$${item.subtotal.toFixed(2)}</td>
+        <td>$${item.importe.toFixed(2)}</td>
+        <td class="fw-bold">$${item.subtotal.toFixed(2)}</td>
         <td>
           <button class="btn btn-sm btn-outline-danger" onclick="eliminarDelCarrito(${index})"><i class="bi bi-trash"></i></button>
         </td>
@@ -316,7 +395,8 @@ function renderCarrito() {
     htmlTicket += `
       <div class="ticket-item border-bottom py-1">
         <div class="d-flex justify-content-between">
-          <strong class="ticket-nombre">${item.nombre}</strong>           <span class="fw-bold">$${item.subtotal.toFixed(2)}</span>
+          <strong class="ticket-nombre">${item.nombre}</strong>
+          <span class="fw-bold">$${item.subtotal.toFixed(2)}</span>
         </div>
         <div class="d-flex justify-content-between text-muted ticket-concepto">
           <span>${item.concepto} (${item.cantidad}x$${item.importe.toFixed(2)})</span>
@@ -372,7 +452,7 @@ async function confirmarGuardarRecibo() {
   }));
 
   if (!supabaseClient) {
-    Swal.fire('Modo Demo', `Se guardaría el Folio ${folioVenta} con${carrito.length} registros.`, 'info');
+    Swal.fire('Modo Demo', `Se guardaría el Folio ${folioVenta} con ${carrito.length} registros.`, 'info');
     carrito = [];
     renderCarrito();
     return;
@@ -412,4 +492,54 @@ async function cargarHistorial() {
   const tbody = document.getElementById('historialBody');
   if (!tbody) return;
 
-  tbody.innerHTML = `<tr><
+  if (!supabaseClient) {
+    tbody.innerHTML = `<tr><td colspan="9" class="text-muted py-3">Modo Demo: Sin conexión a base de datos.</td></tr>`;
+    return;
+  }
+
+  try {
+    const { data, error } = await supabaseClient
+      .from('historial_cobros')
+      .select('*')
+      .order('id', { ascending: false })
+      .limit(50);
+
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="9" class="text-muted py-3">No hay registros de cobros en el historial.</td></tr>`;
+      return;
+    }
+
+    historialMemoria = data;
+    let html = '';
+    data.forEach((item) => {
+      const fechaObj = new Date(item.fecha);
+      const fechaFormateada = fechaObj.toLocaleDateString('es-MX') + ' ' + fechaObj.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+      const badgeEstado = item.estado === 'Activo' 
+        ? '<span class="badge bg-success">Activo</span>' 
+        : '<span class="badge bg-danger">Reembolsado</span>';
+
+      html += `
+        <tr>
+          <td>${item.folio || '---'}</td>
+          <td>${fechaFormateada}</td>
+          <td><strong>${item.nombre}</strong><br><small class="text-muted">${item.familia}</small></td>
+          <td>${item.concepto}</td>
+          <td>${item.cantidad}</td>
+          <td>$${parseFloat(item.importe || 0).toFixed(2)}</td>
+          <td><span class="badge bg-info text-dark">${item.forma_pago || 'Efectivo'}</span></td>
+          <td>${badgeEstado}</td>
+          <td>
+            ${item.estado === 'Activo' ? `<button class="btn btn-sm btn-outline-warning" onclick="abrirModalReembolso('${item.folio}')"><i class="bi bi-arrow-counterclockwise"></i> Reembolsar</button>` : '---'}
+          </td>
+        </tr>
+      `;
+    });
+
+    tbody.innerHTML = html;
+  } catch (e) {
+    console.error("Error al cargar historial:", e);
+    tbody.innerHTML = `<tr><td colspan="9" class="text-danger py-3">Error al cargar el historial.</td></tr>`;
+  }
+}
