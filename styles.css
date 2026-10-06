@@ -102,7 +102,7 @@ body {
   letter-spacing: 0.5px;
 }
 
-/* BÚSQUEDA PREDICTIVA */
+/* BÚSQUEDA PREDICTIVA Y CURSOR MANITA */
 .results-list {
   max-height: 240px;
   overflow-y: auto;
@@ -114,22 +114,16 @@ body {
   border-radius: 8px;
 }
 
-/* MANITA AL PASAR SOBRE LOS RESULTADOS DE BÚSQUEDA */
 .results-list > *,
 .results-list .list-group-item,
 .results-list tr,
-.results-list div {
+.results-list div,
+button,
+.nav-link {
   cursor: pointer !important;
 }
 
-.btn-mode {
-  border-radius: 20px;
-  padding: 4px 14px;
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
-/* 1. PESTAÑAS Y NAVEGACIÓN EN 3D (NUEVO COBRO / HISTORIAL Y REPORTES) */
+/* 1. PESTAÑAS EN 3D (NUEVO COBRO Y HISTORIAL) */
 .nav-tabs {
   border-bottom: none !important;
   gap: 10px;
@@ -171,86 +165,156 @@ body {
   box-shadow: 0 2px 0 #1e3a8a;
 }
 
-/* 2. BOTÓN AGREGAR PACIENTE (3D, MÁS PEQUEÑO Y CENTRADO) */
+/* 2. BOTONES "BUSCAR ALUMNO" Y "PERSONA EXTERNA" EN 3D */
+.btn-mode,
+.btn-group .btn,
+#btnBuscarAlumno,
+#btnPersonaExterna {
+  font-weight: 700 !important;
+  border-radius: 20px !important;
+  padding: 6px 18px !important;
+  font-size: 0.85rem !important;
+  transition: all 0.15s ease-in-out !important;
+}
+
+/* BUSCAR ALUMNO (AZUL 3D) */
+#btnBuscarAlumno,
+.btn-group .btn-primary,
+.btn-mode.active {
+  color: #ffffff !important;
+  background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%) !important;
+  border: 1px solid #1e40af !important;
+  box-shadow: 0 4px 0 #1e3a8a, 0 3px 6px rgba(37, 99, 235, 0.3) !important;
+}
+
+#btnBuscarAlumno:hover,
+.btn-group .btn-primary:hover,
+.btn-mode.active:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 0 #1e3a8a, 0 5px 10px rgba(37, 99, 235, 0.4) !important;
+}
+
+#btnBuscarAlumno:active,
+.btn-group .btn-primary:active,
+.btn-mode.active:active {
+  transform: translateY(2px) !important;
+  box-shadow: 0 2px 0 #1e3a8a !important;
+}
+
+/* PERSONA EXTERNA (CLARO/GRIS 3D) */
+#btnPersonaExterna,
+.btn-group .btn-outline-primary,
+.btn-group .btn-light,
+.btn-group .btn-secondary,
+.btn-mode:not(.active) {
+  color: #475569 !important;
+  background: linear-gradient(180deg, #ffffff 0%, #e2e8f0 100%) !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: 0 4px 0 #94a3b8, 0 3px 6px rgba(0, 0, 0, 0.1) !important;
+}
+
+#btnPersonaExterna:hover,
+.btn-group .btn-outline-primary:hover,
+.btn-group .btn-light:hover,
+.btn-mode:not(.active):hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 0 #94a3b8, 0 5px 10px rgba(0, 0, 0, 0.15) !important;
+  background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%) !important;
+}
+
+#btnPersonaExterna:active,
+.btn-group .btn-outline-primary:active,
+.btn-mode:not(.active):active {
+  transform: translateY(2px) !important;
+  box-shadow: 0 2px 0 #94a3b8 !important;
+}
+
+/* 3. BOTÓN "AGREGAR PACIENTE AL RECIBO" EN 3D (AZUL) */
 .btn-agregar-paciente,
 #btnAgregarPaciente,
+#btnAgregar,
 button[id*="Agregar"],
-button[id*="agregar"] {
+button[id*="agregar"],
+.custom-card .btn-primary:not(.btn-mode) {
   display: flex !important;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  font-size: 0.82rem !important;
+  gap: 8px;
+  width: 100% !important;
+  font-size: 0.9rem !important;
   font-weight: 700 !important;
-  padding: 6px 18px !important;
-  width: auto !important;
-  max-width: fit-content;
-  margin: 12px auto 0 auto !important;
-  background: linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%) !important;
+  padding: 10px 20px !important;
+  border-radius: 8px !important;
+  background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%) !important;
   color: #ffffff !important;
   border: 1px solid #1e40af !important;
-  border-radius: 8px !important;
-  box-shadow: 0 4px 0 #1e3a8a, 0 3px 6px rgba(37, 99, 235, 0.3) !important;
-  transition: all 0.15s ease !important;
-  cursor: pointer !important;
+  box-shadow: 0 4px 0 #1e3a8a, 0 4px 10px rgba(37, 99, 235, 0.3) !important;
+  transition: all 0.15s ease-in-out !important;
 }
 
 .btn-agregar-paciente:hover,
 #btnAgregarPaciente:hover,
+#btnAgregar:hover,
 button[id*="Agregar"]:hover,
-button[id*="agregar"]:hover {
+button[id*="agregar"]:hover,
+.custom-card .btn-primary:not(.btn-mode):hover {
   transform: translateY(-2px) !important;
   box-shadow: 0 6px 0 #1e3a8a, 0 6px 12px rgba(37, 99, 235, 0.4) !important;
 }
 
 .btn-agregar-paciente:active,
 #btnAgregarPaciente:active,
+#btnAgregar:active,
 button[id*="Agregar"]:active,
-button[id*="agregar"]:active {
+button[id*="agregar"]:active,
+.custom-card .btn-primary:not(.btn-mode):active {
   transform: translateY(2px) !important;
   box-shadow: 0 2px 0 #1e3a8a !important;
 }
 
-/* 4. BOTÓN GUARDAR REGISTRO (3D, MÁS PEQUEÑO Y ALINEADO A LA DERECHA) */
+/* 4. BOTÓN "GUARDAR REGISTRO" EN 3D (VERDE) */
 .btn-guardar-registro,
 #btnGuardarRegistro,
+#btnGuardar,
 button[id*="Guardar"],
-button[id*="guardar"] {
+button[id*="guardar"],
+.btn-success {
   display: flex !important;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  font-size: 0.85rem !important;
+  gap: 8px;
+  width: 100% !important;
+  font-size: 0.95rem !important;
   font-weight: 800 !important;
-  padding: 8px 22px !important;
-  width: auto !important;
-  max-width: fit-content;
-  margin: 14px 0 0 auto !important;
-  background: linear-gradient(180deg, #00e676 0%, #00a844 100%) !important;
-  color: #ffffff !important;
-  border: 1px solid #008a37 !important;
+  padding: 12px 24px !important;
   border-radius: 8px !important;
-  box-shadow: 0 4px 0 #006628, 0 4px 8px rgba(0, 200, 83, 0.35) !important;
-  transition: all 0.15s ease !important;
-  cursor: pointer !important;
-  text-transform: uppercase;
+  background: linear-gradient(180deg, #00c853 0%, #009624 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid #007a1c !important;
+  box-shadow: 0 4px 0 #005c14, 0 4px 10px rgba(0, 200, 83, 0.35) !important;
+  transition: all 0.15s ease-in-out !important;
   letter-spacing: 0.5px;
 }
 
 .btn-guardar-registro:hover,
 #btnGuardarRegistro:hover,
+#btnGuardar:hover,
 button[id*="Guardar"]:hover,
-button[id*="guardar"]:hover {
+button[id*="guardar"]:hover,
+.btn-success:hover {
   transform: translateY(-2px) !important;
-  box-shadow: 0 6px 0 #006628, 0 6px 12px rgba(0, 200, 83, 0.45) !important;
+  box-shadow: 0 6px 0 #005c14, 0 6px 14px rgba(0, 200, 83, 0.45) !important;
+  background: linear-gradient(180deg, #00e676 0%, #00a844 100%) !important;
 }
 
 .btn-guardar-registro:active,
 #btnGuardarRegistro:active,
+#btnGuardar:active,
 button[id*="Guardar"]:active,
-button[id*="guardar"]:active {
+button[id*="guardar"]:active,
+.btn-success:active {
   transform: translateY(2px) !important;
-  box-shadow: 0 2px 0 #006628 !important;
+  box-shadow: 0 2px 0 #005c14 !important;
 }
 
 /* TARJETAS KPI */
@@ -259,90 +323,4 @@ button[id*="guardar"]:active {
   border-radius: 10px;
   background: #ffffff;
   padding: 16px;
-  border-top: 1px solid var(--border-color);
-  border-right: 1px solid var(--border-color);
-  border-bottom: 1px solid var(--border-color);
-}
-
-/* REGISTROS CANCELADOS Y REEMBOLSADOS */
-.fila-cancelada {
-  background-color: #fef2f2 !important;
-  opacity: 0.75;
-}
-
-.fila-cancelada td {
-  color: #991b1b;
-  text-decoration: line-through;
-}
-
-.fila-reembolso-egreso {
-  background-color: #fff7ed !important;
-  font-weight: 500;
-}
-
-.fila-reembolsada-total {
-  background-color: #f8fafc !important;
-  opacity: 0.8;
-}
-
-.fila-reembolsada-parcial {
-  background-color: #fffbeb !important;
-}
-
-/* CONGELAR ENCABEZADO Y SCROLLBAR DE LA TABLA */
-#tablaHistorial thead th {
-  position: sticky;
-  top: 0;
-  background-color: #f8f9fa;
-  z-index: 2;
-  box-shadow: inset 0 -2px 0 #dee2e6;
-}
-
-.table-responsive::-webkit-scrollbar {
-  width: 8px;
-}
-
-.table-responsive::-webkit-scrollbar-track {
-  background: #f1f5f9;
-  border-radius: 4px;
-}
-
-.table-responsive::-webkit-scrollbar-thumb {
-  background: #94a3b8;
-  border-radius: 4px;
-}
-
-.table-responsive::-webkit-scrollbar-thumb:hover {
-  background: #64748b;
-}
-
-/* ESTILOS Y TICKET DE IMPRESIÓN */
-.ticket-paper {
-  background: #ffffff;
-  border: 2px dashed #cbd5e1;
-  border-radius: 10px;
-  padding: 16px;
-  transition: all 0.2s ease;
-}
-
-.ticket-header-title { font-size: 1.1rem; margin-bottom: 2px; }
-.ticket-header-sub { font-size: 0.8rem; margin-bottom: 6px; }
-.ticket-info-block { font-size: 0.82rem; }
-.ticket-item { font-size: 0.85rem; padding-bottom: 6px; margin-bottom: 6px; }
-.ticket-item .ticket-nombre { font-size: 0.88rem; }
-.ticket-item .ticket-concepto { font-size: 0.78rem; }
-.ticket-total-title { font-size: 1.1rem; }
-.ticket-total-amount { font-size: 1.4rem; }
-
-/* REGLAS DE IMPRESIÓN AISLADA */
-@media print {
-  body > * { display: none !important; }
-  body > #print-area {
-    display: block !important;
-    position: absolute !important;
-    left: 0 !important; top: 0 !important;
-    width: 100% !important; margin: 0 !important; padding: 0 !important;
-    background: #ffffff !important;
-  }
-  body > #print-area * { display: revert !important; visibility: visible !important; }
-}
+  border-top:
