@@ -433,13 +433,27 @@ function actualizarFormaPagoTicket() {
 }
 
 // ==========================================
-// GUARDAR E IMPRIMIR RECIBOS
+// GUARDAR E IMPRIMIR RECIBOS (FLUJO UNIFICADO)
 // ==========================================
 async function confirmarGuardarRecibo() {
   if (carrito.length === 0) {
     Swal.fire('Atención', 'El recibo está vacío. Agregue al menos un paciente.', 'warning');
     return;
   }
+
+  // 1. ADVERTENCIA PREVIA AL GUARDADO
+  const confirmacionGuardar = await Swal.fire({
+    title: '¿Deseas guardar este registro?',
+    text: 'Asegúrate de que los datos del paciente y el desglose del recibo sean correctos.',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#107c41', // Verde del sistema
+    cancelButtonColor: '#dc3545',
+    confirmButtonText: 'Sí, guardar',
+    cancelButtonText: 'Cancelar'
+  });
+
+  if (!confirmacionGuardar.isConfirmed) return;
 
   const folioVenta = await obtenerSiguienteFolioVenta();
   const formaPago = document.getElementById('forma_pago').value;
@@ -464,8 +478,31 @@ async function confirmarGuardarRecibo() {
     monto_reembolsado: 0.00
   }));
 
+  // Clonamos el contenido del ticket ANTES de limpiar el carrito
+  const ticketClon = document.getElementById('ticketPrint')?.cloneNode(true);
+
   if (!supabaseClient) {
-    Swal.fire('Modo Demo', `Se guardaría el Folio ${folioVenta} con ${carrito.length} registros.`, 'info');
+    // Modo Demo sin backend
+    const pregImpresionDemo = await Swal.fire({
+      title: '¡Modo Demo!',
+      text: `Se guardaría el Folio ${folioVenta} con ${carrito.length} registros. ¿Deseas imprimir el recibo ahora?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#1259a7',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Sí, imprimir',
+      cancelButtonText: 'No, finalizar'
+    });
+
+    if (pregImpresionDemo.isConfirmed && ticketClon) {
+      const printArea = document.getElementById('print-area');
+      if (printArea) {
+        printArea.innerHTML = '';
+        printArea.appendChild(ticketClon);
+      }
+      window.print();
+    }
+
     carrito = [];
     renderCarrito();
     return;
@@ -475,7 +512,27 @@ async function confirmarGuardarRecibo() {
     const { error } = await supabaseClient.from('historial_cobros').insert(inserts);
     if (error) throw error;
 
-    Swal.fire('¡Éxito!', `El recibo ${folioVenta} ha sido guardado correctamente.`, 'success');
+    // 2. CONFIRMACIÓN POST-GUARDADO Y PREGUNTA DE IMPRESIÓN
+    const pregImpresion = await Swal.fire({
+      title: '¡Éxito!',
+      text: `El recibo ${folioVenta} ha sido guardado correctamente. ¿Deseas imprimir el recibo ahora?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#1259a7', // Azul de impresión
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Sí, imprimir',
+      cancelButtonText: 'No, finalizar'
+    });
+
+    if (pregImpresion.isConfirmed && ticketClon) {
+      const printArea = document.getElementById('print-area');
+      if (printArea) {
+        printArea.innerHTML = '';
+        printArea.appendChild(ticketClon);
+      }
+      window.print();
+    }
+
     carrito = [];
     renderCarrito();
     await obtenerSiguienteFolioVenta();
