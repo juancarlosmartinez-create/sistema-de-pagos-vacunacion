@@ -114,6 +114,14 @@ body {
   border-radius: 8px;
 }
 
+/* MANITA AL PASAR SOBRE LOS RESULTADOS DE BÚSQUEDA */
+.results-list > *,
+.results-list .list-group-item,
+.results-list tr,
+.results-list div {
+  cursor: pointer !important;
+}
+
 .btn-mode {
   border-radius: 20px;
   padding: 4px 14px;
