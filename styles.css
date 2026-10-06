@@ -1,6 +1,6 @@
 :root {
   --bg-main: #f8fafc;
-  --header-bg: linear-gradient(135deg, #122147 0%, #0a1532 100%);
+  --header-bg: linear-gradient(135deg, #0b1736 0%, #081026 100%);
   --accent-green: #00c853;
   --accent-blue: #2563eb;
   --border-color: #e2e8f0;
@@ -12,13 +12,44 @@ body {
   color: #1e293b;
 }
 
-/* ENCABEZADO Y CARDS */
-.header-banner {
+/* OVERLAY Y CARD DE LOGIN */
+#loginOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
   background: var(--header-bg);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 420px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+  padding: 2.5rem;
+  border: 1px solid var(--border-color);
+}
+
+.login-logo {
+  height: 60px;
+  width: auto;
+  object-fit: contain;
+}
+
+/* ENCABEZADO Y BANNER PRINCIPAL */
+.header-banner {
+  background: var(--header-bg) !important;
   border-radius: 12px;
   border-bottom: 4px solid var(--accent-green);
   padding: 16px 24px;
-  color: white;
+  color: #ffffff !important;
   box-shadow: 0 4px 12px rgba(18, 33, 71, 0.15);
 }
 
@@ -26,8 +57,8 @@ body {
   height: 48px;
   width: auto;
   object-fit: contain;
-  background: white;
-  padding: 4px;
+  background: #ffffff;
+  padding: 4px 8px;
   border-radius: 8px;
 }
 
@@ -36,14 +67,27 @@ body {
   font-size: 1.3rem;
   margin: 0;
   line-height: 1.2;
+  color: #ffffff !important;
 }
 
 .header-subtitle {
   font-size: 0.85rem;
-  color: #93c5fd;
+  color: #93c5fd !important;
   margin: 0;
 }
 
+.folio-badge {
+  background-color: #1e293b;
+  color: #ffffff;
+  border: 1px solid #334155;
+  font-weight: 800;
+  font-size: 1.1rem;
+  padding: 4px 14px;
+  border-radius: 6px;
+  display: inline-block;
+}
+
+/* TARJETAS Y CONTENEDORES */
 .custom-card {
   background: #ffffff;
   border: 1px solid var(--border-color);
@@ -68,17 +112,6 @@ body {
   right: 0;
   z-index: 1050;
   border-radius: 8px;
-}
-
-.folio-badge {
-  background-color: #eff6ff;
-  color: #1d4ed8;
-  border: 1px solid #bfdbfe;
-  font-weight: 800;
-  font-size: 1.1rem;
-  padding: 4px 12px;
-  border-radius: 6px;
-  display: inline-block;
 }
 
 .btn-mode {
@@ -123,10 +156,17 @@ body {
 
 .fila-cancelada td {
   color: #991b1b;
+  text-decoration: line-through;
+}
+
+.fila-reembolso-egreso {
+  background-color: #fff7ed !important;
+  font-weight: 500;
 }
 
 .fila-reembolsada-total {
-  background-color: #faf5ff !important;
+  background-color: #f8fafc !important;
+  opacity: 0.8;
 }
 
 .fila-reembolsada-parcial {
@@ -160,7 +200,7 @@ body {
   background: #64748b;
 }
 
-/* ESTILOS Y DENSIDAD DEL RECIBO (MEDIA HOJA CARTA) */
+/* ESTILOS Y TICKET DE IMPRESIÓN */
 .ticket-paper {
   background: #ffffff;
   border: 2px dashed #cbd5e1;
@@ -169,139 +209,24 @@ body {
   transition: all 0.2s ease;
 }
 
-.ticket-header-title {
-  font-size: 1.1rem;
-  margin-bottom: 2px;
-}
-
-.ticket-header-sub {
-  font-size: 0.8rem;
-  margin-bottom: 6px;
-}
-
-.ticket-info-block {
-  font-size: 0.82rem;
-}
-
-.ticket-item {
-  font-size: 0.85rem;
-  padding-bottom: 6px;
-  margin-bottom: 6px;
-}
-
-.ticket-item .ticket-nombre {
-  font-size: 0.88rem;
-}
-
-.ticket-item .ticket-concepto {
-  font-size: 0.78rem;
-}
-
-.ticket-total-title {
-  font-size: 1.1rem;
-}
-
-.ticket-total-amount {
-  font-size: 1.4rem;
-}
-
-/* DENSIDADES DE TICKET */
-.ticket-paper.ticket-density-medium {
-  padding: 10px 14px;
-}
-
-.ticket-paper.ticket-density-medium .ticket-header-title {
-  font-size: 0.95rem;
-}
-
-.ticket-paper.ticket-density-medium .ticket-header-sub {
-  font-size: 0.75rem;
-  margin-bottom: 4px;
-}
-
-.ticket-paper.ticket-density-medium .ticket-info-block {
-  padding-top: 2px !important;
-  padding-bottom: 2px !important;
-  font-size: 0.78rem !important;
-}
-
-.ticket-paper.ticket-density-medium .ticket-item {
-  font-size: 0.78rem;
-  padding-bottom: 3px;
-  margin-bottom: 3px;
-}
-
-.ticket-paper.ticket-density-medium .ticket-total-block {
-  padding-top: 4px !important;
-}
-
-.ticket-paper.ticket-density-medium .ticket-total-title {
-  font-size: 0.95rem !important;
-}
-
-.ticket-paper.ticket-density-medium .ticket-total-amount {
-  font-size: 1.2rem !important;
-}
-
-.ticket-paper.ticket-density-compact {
-  padding: 6px 10px;
-}
-
-.ticket-paper.ticket-density-compact .ticket-header-title {
-  font-size: 0.85rem;
-}
-
-.ticket-paper.ticket-density-compact .ticket-header-sub {
-  font-size: 0.7rem;
-  margin-bottom: 2px;
-}
-
-.ticket-paper.ticket-density-compact .ticket-info-block {
-  padding-top: 2px !important;
-  padding-bottom: 2px !important;
-  margin-top: 2px !important;
-  margin-bottom: 2px !important;
-  font-size: 0.72rem !important;
-}
-
-.ticket-paper.ticket-density-compact .ticket-item {
-  font-size: 0.7rem;
-  padding-bottom: 2px;
-  margin-bottom: 2px;
-  line-height: 1.15;
-}
-
-.ticket-paper.ticket-density-compact .ticket-total-block {
-  padding-top: 4px !important;
-}
-
-.ticket-paper.ticket-density-compact .ticket-total-title {
-  font-size: 0.85rem !important;
-}
-
-.ticket-paper.ticket-density-compact .ticket-total-amount {
-  font-size: 1.05rem !important;
-}
+.ticket-header-title { font-size: 1.1rem; margin-bottom: 2px; }
+.ticket-header-sub { font-size: 0.8rem; margin-bottom: 6px; }
+.ticket-info-block { font-size: 0.82rem; }
+.ticket-item { font-size: 0.85rem; padding-bottom: 6px; margin-bottom: 6px; }
+.ticket-item .ticket-nombre { font-size: 0.88rem; }
+.ticket-item .ticket-concepto { font-size: 0.78rem; }
+.ticket-total-title { font-size: 1.1rem; }
+.ticket-total-amount { font-size: 1.4rem; }
 
 /* REGLAS DE IMPRESIÓN AISLADA */
 @media print {
-  body > * {
-    display: none !important;
-  }
-
+  body > * { display: none !important; }
   body > #print-area {
     display: block !important;
     position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
-    width: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
+    left: 0 !important; top: 0 !important;
+    width: 100% !important; margin: 0 !important; padding: 0 !important;
     background: #ffffff !important;
   }
-
-  body > #print-area * {
-    display: revert !important;
-    visibility: visible !important;
-  }
+  body > #print-area * { display: revert !important; visibility: visible !important; }
 }
