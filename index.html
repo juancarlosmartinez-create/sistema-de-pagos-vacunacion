@@ -18,553 +18,356 @@
 
   <!-- Estilos Personalizados -->
   <link rel="stylesheet" href="styles.css">
-  <style>
-    :root {
-      --bg-main: #f8fafc;
-      --header-bg: linear-gradient(135deg, #0b1736 0%, #081026 100%);
-      --accent-green: #00c853;
-      --accent-blue: #2563eb;
-      --border-color: #e2e8f0;
-    }
-
-    body {
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      background-color: var(--bg-main);
-      color: #1e293b;
-    }
-
-    /* ENCABEZADO PRINCIPAL */
-    .header-banner {
-      background: var(--header-bg) !important;
-      border-radius: 12px;
-      border-bottom: 4px solid var(--accent-green);
-      padding: 16px 24px;
-      color: #ffffff !important;
-      box-shadow: 0 4px 12px rgba(18, 33, 71, 0.15);
-    }
-
-    .header-logo {
-      height: 48px;
-      width: auto;
-      object-fit: contain;
-      background: #ffffff;
-      padding: 4px 8px;
-      border-radius: 8px;
-    }
-
-    .header-title {
-      font-weight: 800;
-      font-size: 1.3rem;
-      margin: 0;
-      line-height: 1.2;
-      color: #ffffff !important;
-    }
-
-    .header-subtitle {
-      font-size: 0.85rem;
-      color: #93c5fd !important;
-      margin: 0;
-    }
-
-    .folio-badge {
-      background-color: #1e293b;
-      color: #ffffff;
-      border: 1px solid #334155;
-      font-weight: 800;
-      font-size: 1.1rem;
-      padding: 4px 14px;
-      border-radius: 6px;
-      display: inline-block;
-    }
-
-    /* TARJETAS Y CONTENEDORES */
-    .custom-card {
-      background: #ffffff;
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
-    }
-
-    .card-title-custom {
-      font-size: 0.85rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    /* BÚSQUEDA PREDICTIVA */
-    .results-list {
-      max-height: 240px;
-      overflow-y: auto;
-      position: absolute;
-      top: 100%;
-      left: 0;
-      right: 0;
-      z-index: 1050;
-      border-radius: 8px;
-    }
-
-    .btn-mode {
-      border-radius: 20px;
-      padding: 4px 14px;
-      font-size: 0.85rem;
-      font-weight: 600;
-    }
-
-    /* PESTAÑAS Y NAVEGACIÓN */
-    .nav-tabs .nav-link {
-      color: #64748b;
-      font-weight: 700;
-      border: none;
-      border-bottom: 3px solid transparent;
-      padding: 12px 24px;
-      font-size: 0.95rem;
-    }
-
-    .nav-tabs .nav-link.active {
-      color: var(--accent-blue);
-      border-bottom-color: var(--accent-blue);
-      background: transparent;
-    }
-
-    /* TARJETAS KPI */
-    .kpi-card {
-      border-left: 4px solid var(--accent-blue);
-      border-radius: 10px;
-      background: #ffffff;
-      padding: 16px;
-      border-top: 1px solid var(--border-color);
-      border-right: 1px solid var(--border-color);
-      border-bottom: 1px solid var(--border-color);
-    }
-
-    /* REGISTROS CANCELADOS Y REEMBOLSADOS */
-    .fila-cancelada {
-      background-color: #fef2f2 !important;
-      opacity: 0.75;
-    }
-
-    .fila-cancelada td {
-      color: #991b1b;
-      text-decoration: line-through;
-    }
-
-    .fila-reembolso-egreso {
-      background-color: #fff7ed !important;
-      font-weight: 500;
-    }
-
-    .fila-reembolsada-total {
-      background-color: #f8fafc !important;
-      opacity: 0.8;
-    }
-
-    /* CONGELAR ENCABEZADO DE TABLA */
-    #tablaHistorial thead th {
-      position: sticky;
-      top: 0;
-      background-color: #f8f9fa;
-      z-index: 2;
-      box-shadow: inset 0 -2px 0 #dee2e6;
-    }
-
-    /* RECIBO */
-    .ticket-paper {
-      background: #ffffff;
-      border: 2px dashed #cbd5e1;
-      border-radius: 10px;
-      padding: 16px;
-      transition: all 0.2s ease;
-    }
-
-    .ticket-header-title { font-size: 1.1rem; margin-bottom: 2px; }
-    .ticket-header-sub { font-size: 0.8rem; margin-bottom: 6px; }
-    .ticket-info-block { font-size: 0.82rem; }
-    .ticket-item { font-size: 0.85rem; padding-bottom: 6px; margin-bottom: 6px; }
-
-    @media print {
-      body > * { display: none !important; }
-      body > #print-area {
-        display: block !important;
-        position: absolute !important;
-        left: 0 !important; top: 0 !important;
-        width: 100% !important; margin: 0 !important; padding: 0 !important;
-        background: #ffffff !important;
-      }
-      body > #print-area * { display: revert !important; visibility: visible !important; }
-    }
-
-    /* Alertas SweetAlert por encima de la pantalla de login */
-    .swal2-container { z-index: 20000 !important; }
-  </style>
 </head>
 <body class="pb-5">
 
 <!-- PANTALLA DE INICIO DE SESIÓN -->
-<div id="loginOverlay" class="d-flex align-items-center justify-content-center min-vh-100" style="background-color: #0b1736; position: fixed; top:0; left:0; width:100%; z-index:9999;">
-  <div class="card p-4 shadow-lg border-0" style="max-width: 400px; width: 100%; border-radius: 16px;">
-    <div class="text-center mb-4">
-      <img src="https://lh3.googleusercontent.com/d/17IUhG3ADvHxHm4wg9CpszjbiEfS5f2Ms" alt="Logo CCM" style="height: 55px; object-fit: contain;" class="mb-2" onerror="this.src='https://via.placeholder.com/48?text=CCM'">
-      <h5 class="fw-bold text-dark m-0">Colegio Ciudad de México</h5>
-      <p class="text-muted small">Módulo de Vacunación - Acceso</p>
+<div id="loginOverlay">
+  <div class="login-card text-center">
+    <img src="https://lh3.googleusercontent.com/d/17IUhG3ADvHxHm4wg9CpszjbiEfS5f2Ms" alt="Logo CCM" class="login-logo mb-3" onerror="this.src='https://via.placeholder.com/60?text=CCM'">
+    <h4 class="fw-bold text-dark mb-1">Acceso al Sistema</h4>
+    <p class="text-muted small mb-4">Colegio Ciudad de México - Módulo de Vacunación</p>
+
+    <div class="text-start mb-3">
+      <label class="form-label small fw-semibold text-dark">Correo Electrónico</label>
+      <div class="input-group">
+        <span class="input-group-text bg-light text-muted"><i class="bi bi-envelope"></i></span>
+        <input type="email" id="loginEmail" class="form-control" placeholder="usuario@colegiociudad.edu.mx" onkeydown="if(event.key==='Enter') iniciarSesion()">
+      </div>
     </div>
-    <div class="mb-3">
-      <label class="form-label fw-semibold small text-muted">Correo Institucional</label>
-      <input type="email" id="loginEmail" class="form-control" placeholder="usuario@colegiociudad.edu.mx" onkeydown="if(event.key==='Enter') iniciarSesion()">
+
+    <div class="text-start mb-4">
+      <label class="form-label small fw-semibold text-dark">Contraseña</label>
+      <div class="input-group">
+        <span class="input-group-text bg-light text-muted"><i class="bi bi-lock"></i></span>
+        <input type="password" id="loginPassword" class="form-control" placeholder="••••••••" onkeydown="if(event.key==='Enter') iniciarSesion()">
+      </div>
     </div>
-    <div class="mb-4">
-      <label class="form-label fw-semibold small text-muted">Contraseña</label>
-      <input type="password" id="loginPassword" class="form-control" placeholder="••••••••" onkeydown="if(event.key==='Enter') iniciarSesion()">
-    </div>
-    <button type="button" class="btn btn-primary w-100 fw-bold py-2" onclick="iniciarSesion()">
-      <i class="bi bi-box-arrow-in-right me-2"></i> Iniciar Sesión
+
+    <button type="button" class="btn btn-primary w-100 py-2.5 fw-bold shadow-sm" onclick="iniciarSesion()">
+      <i class="bi bi-box-arrow-in-right me-2"></i>Iniciar Sesión
     </button>
   </div>
 </div>
 
-<!-- CONTENIDO PRINCIPAL DEL SISTEMA (OCULTO HASTA AUTENTICAR) -->
-<div id="appContent" style="display: none;" class="container-fluid px-4 pt-3">
-  
-  <!-- ENCABEZADO -->
-  <div class="header-banner d-flex justify-content-between align-items-center mb-3 no-print">
-    <div class="d-flex align-items-center gap-3">
-      <img src="https://lh3.googleusercontent.com/d/17IUhG3ADvHxHm4wg9CpszjbiEfS5f2Ms" alt="Logo CCM" class="header-logo" onerror="this.src='https://via.placeholder.com/48?text=CCM'">
-      <div>
-        <h1 class="header-title">Colegio Ciudad de México</h1>
-        <p class="header-subtitle">Módulo de Vacunación - Sistema de Gestión y Cobro</p>
-      </div>
-    </div>
-    <div class="d-flex align-items-center gap-3">
-      <div class="text-end">
-        <span class="small text-white-50 d-block" id="userEmailDisplay">usuario@colegiociudad.edu.mx</span>
-        <div>
-          <button class="btn btn-sm btn-outline-light py-0 px-2 me-1" style="font-size:0.75rem;" data-bs-toggle="modal" data-bs-target="#modalCambiarPassword" title="Cambiar Contraseña">
-            <i class="bi bi-key-fill me-1"></i>Cambiar Clave
-          </button>
-          <button class="btn btn-sm btn-outline-danger py-0 px-2" style="font-size:0.75rem;" onclick="cerrarSesion()" title="Cerrar Sesión">
-            <i class="bi bi-box-arrow-right me-1"></i>Salir
-          </button>
-        </div>
-      </div>
-      <div class="text-end border-start ps-3 border-secondary">
-        <span class="small text-white-50 d-block">Siguiente Folio Cobro</span>
-        <span class="folio-badge" id="display-folio">V-0001</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- NAVEGACIÓN -->
-  <ul class="nav nav-tabs mb-4 border-bottom no-print" id="mainTab" role="tablist">
-    <li class="nav-item" role="presentation">
-      <button class="nav-link active" id="cobro-tab" data-bs-toggle="tab" data-bs-target="#cobro-pane" type="button">
-        <i class="bi bi-cash-stack me-2"></i>Nuevo Cobro (Multi-paciente)
-      </button>
-    </li>
-    <li class="nav-item" role="presentation">
-      <button class="nav-link" id="reportes-tab" data-bs-toggle="tab" data-bs-target="#reportes-pane" type="button" onclick="cargarHistorial()">
-        <i class="bi bi-bar-chart-line-fill me-2"></i>Historial y Reportes Admin
-      </button>
-    </li>
-  </ul>
-
-  <div class="tab-content" id="mainTabContent">
+<!-- CONTENIDO PRINCIPAL DE LA APLICACIÓN -->
+<div id="appContent" style="display: none;">
+  <div class="container-fluid px-4 pt-3">
     
-    <!-- PESTAÑA 1: NUEVO COBRO -->
-    <div class="tab-pane fade show active" id="cobro-pane" role="tabpanel">
-      <div class="row g-4">
-        
-        <!-- FORMULARIO -->
-        <div class="col-lg-7 no-print">
-          
-          <!-- DATOS PACIENTE -->
-          <div class="custom-card p-4 mb-3">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-              <div class="d-flex align-items-center gap-2 text-primary card-title-custom">
-                <i class="bi bi-person-plus-fill fs-5"></i>
-                <span>1. Datos del Paciente</span>
-              </div>
-              <div class="btn-group" role="group">
-                <button type="button" class="btn btn-outline-primary btn-mode active" id="btnModeAlumno" onclick="setModo('alumno')"><i class="bi bi-search me-1"></i>Buscar Alumno</button>
-                <button type="button" class="btn btn-outline-secondary btn-mode" id="btnModeExterno" onclick="setModo('externo')"><i class="bi bi-person-plus me-1"></i>Persona Externa</button>
-              </div>
-            </div>
-
-            <div id="modoAlumnoView">
-              <div class="position-relative mb-3">
-                <div class="input-group">
-                  <span class="input-group-text bg-white text-muted"><i class="bi bi-search"></i></span>
-                  <input type="text" id="searchInput" class="form-control" placeholder="Escriba matrícula o nombre del alumno..." oninput="buscarPersona()" autocomplete="off">
-                </div>
-                <div id="results" class="list-group results-list shadow-lg mt-1"></div>
-              </div>
-            </div>
-
-            <div class="row g-2 bg-light p-3 rounded-3 border">
-              <div class="col-md-2">
-                <label class="form-label text-muted small fw-semibold mb-1">Matrícula / ID</label>
-                <input type="text" id="matricula" class="form-control form-control-sm bg-white" placeholder="---" readonly>
-              </div>
-              <div class="col-md-4">
-                <label class="form-label text-muted small fw-semibold mb-1">Nombre Completo</label>
-                <input type="text" id="nombre" class="form-control form-control-sm bg-white" placeholder="Nombre del paciente">
-              </div>
-              <div class="col-md-3">
-                <label class="form-label text-muted small fw-semibold mb-1">Familia</label>
-                <input type="text" id="familia" class="form-control form-control-sm bg-white" placeholder="Familia / Apellidos">
-              </div>
-              <div class="col-md-1">
-                <label class="form-label text-muted small fw-semibold mb-1">Sección</label>
-                <input type="text" id="seccion" class="form-control form-control-sm bg-white" placeholder="---">
-              </div>
-              <div class="col-md-2">
-                <label class="form-label text-muted small fw-semibold mb-1">Grupo</label>
-                <input type="text" id="grupo" class="form-control form-control-sm bg-white" placeholder="---">
-              </div>
-            </div>
-          </div>
-
-          <!-- VACUNA / IMPORTE -->
-          <div class="custom-card p-4 mb-3">
-            <div class="d-flex align-items-center gap-2 mb-3 text-success card-title-custom">
-              <i class="bi bi-capsule fs-5"></i>
-              <span>2. Detalle de la Vacuna / Importe</span>
-            </div>
-            <div class="row g-3 align-items-end">
-              <div class="col-md-5">
-                <label class="form-label text-muted small fw-semibold mb-1">Vacuna / Concepto</label>
-                <input type="text" id="concepto" class="form-control" list="vacunasLista" value="Influenza" placeholder="Seleccione o escriba la vacuna">
-                <datalist id="vacunasLista">
-                  <option value="Influenza">
-                  <option value="VPH">
-                  <option value="COVID">
-                  <option value="Herpes Zoster">
-                </datalist>
-              </div>
-              <div class="col-md-3">
-                <label class="form-label text-muted small fw-semibold mb-1">Cantidad</label>
-                <input type="number" id="cantidad" class="form-control" value="1" min="1">
-              </div>
-              <div class="col-md-4">
-                <label class="form-label text-muted small fw-semibold mb-1">Importe ($)</label>
-                <input type="number" step="0.01" id="importe" class="form-control" placeholder="100.00" value="100.00">
-              </div>
-              <div class="col-12 mt-3">
-                <button type="button" class="btn btn-primary w-100 fw-bold shadow-sm" onclick="agregarAlRecibo()">
-                  <i class="bi bi-plus-circle-fill me-2"></i> + Agregar Paciente al Recibo
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- LISTA EN RECIBO -->
-          <div class="custom-card p-4">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-              <span class="card-title-custom text-dark"><i class="bi bi-list-check me-1"></i> Lista de Pacientes en este Recibo</span>
-              <span class="badge bg-secondary" id="count-items">0 Pacientes</span>
-            </div>
-            <div class="table-responsive">
-              <table class="table table-hover align-middle border text-center" style="font-size: 0.9rem;">
-                <thead class="table-light">
-                  <tr>
-                    <th>#</th>
-                    <th class="text-start">Paciente / Familia</th>
-                    <th>Vacuna</th>
-                    <th>Cant.</th>
-                    <th>Precio</th>
-                    <th>Subtotal</th>
-                    <th>Acción</th>
-                  </tr>
-                </thead>
-                <tbody id="tablaCarritoBody">
-                  <tr><td colspan="7" class="text-muted py-3">No hay pacientes agregados al recibo aún.</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-        </div>
-
-        <!-- RECIBO DE IMPRESIÓN -->
-        <div class="col-lg-5">
-          <div class="custom-card p-4 sticky-top" style="top: 20px;">
-            <div class="d-flex justify-content-between align-items-center mb-3 no-print">
-              <span class="card-title-custom text-secondary"><i class="bi bi-receipt-cutoff me-1"></i> Vista Previa del Recibo</span>
-              <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">En preparación</span>
-            </div>
-
-            <div class="ticket-paper mb-3" id="ticketPrint">
-              <div class="text-center mb-2">
-                <h5 class="fw-bold text-dark ticket-header-title">COLEGIO CIUDAD DE MÉXICO</h5>
-                <p class="text-muted ticket-header-sub">Comprobante de Vacunación</p>
-                <span class="badge bg-dark text-white fw-bold px-3 py-1" id="t-folio">FOLIO: V-0001</span>
-              </div>
-
-              <div class="border-top border-bottom py-1 my-2 small text-secondary ticket-info-block">
-                <div class="d-flex justify-content-between"><span>Fecha/Hora:</span><strong class="text-dark" id="t-fecha">--/--/----</strong></div>
-                <div class="d-flex justify-content-between"><span>Forma de Pago:</span><strong class="text-dark" id="t-pago">Efectivo</strong></div>
-              </div>
-
-              <div id="t-lista-items" class="py-1 border-bottom">
-                <p class="text-muted text-center my-2">Agregue pacientes para ver el desglose aquí.</p>
-              </div>
-
-              <div class="pt-2 d-flex justify-content-between align-items-center ticket-total-block">
-                <span class="fw-bold text-dark ticket-total-title">TOTAL A PAGAR</span>
-                <span class="fw-bold text-success ticket-total-amount">$<span id="t-total">0.00</span></span>
-              </div>
-            </div>
-
-            <div class="mb-3 no-print">
-              <label class="form-label text-muted small fw-semibold">Forma de Pago del Recibo</label>
-              <select id="forma_pago" class="form-select fw-bold" onchange="actualizarFormaPagoTicket()">
-                <option value="Efectivo">Efectivo</option>
-                <option value="Tarjeta">Tarjeta de Crédito / Débito</option>
-                <option value="Transferencia">Transferencia Electrónica</option>
-              </select>
-            </div>
-
-            <div class="d-grid gap-2 no-print">
-              <button type="button" class="btn btn-success py-2.5 fw-bold text-white shadow-sm" onclick="confirmarGuardarRecibo()">
-                <i class="bi bi-floppy-fill me-2"></i> Guardar Registro
-              </button>
-              <button type="button" class="btn btn-outline-primary py-2 fw-bold" onclick="confirmarImprimirRecibo()">
-                <i class="bi bi-printer-fill me-2"></i> Imprimir Recibo
-              </button>
-            </div>
-
-          </div>
-        </div>
-
-      </div>
-    </div>
-
-    <!-- PESTAÑA 2: REPORTES -->
-    <div class="tab-pane fade no-print" id="reportes-pane" role="tabpanel">
-      
-      <div class="row g-3 mb-4">
-        <div class="col-md-3">
-          <div class="kpi-card shadow-sm" style="border-left-color: #059669;">
-            <div class="text-muted small fw-semibold">Ingreso Neto Real</div>
-            <div class="fs-3 fw-bold text-success" id="kpi-total">$0.00</div>
-            <div class="small text-muted" id="kpi-bruto-sub">Bruto: $0.00</div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="kpi-card shadow-sm" style="border-left-color: #dc2626;">
-            <div class="text-muted small fw-semibold">Total Reembolsado</div>
-            <div class="fs-3 fw-bold text-danger" id="kpi-reembolsos">$0.00</div>
-            <div class="small text-muted" id="kpi-reembolsos-cant">0 Devoluciones</div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="kpi-card shadow-sm" style="border-left-color: #2563eb;">
-            <div class="text-muted small fw-semibold">Vacunas Aplicadas</div>
-            <div class="fs-3 fw-bold text-primary" id="kpi-count">0</div>
-            <div class="small text-muted"><span id="kpi-folios">0</span> Folios Registrados</div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="kpi-card shadow-sm" style="border-left-color: #7c3aed;">
-            <div class="text-muted small fw-semibold">Efectivo vs Otros (Neto)</div>
-            <div class="fs-6 fw-bold text-dark mt-1">Efec: <span id="kpi-efectivo" class="text-success">$0.00</span></div>
-            <div class="fs-6 fw-bold text-dark">Otros: <span id="kpi-otros" class="text-primary">$0.00</span></div>
-          </div>
+    <!-- ENCABEZADO PRINCIPAL -->
+    <div class="header-banner d-flex justify-content-between align-items-center mb-3 no-print">
+      <div class="d-flex align-items-center gap-3">
+        <img src="https://lh3.googleusercontent.com/d/17IUhG3ADvHxHm4wg9CpszjbiEfS5f2Ms" alt="Logo CCM" class="header-logo" onerror="this.src='https://via.placeholder.com/48?text=CCM'">
+        <div>
+          <h1 class="header-title">Colegio Ciudad de México</h1>
+          <p class="header-subtitle">Módulo de Vacunación - Sistema de Gestión y Cobro</p>
         </div>
       </div>
 
-      <div class="custom-card p-4">
-        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
-          <h5 class="fw-bold m-0 text-dark"><i class="bi bi-journal-check me-2 text-primary"></i> Historial General de Registros (Supabase)</h5>
-          
-          <div class="d-flex align-items-center gap-3">
-            <div class="form-check form-switch bg-light border px-3 py-1 rounded-3">
-              <input class="form-check-input" type="checkbox" id="switchSuperUsuario" onchange="toggleSuperUsuario(this.checked)">
-              <label class="form-check-label small fw-bold text-dark" for="switchSuperUsuario">
-                <i class="bi bi-shield-lock-fill text-warning me-1"></i>Modo Superusuario
-              </label>
-            </div>
-            
-            <button class="btn btn-outline-success fw-bold btn-sm rounded-2" onclick="exportarExcel()">
-              <i class="bi bi-file-earmark-excel me-1"></i> Exportar a Excel
+      <div class="d-flex align-items-center gap-3">
+        <div class="text-end border-end pe-3 border-secondary">
+          <span class="small text-white-50 d-block" id="userEmailDisplay">usuario@colegiociudad.edu.mx</span>
+          <div class="mt-1">
+            <button class="btn btn-sm btn-outline-light py-0 px-2 small me-1" data-bs-toggle="modal" data-bs-target="#modalCambiarPassword">
+              <i class="bi bi-key me-1"></i>Contraseña
+            </button>
+            <button class="btn btn-sm btn-danger py-0 px-2 small" onclick="cerrarSesion()">
+              <i class="bi bi-power me-1"></i>Salir
             </button>
           </div>
         </div>
 
-        <div class="row g-2 mb-3">
-          <div class="col-md-6">
-            <input type="text" id="filterInput" class="form-control" placeholder="Buscar por Folio (ej. V-0001, R-0001), Nombre, Familia o Vacuna..." oninput="filtrarTabla()">
-          </div>
-          <div class="col-md-4">
-            <select id="filterPago" class="form-select" onchange="filtrarTabla()">
-              <option value="">Todas las formas de pago</option>
-              <option value="Efectivo">Efectivo</option>
-              <option value="Tarjeta">Tarjeta</option>
-              <option value="Transferencia">Transferencia</option>
-            </select>
-          </div>
-          <div class="col-md-2">
-            <button class="btn btn-secondary w-100 fw-semibold" onclick="cargarHistorial()"><i class="bi bi-arrow-clockwise me-1"></i> Actualizar</button>
-          </div>
-        </div>
-
-        <div class="table-responsive" style="max-height: 480px; overflow-y: auto;">
-          <table class="table table-hover align-middle border" id="tablaHistorial" style="font-size: 0.88rem;">
-            <thead class="table-light">
-              <tr>
-                <th>Fecha / Hora</th>
-                <th>Folio</th>
-                <th>Folio Ref.</th>
-                <th>Matrícula</th>
-                <th>Paciente</th>
-                <th>Familia</th>
-                <th>Sección / Grupo</th>
-                <th>Concepto / Vacuna</th>
-                <th>Cant.</th>
-                <th>Importe</th>
-                <th>Total</th>
-                <th>Forma Pago</th>
-                <th class="text-center">Estado</th>
-                <th class="text-center">Acciones</th>
-              </tr>
-            </thead>
-            <tbody id="historialBody">
-              <tr><td colspan="14" class="text-center py-4 text-muted">Cargando registros desde la base de datos...</td></tr>
-            </tbody>
-          </table>
+        <div class="text-end">
+          <span class="small text-white-50 d-block">Siguiente Folio</span>
+          <span class="folio-badge" id="display-folio">V-0001</span>
         </div>
       </div>
-
     </div>
 
-  </div>
-</div>
-
-<!-- MODAL DE CAMBIO DE CONTRASEÑA -->
-<div class="modal fade" id="modalCambiarPassword" tabindex="-1" aria-labelledby="modalCambiarPasswordLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg">
-      <div class="modal-header bg-primary text-white border-0">
-        <h5 class="modal-title fw-bold" id="modalCambiarPasswordLabel">
-          <i class="bi bi-key-fill me-2"></i>Cambiar Contraseña
-        </h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body p-4">
-        <div class="mb-3">
-          <label class="form-label fw-bold text-dark small">Nueva Contraseña</label>
-          <input type="password" id="newPasswordInput" class="form-control" placeholder="Mínimo 6 caracteres">
-        </div>
-        <div class="mb-3">
-          <label class="form-label fw-bold text-dark small">Confirmar Nueva Contraseña</label>
-          <input type="password" id="confirmPasswordInput" class="form-control" placeholder="Repita la contraseña">
-        </div>
-      </div>
-      <div class="modal-footer border-0 bg-light">
-        <button type="button" class="btn btn-secondary fw-semibold" data-bs-dismiss="modal">Cancelar</button>
-        <button type="button" class="btn btn-primary fw-bold" onclick="cambiarPassword()">
-          <i class="bi bi-check-circle-fill me-1"></i> Guardar Nueva Contraseña
+    <!-- NAVEGACIÓN ENTRE PESTAÑAS -->
+    <ul class="nav nav-tabs mb-4 border-bottom no-print" id="mainTab" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="cobro-tab" data-bs-toggle="tab" data-bs-target="#cobro-pane" type="button">
+          <i class="bi bi-cash-stack me-2"></i>Nuevo Cobro (Multi-paciente)
         </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="reportes-tab" data-bs-toggle="tab" data-bs-target="#reportes-pane" type="button" onclick="cargarHistorial()">
+          <i class="bi bi-bar-chart-line-fill me-2"></i>Historial y Reportes Admin
+        </button>
+      </li>
+    </ul>
+
+    <div class="tab-content" id="mainTabContent">
+      
+      <!-- PESTAÑA 1: NUEVO COBRO -->
+      <div class="tab-pane fade show active" id="cobro-pane" role="tabpanel">
+        <div class="row g-4">
+          
+          <!-- FORMULARIO PACIENTES -->
+          <div class="col-lg-7 no-print">
+            
+            <!-- DATOS DEL PACIENTE -->
+            <div class="custom-card p-4 mb-3">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="d-flex align-items-center gap-2 text-primary card-title-custom">
+                  <i class="bi bi-person-plus-fill fs-5"></i>
+                  <span>1. Datos del Paciente</span>
+                </div>
+                <div class="btn-group" role="group">
+                  <button type="button" class="btn btn-outline-primary btn-mode active" id="btnModeAlumno" onclick="setModo('alumno')"><i class="bi bi-search me-1"></i>Buscar Alumno</button>
+                  <button type="button" class="btn btn-outline-secondary btn-mode" id="btnModeExterno" onclick="setModo('externo')"><i class="bi bi-person-plus me-1"></i>Persona Externa</button>
+                </div>
+              </div>
+
+              <div id="modoAlumnoView">
+                <div class="position-relative mb-3">
+                  <div class="input-group">
+                    <span class="input-group-text bg-white text-muted"><i class="bi bi-search"></i></span>
+                    <input type="text" id="searchInput" class="form-control" placeholder="Escriba matrícula, nombre o familia..." oninput="buscarPersona()" autocomplete="off">
+                  </div>
+                  <div id="results" class="list-group results-list shadow-lg mt-1"></div>
+                </div>
+              </div>
+
+              <div class="row g-2 bg-light p-3 rounded-3 border">
+                <div class="col-md-2">
+                  <label class="form-label text-muted small fw-semibold mb-1">Matrícula / ID</label>
+                  <input type="text" id="matricula" class="form-control form-control-sm bg-white" placeholder="---" readonly>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label text-muted small fw-semibold mb-1">Nombre Completo</label>
+                  <input type="text" id="nombre" class="form-control form-control-sm bg-white" placeholder="Nombre del paciente">
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label text-muted small fw-semibold mb-1">Familia</label>
+                  <input type="text" id="familia" class="form-control form-control-sm bg-white" placeholder="Familia / Apellidos">
+                </div>
+                <div class="col-md-1">
+                  <label class="form-label text-muted small fw-semibold mb-1">Sección</label>
+                  <input type="text" id="seccion" class="form-control form-control-sm bg-white" placeholder="---">
+                </div>
+                <div class="col-md-2">
+                  <label class="form-label text-muted small fw-semibold mb-1">Grupo</label>
+                  <input type="text" id="grupo" class="form-control form-control-sm bg-white" placeholder="---">
+                </div>
+              </div>
+            </div>
+
+            <!-- VACUNA E IMPORTE -->
+            <div class="custom-card p-4 mb-3">
+              <div class="d-flex align-items-center gap-2 mb-3 text-success card-title-custom">
+                <i class="bi bi-capsule fs-5"></i>
+                <span>2. Detalle de la Vacuna / Importe</span>
+              </div>
+              <div class="row g-3 align-items-end">
+                <div class="col-md-5">
+                  <label class="form-label text-muted small fw-semibold mb-1">Vacuna / Concepto</label>
+                  <input type="text" id="concepto" class="form-control" list="vacunasLista" value="Influenza" placeholder="Seleccione o escriba la vacuna">
+                  <datalist id="vacunasLista">
+                    <option value="Influenza">
+                    <option value="VPH">
+                    <option value="COVID">
+                    <option value="Herpes Zoster">
+                  </datalist>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label text-muted small fw-semibold mb-1">Cantidad</label>
+                  <input type="number" id="cantidad" class="form-control" value="1" min="1">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label text-muted small fw-semibold mb-1">Importe ($)</label>
+                  <input type="number" step="0.01" id="importe" class="form-control" placeholder="100.00" value="100.00">
+                </div>
+                <div class="col-12 mt-3">
+                  <button type="button" class="btn btn-primary w-100 fw-bold shadow-sm" onclick="agregarAlRecibo()">
+                    <i class="bi bi-plus-circle-fill me-2"></i> + Agregar Paciente al Recibo
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- CARRITO MULTI-PACIENTE -->
+            <div class="custom-card p-4">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <span class="card-title-custom text-dark"><i class="bi bi-list-check me-1"></i> Lista de Pacientes en este Recibo</span>
+                <span class="badge bg-secondary" id="count-items">0 Pacientes</span>
+              </div>
+              <div class="table-responsive">
+                <table class="table table-hover align-middle border text-center" style="font-size: 0.9rem;">
+                  <thead class="table-light">
+                    <tr>
+                      <th>#</th>
+                      <th class="text-start">Paciente / Familia</th>
+                      <th>Vacuna</th>
+                      <th>Cant.</th>
+                      <th>Precio</th>
+                      <th>Subtotal</th>
+                      <th>Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tablaCarritoBody">
+                    <tr><td colspan="7" class="text-muted py-3">No hay pacientes agregados al recibo aún.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- RECIBO Y VISTA PREVIA -->
+          <div class="col-lg-5">
+            <div class="custom-card p-4 sticky-top" style="top: 20px;">
+              <div class="d-flex justify-content-between align-items-center mb-3 no-print">
+                <span class="card-title-custom text-secondary"><i class="bi bi-receipt-cutoff me-1"></i> Vista Previa del Recibo</span>
+                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">En preparación</span>
+              </div>
+
+              <div class="ticket-paper mb-3" id="ticketPrint">
+                <div class="text-center mb-2">
+                  <h5 class="fw-bold text-dark ticket-header-title">COLEGIO CIUDAD DE MÉXICO</h5>
+                  <p class="text-muted ticket-header-sub">Comprobante de Vacunación</p>
+                  <span class="badge bg-dark text-white fw-bold px-3 py-1" id="t-folio">FOLIO: V-0001</span>
+                </div>
+
+                <div class="border-top border-bottom py-1 my-2 small text-secondary ticket-info-block">
+                  <div class="d-flex justify-content-between"><span>Fecha/Hora:</span><strong class="text-dark" id="t-fecha">--/--/----</strong></div>
+                  <div class="d-flex justify-content-between"><span>Forma de Pago:</span><strong class="text-dark" id="t-pago">Efectivo</strong></div>
+                </div>
+
+                <div id="t-lista-items" class="py-1 border-bottom">
+                  <p class="text-muted text-center my-2">Agregue pacientes para ver el desglose aquí.</p>
+                </div>
+
+                <div class="pt-2 d-flex justify-content-between align-items-center ticket-total-block">
+                  <span class="fw-bold text-dark ticket-total-title">TOTAL A PAGAR</span>
+                  <span class="fw-bold text-success ticket-total-amount">$<span id="t-total">0.00</span></span>
+                </div>
+              </div>
+
+              <div class="mb-3 no-print">
+                <label class="form-label text-muted small fw-semibold">Forma de Pago del Recibo</label>
+                <select id="forma_pago" class="form-select fw-bold" onchange="actualizarFormaPagoTicket()">
+                  <option value="Efectivo">Efectivo</option>
+                  <option value="Tarjeta">Tarjeta de Crédito / Débito</option>
+                  <option value="Transferencia">Transferencia Electrónica</option>
+                </select>
+              </div>
+
+              <div class="d-grid gap-2 no-print">
+                <button type="button" class="btn btn-success py-2.5 fw-bold text-white shadow-sm" onclick="confirmarGuardarRecibo()">
+                  <i class="bi bi-floppy-fill me-2"></i> Guardar Registro
+                </button>
+                <button type="button" class="btn btn-outline-primary py-2 fw-bold" onclick="confirmarImprimirRecibo()">
+                  <i class="bi bi-printer-fill me-2"></i> Imprimir Recibo
+                </button>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
       </div>
+
+      <!-- PESTAÑA 2: REPORTES Y AUDITORÍA -->
+      <div class="tab-pane fade no-print" id="reportes-pane" role="tabpanel">
+        
+        <!-- TARJETAS KPI METRICAS -->
+        <div class="row g-3 mb-4">
+          <div class="col-md-3">
+            <div class="kpi-card shadow-sm" style="border-left-color: #059669;">
+              <div class="text-muted small fw-semibold">Ingreso Neto Real</div>
+              <div class="fs-3 fw-bold text-success" id="kpi-total">$0.00</div>
+              <div class="small text-muted" id="kpi-bruto-sub">Bruto: $0.00</div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="kpi-card shadow-sm" style="border-left-color: #dc2626;">
+              <div class="text-muted small fw-semibold">Total Reembolsado</div>
+              <div class="fs-3 fw-bold text-danger" id="kpi-reembolsos">$0.00</div>
+              <div class="small text-muted" id="kpi-reembolsos-cant">0 Devoluciones</div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="kpi-card shadow-sm" style="border-left-color: #2563eb;">
+              <div class="text-muted small fw-semibold">Vacunas Aplicadas</div>
+              <div class="fs-3 fw-bold text-primary" id="kpi-count">0</div>
+              <div class="small text-muted"><span id="kpi-folios">0</span> Folios Registrados</div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="kpi-card shadow-sm" style="border-left-color: #7c3aed;">
+              <div class="text-muted small fw-semibold">Efectivo vs Otros (Neto)</div>
+              <div class="fs-6 fw-bold text-dark mt-1">Efec: <span id="kpi-efectivo" class="text-success">$0.00</span></div>
+              <div class="fs-6 fw-bold text-dark">Otros: <span id="kpi-otros" class="text-primary">$0.00</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="custom-card p-4">
+          <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+            <h5 class="fw-bold m-0 text-dark"><i class="bi bi-journal-check me-2 text-primary"></i> Historial General de Registros (Supabase)</h5>
+            
+            <div class="d-flex align-items-center gap-3">
+              <div class="form-check form-switch bg-light border px-3 py-1 rounded-3">
+                <input class="form-check-input" type="checkbox" id="switchSuperUsuario" onchange="toggleSuperUsuario(this.checked)">
+                <label class="form-check-label small fw-bold text-dark" for="switchSuperUsuario">
+                  <i class="bi bi-shield-lock-fill text-warning me-1"></i>Modo Superusuario
+                </label>
+              </div>
+              
+              <button class="btn btn-outline-success fw-bold btn-sm rounded-2" onclick="exportarExcel()">
+                <i class="bi bi-file-earmark-excel me-1"></i> Exportar a Excel
+              </button>
+            </div>
+          </div>
+
+          <div class="row g-2 mb-3">
+            <div class="col-md-6">
+              <input type="text" id="filterInput" class="form-control" placeholder="Buscar por Folio (ej. V-0001, R-0001), Nombre, Familia o Vacuna..." oninput="filtrarTabla()">
+            </div>
+            <div class="col-md-4">
+              <select id="filterPago" class="form-select" onchange="filtrarTabla()">
+                <option value="">Todas las formas de pago</option>
+                <option value="Efectivo">Efectivo</option>
+                <option value="Tarjeta">Tarjeta</option>
+                <option value="Transferencia">Transferencia</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <button class="btn btn-secondary w-100 fw-semibold" onclick="cargarHistorial()"><i class="bi bi-arrow-clockwise me-1"></i> Actualizar</button>
+            </div>
+          </div>
+
+          <div class="table-responsive" style="max-height: 480px; overflow-y: auto;">
+            <table class="table table-hover align-middle border" id="tablaHistorial" style="font-size: 0.88rem;">
+              <thead class="table-light">
+                <tr>
+                  <th>Fecha / Hora</th>
+                  <th>Folio</th>
+                  <th>Folio Ref.</th>
+                  <th>Matrícula</th>
+                  <th>Paciente</th>
+                  <th>Familia</th>
+                  <th>Sección / Grupo</th>
+                  <th>Concepto / Vacuna</th>
+                  <th>Cant.</th>
+                  <th>Importe</th>
+                  <th>Total</th>
+                  <th>Forma Pago</th>
+                  <th class="text-center">Estado</th>
+                  <th class="text-center">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="historialBody">
+                <tr><td colspan="14" class="text-center py-4 text-muted">Cargando registros desde la base de datos...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
     </div>
   </div>
 </div>
@@ -633,12 +436,38 @@
   </div>
 </div>
 
+<!-- MODAL CAMBIAR CONTRASEÑA -->
+<div class="modal fade" id="modalCambiarPassword" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-primary text-white border-0">
+        <h5 class="modal-title fw-bold"><i class="bi bi-key me-2"></i>Cambiar Contraseña</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div class="mb-3">
+          <label class="form-label fw-bold small text-dark">Nueva Contraseña</label>
+          <input type="password" id="newPasswordInput" class="form-control" placeholder="Mínimo 6 caracteres">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold small text-dark">Confirmar Nueva Contraseña</label>
+          <input type="password" id="confirmPasswordInput" class="form-control" placeholder="Repite la contraseña">
+        </div>
+      </div>
+      <div class="modal-footer bg-light border-0">
+        <button type="button" class="btn btn-secondary fw-semibold" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary fw-bold" onclick="cambiarPassword()">Guardar Contraseña</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="print-area"></div>
 
 <!-- Scripts JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="config.js?v=2"></script>
-<script src="app.js?v=2"></script>
+<script src="config.js"></script>
+<script src="app.js"></script>
 
 </body>
 </html>
