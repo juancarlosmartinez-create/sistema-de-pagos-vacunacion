@@ -233,8 +233,10 @@ function setModo(modo) {
     }
     if (vistaAlumno) vistaAlumno.style.display = 'block';
 
-    document.getElementById('nombre').readOnly = true;
-    document.getElementById('familia').readOnly = true;
+    const nomEl = document.getElementById('nombre');
+    const famEl = document.getElementById('familia');
+    if (nomEl) nomEl.readOnly = true;
+    if (famEl) famEl.readOnly = true;
   } else {
     if (btnExterno) {
       btnExterno.classList.add('active', 'btn-primary');
@@ -246,13 +248,23 @@ function setModo(modo) {
     }
     if (vistaAlumno) vistaAlumno.style.display = 'none';
 
-    document.getElementById('matricula').value = 'EXTERNO';
-    document.getElementById('nombre').readOnly = false;
-    document.getElementById('nombre').value = '';
-    document.getElementById('familia').readOnly = false;
-    document.getElementById('familia').value = '';
-    document.getElementById('seccion').value = 'EXTERNO';
-    document.getElementById('grupo').value = 'EXTERNO';
+    const matEl = document.getElementById('matricula');
+    const nomEl = document.getElementById('nombre');
+    const famEl = document.getElementById('familia');
+    const secEl = document.getElementById('seccion');
+    const gruEl = document.getElementById('grupo');
+
+    if (matEl) matEl.value = 'EXTERNO';
+    if (nomEl) {
+      nomEl.readOnly = false;
+      nomEl.value = '';
+    }
+    if (famEl) {
+      famEl.readOnly = false;
+      famEl.value = '';
+    }
+    if (secEl) secEl.value = 'EXTERNO';
+    if (gruEl) gruEl.value = 'EXTERNO';
   }
 }
 
@@ -296,6 +308,33 @@ function seleccionarPersona(p) {
   document.getElementById('grupo').value = p.grupo || '';
   document.getElementById('results').innerHTML = '';
   document.getElementById('searchInput').value = '';
+}
+
+// ==========================================
+// RESTABLECIMIENTO Y REINICIO DE VENTA
+// ==========================================
+function resetearFormularioVenta() {
+  carrito = [];
+  renderCarrito();
+
+  const searchInput = document.getElementById('searchInput');
+  const results = document.getElementById('results');
+  if (searchInput) searchInput.value = '';
+  if (results) results.innerHTML = '';
+
+  const campos = ['matricula', 'nombre', 'familia', 'seccion', 'grupo'];
+  campos.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+
+  setModo('alumno');
+
+  if (searchInput) {
+    setTimeout(() => {
+      searchInput.focus();
+    }, 150);
+  }
 }
 
 // ==========================================
@@ -503,8 +542,7 @@ async function confirmarGuardarRecibo() {
       window.print();
     }
 
-    carrito = [];
-    renderCarrito();
+    resetearFormularioVenta();
     return;
   }
 
@@ -533,10 +571,9 @@ async function confirmarGuardarRecibo() {
       window.print();
     }
 
-    carrito = [];
-    renderCarrito();
     await obtenerSiguienteFolioVenta();
     cargarHistorial();
+    resetearFormularioVenta();
   } catch (e) {
     console.error("Error al guardar recibo:", e);
     Swal.fire('Error', 'No se pudo guardar el registro en la base de datos: ' + e.message, 'error');
@@ -1007,6 +1044,7 @@ window.cambiarPassword = cambiarPassword;
 window.setModo = setModo;
 window.buscarPersona = buscarPersona;
 window.seleccionarPersona = seleccionarPersona;
+window.resetearFormularioVenta = resetearFormularioVenta;
 window.agregarAlRecibo = agregarAlRecibo;
 window.eliminarDelRecibo = eliminarDelRecibo;
 window.actualizarFormaPagoTicket = actualizarFormaPagoTicket;
