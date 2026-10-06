@@ -1,473 +1,1023 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Colegio Ciudad de México - Módulo de Vacunación</title>
-  
-  <!-- CSS Externos -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  
-  <!-- SweetAlert2 -->
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+// ==========================================
+// CONFIGURACIÓN DE SUPABASE (Desde config.js)
+// ==========================================
+const SUPABASE_URL = window.CONFIG?.SUPABASE_URL || ""; 
+const SUPABASE_ANON_KEY = window.CONFIG?.SUPABASE_ANON_KEY || "";
 
-  <!-- Librería Supabase CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+const supabaseClient = (window.supabase && SUPABASE_URL && SUPABASE_ANON_KEY) ? window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
+) : null;
 
-  <!-- Estilos Personalizados -->
-  <link rel="stylesheet" href="styles.css">
-</head>
-<body class="pb-5">
+// ==========================================
+// ESTADO GLOBAL DE LA APLICACIÓN
+// ==========================================
+let carrito = [];
+let historialMemoria = [];
+let modoSuperUsuario = false;
+let modoPaciente = 'alumno'; // 'alumno' | 'externo'
+let modalReembolsoBS = null;
+let itemReembolsoActual = null;
 
-<!-- PANTALLA DE INICIO DE SESIÓN -->
-<div id="loginOverlay">
-  <div class="login-card text-center">
-    <img src="https://lh3.googleusercontent.com/d/17IUhG3ADvHxHm4wg9CpszjbiEfS5f2Ms" alt="Logo CCM" class="login-logo mb-3" onerror="this.src='https://via.placeholder.com/60?text=CCM'">
-    <h4 class="fw-bold text-dark mb-1">Acceso al Sistema</h4>
-    <p class="text-muted small mb-4">Colegio Ciudad de México - Módulo de Vacunación</p>
+// ==========================================
+// INICIALIZACIÓN Y CONTROL DE SESIÓN
+// ==========================================
+document.addEventListener('DOMContentLoaded', async () => {
+  const modalEl = document.getElementById('modalReembolso');
+  if (modalEl) {
+    modalReembolsoBS = new bootstrap.Modal(modalEl);
+  }
 
-    <div class="text-start mb-3">
-      <label class="form-label small fw-semibold text-dark">Correo Electrónico</label>
-      <div class="input-group">
-        <span class="input-group-text bg-light text-muted"><i class="bi bi-envelope"></i></span>
-        <input type="email" id="loginEmail" class="form-control" placeholder="usuario@colegiociudad.edu.mx" onkeydown="if(event.key==='Enter') iniciarSesion()">
+  if (supabaseClient) {
+    supabaseClient.auth.onAuthStateChange((event, session) => {
+      if (session) {
+        mostrarAplicacion(session.user);
+      } else {
+        mostrarLogin();
+      }
+    });
+  } else {
+    mostrarAplicacion(null);
+  }
+});
+
+// ==========================================
+// FUNCIONES DE ACCESO Y SESIÓN
+// ==========================================
+async function iniciarSesion() {
+  const emailInput = document.getElementById('loginEmail');
+  const passwordInput = document.getElementById('loginPassword');
+
+  if (!emailInput || !passwordInput) return;
+
+  const email = emailInput.value.trim();
+  const password = passwordInput.value;
+
+  if (!email || !password) {
+    Swal.fire('Atención', 'Por favor ingresa tu correo y contraseña.', 'warning');
+    return;
+  }
+
+  if (!supabaseClient) {
+    Swal.fire('Error de Configuración', 'No se pudo conectar con Supabase.', 'error');
+    return;
+  }
+
+  try {
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
+      email: email,
+      password: password
+    });
+
+    if (error) {
+      Swal.fire('Error de Acceso', error.message === 'Invalid login credentials' ? 'Correo o contraseña incorrectos.' : error.message, 'error');
+    } else if (data && data.user) {
+      mostrarAplicacion(data.user);
+    }
+  } catch (err) {
+    Swal.fire('Error Inesperado', err.message, 'error');
+  }
+}
+
+async function cerrarSesion() {
+  if (supabaseClient) {
+    await supabaseClient.auth.signOut();
+  }
+  mostrarLogin();
+}
+
+function mostrarAplicacion(user) {
+  const loginOverlay = document.getElementById('loginOverlay');
+  const appContent = document.getElementById('appContent');
+  const userDisplay = document.getElementById('userEmailDisplay');
+
+  if (loginOverlay) loginOverlay.style.display = 'none';
+  if (appContent) appContent.style.display = 'block';
+  if (userDisplay && user) userDisplay.innerText = user.email;
+
+  obtenerSiguienteFolioVenta();
+  actualizarFechaTicket();
+  renderCarrito();
+  cargarHistorial();
+}
+
+function mostrarLogin() {
+  const loginOverlay = document.getElementById('loginOverlay');
+  const appContent = document.getElementById('appContent');
+  if (loginOverlay) loginOverlay.style.display = 'flex';
+  if (appContent) appContent.style.display = 'none';
+}
+
+async function cambiarPassword() {
+  const newPass = document.getElementById('newPasswordInput').value.trim();
+  const confirmPass = document.getElementById('confirmPasswordInput').value.trim();
+
+  if (!newPass || newPass.length < 6) {
+    Swal.fire('Atención', 'La nueva contraseña debe tener al menos 6 caracteres.', 'warning');
+    return;
+  }
+
+  if (newPass !== confirmPass) {
+    Swal.fire('Atención', 'Las contraseñas no coinciden.', 'warning');
+    return;
+  }
+
+  try {
+    const { error } = await supabaseClient.auth.updateUser({ password: newPass });
+    if (error) throw error;
+
+    const modalEl = document.getElementById('modalCambiarPassword');
+    const modalBs = bootstrap.Modal.getInstance(modalEl);
+    if (modalBs) modalBs.hide();
+
+    document.getElementById('newPasswordInput').value = '';
+    document.getElementById('confirmPasswordInput').value = '';
+
+    Swal.fire('Éxito', 'Contraseña actualizada correctamente.', 'success');
+  } catch (err) {
+    Swal.fire('Error', 'No se pudo cambiar la contraseña: ' + err.message, 'error');
+  }
+}
+
+// ==========================================
+// GENERACIÓN DE FOLIOS (V-XXXX y R-XXXX)
+// ==========================================
+async function obtenerSiguienteFolioVenta() {
+  const defaultFolio = 'V-0001';
+  if (!supabaseClient) {
+    const elDisplay = document.getElementById('display-folio');
+    const elTicket = document.getElementById('t-folio');
+    if (elDisplay) elDisplay.innerText = defaultFolio;
+    if (elTicket) elTicket.innerText = 'FOLIO: ' + defaultFolio;
+    return defaultFolio;
+  }
+
+  try {
+    const { data, error } = await supabaseClient
+      .from('historial_cobros')
+      .select('folio')
+      .ilike('folio', 'V-%')
+      .order('id', { ascending: false })
+      .limit(1);
+
+    if (error) throw error;
+
+    let num = 1;
+    if (data && data.length > 0) {
+      const ultimo = data[0].folio;
+      const partes = ultimo.split('-');
+      if (partes.length === 2 && !isNaN(partes[1])) {
+        num = parseInt(partes[1], 10) + 1;
+      }
+    }
+
+    const nuevoFolio = 'V-' + String(num).padStart(4, '0');
+    const elDisplay = document.getElementById('display-folio');
+    const elTicket = document.getElementById('t-folio');
+    if (elDisplay) elDisplay.innerText = nuevoFolio;
+    if (elTicket) elTicket.innerText = 'FOLIO: ' + nuevoFolio;
+    return nuevoFolio;
+  } catch (e) {
+    console.error("Error obteniendo siguiente folio V:", e);
+    return defaultFolio;
+  }
+}
+
+async function obtenerSiguienteFolioReembolso() {
+  const defaultFolio = 'R-0001';
+  if (!supabaseClient) return defaultFolio;
+
+  try {
+    const { data, error } = await supabaseClient
+      .from('historial_cobros')
+      .select('folio')
+      .ilike('folio', 'R-%')
+      .order('id', { ascending: false })
+      .limit(1);
+
+    if (error) throw error;
+
+    let num = 1;
+    if (data && data.length > 0) {
+      const ultimo = data[0].folio;
+      const partes = ultimo.split('-');
+      if (partes.length === 2 && !isNaN(partes[1])) {
+        num = parseInt(partes[1], 10) + 1;
+      }
+    }
+
+    return 'R-' + String(num).padStart(4, '0');
+  } catch (e) {
+    console.error("Error obteniendo folio R:", e);
+    return defaultFolio;
+  }
+}
+
+// ==========================================
+// BÚSQUEDA Y SELECCIÓN DE PACIENTES
+// ==========================================
+function setModo(modo) {
+  modoPaciente = modo;
+  const btnAlumno = document.getElementById('btnModeAlumno');
+  const btnExterno = document.getElementById('btnModeExterno');
+  const vistaAlumno = document.getElementById('modoAlumnoView');
+
+  if (modo === 'alumno') {
+    if (btnAlumno) {
+      btnAlumno.classList.add('active', 'btn-outline-primary');
+      btnAlumno.classList.remove('btn-secondary');
+    }
+    if (btnExterno) {
+      btnExterno.classList.add('btn-outline-secondary');
+      btnExterno.classList.remove('active', 'btn-primary');
+    }
+    if (vistaAlumno) vistaAlumno.style.display = 'block';
+
+    document.getElementById('nombre').readOnly = true;
+    document.getElementById('familia').readOnly = true;
+  } else {
+    if (btnExterno) {
+      btnExterno.classList.add('active', 'btn-primary');
+      btnExterno.classList.remove('btn-outline-secondary');
+    }
+    if (btnAlumno) {
+      btnAlumno.classList.add('btn-outline-primary');
+      btnAlumno.classList.remove('active');
+    }
+    if (vistaAlumno) vistaAlumno.style.display = 'none';
+
+    document.getElementById('matricula').value = 'EXTERNO';
+    document.getElementById('nombre').readOnly = false;
+    document.getElementById('nombre').value = '';
+    document.getElementById('familia').readOnly = false;
+    document.getElementById('familia').value = '';
+    document.getElementById('seccion').value = 'EXTERNO';
+    document.getElementById('grupo').value = 'EXTERNO';
+  }
+}
+
+async function buscarPersona() {
+  const query = document.getElementById('searchInput').value.trim();
+  const listContainer = document.getElementById('results');
+  if (query.length < 2) {
+    listContainer.innerHTML = '';
+    return;
+  }
+
+  if (!supabaseClient) return;
+
+  try {
+    const { data, error } = await supabaseClient
+      .from('personas')
+      .select('*')
+      .or(`nombre.ilike.%${query}%,matricula.ilike.%${query}%,familia.ilike.%${query}%`)
+      .limit(6);
+
+    if (error) throw error;
+
+    listContainer.innerHTML = '';
+    data.forEach(p => {
+      const a = document.createElement('a');
+      a.className = 'list-group-item list-group-item-action cursor-pointer';
+      a.innerHTML = `<strong>${p.nombre}</strong> <small class="text-muted">(${p.matricula} - ${p.familia})</small>`;
+      a.onclick = () => seleccionarPersona(p);
+      listContainer.appendChild(a);
+    });
+  } catch (e) {
+    console.error("Error buscando persona:", e);
+  }
+}
+
+function seleccionarPersona(p) {
+  document.getElementById('matricula').value = p.matricula || '';
+  document.getElementById('nombre').value = p.nombre || '';
+  document.getElementById('familia').value = p.familia || '';
+  document.getElementById('seccion').value = p.seccion || '';
+  document.getElementById('grupo').value = p.grupo || '';
+  document.getElementById('results').innerHTML = '';
+  document.getElementById('searchInput').value = '';
+}
+
+// ==========================================
+// CARRITO MULTI-PACIENTE Y VISTA PREVIA RECIBO
+// ==========================================
+function agregarAlRecibo() {
+  const nombre = document.getElementById('nombre').value.trim();
+  const concepto = document.getElementById('concepto').value.trim();
+  const cantidad = parseInt(document.getElementById('cantidad').value, 10) || 1;
+  const importe = parseFloat(document.getElementById('importe').value) || 0;
+  const matricula = document.getElementById('matricula').value.trim() || 'EXTERNO';
+  const familia = document.getElementById('familia').value.trim() || 'S/F';
+  const seccion = document.getElementById('seccion').value.trim() || '---';
+  const grupo = document.getElementById('grupo').value.trim() || '---';
+
+  if (!nombre) {
+    Swal.fire('Atención', 'Por favor selecciona o ingresa el nombre del paciente.', 'warning');
+    return;
+  }
+  if (!concepto || importe <= 0) {
+    Swal.fire('Atención', 'Por favor especifica un concepto válido e importe mayor a $0.', 'warning');
+    return;
+  }
+
+  const subtotal = cantidad * importe;
+
+  carrito.push({
+    matricula,
+    nombre,
+    familia,
+    seccion,
+    grupo,
+    concepto,
+    cantidad,
+    importe,
+    subtotal
+  });
+
+  renderCarrito();
+
+  if (modoPaciente === 'alumno') {
+    document.getElementById('matricula').value = '';
+    document.getElementById('nombre').value = '';
+    document.getElementById('familia').value = '';
+    document.getElementById('seccion').value = '';
+    document.getElementById('grupo').value = '';
+    document.getElementById('searchInput').value = '';
+  } else {
+    document.getElementById('nombre').value = '';
+    document.getElementById('familia').value = '';
+  }
+}
+
+function eliminarDelRecibo(index) {
+  carrito.splice(index, 1);
+  renderCarrito();
+}
+
+function renderCarrito() {
+  const tbody = document.getElementById('tablaCarritoBody');
+  const countBadge = document.getElementById('count-items');
+  const ticketItems = document.getElementById('t-lista-items');
+  const ticketTotal = document.getElementById('t-total');
+
+  if (!tbody) return;
+
+  if (carrito.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" class="text-muted py-3">No hay pacientes agregados al recibo aún.</td></tr>`;
+    if (countBadge) countBadge.innerText = '0 Pacientes';
+    if (ticketItems) ticketItems.innerHTML = `<p class="text-muted text-center my-2">Agregue pacientes para ver el desglose aquí.</p>`;
+    if (ticketTotal) ticketTotal.innerText = '0.00';
+    return;
+  }
+
+  let totalGeneral = 0;
+  let htmlTabla = '';
+  let htmlTicket = '';
+
+  carrito.forEach((item, index) => {
+    totalGeneral += item.subtotal;
+
+    htmlTabla += `
+      <tr>
+        <td>${index + 1}</td>
+        <td class="text-start">
+          <strong>${item.nombre}</strong><br>
+          <small class="text-muted">${item.familia} (${item.matricula})</small>
+        </td>
+        <td>${item.concepto}</td>
+        <td>${item.cantidad}</td>
+        <td>$${item.importe.toFixed(2)}</td>
+        <td class="fw-bold">$${item.subtotal.toFixed(2)}</td>
+        <td>
+          <button class="btn btn-sm btn-outline-danger" onclick="eliminarDelRecibo(${index})" title="Eliminar">
+            <i class="bi bi-trash"></i>
+          </button>
+        </td>
+      </tr>
+    `;
+
+    htmlTicket += `
+      <div class="ticket-item border-bottom py-1">
+        <div class="d-flex justify-content-between">
+          <strong class="ticket-nombre">${item.nombre}</strong>
+          <span class="fw-bold">$${item.subtotal.toFixed(2)}</span>
+        </div>
+        <div class="d-flex justify-content-between text-muted ticket-concepto">
+          <span>${item.concepto} (${item.cantidad}x $${item.importe.toFixed(2)})</span>
+          <span>${item.familia}</span>
+        </div>
+      </div>
+    `;
+  });
+
+  tbody.innerHTML = htmlTabla;
+  if (countBadge) countBadge.innerText = `${carrito.length} Paciente${carrito.length > 1 ? 's' : ''}`;
+  if (ticketItems) ticketItems.innerHTML = htmlTicket;
+  if (ticketTotal) ticketTotal.innerText = totalGeneral.toFixed(2);
+}
+
+function actualizarFechaTicket() {
+  const elFecha = document.getElementById('t-fecha');
+  if (elFecha) {
+    const ahora = new Date();
+    elFecha.innerText = ahora.toLocaleDateString('es-MX') + ' ' + ahora.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+  }
+}
+
+function actualizarFormaPagoTicket() {
+  const selectPago = document.getElementById('forma_pago');
+  const ticketPago = document.getElementById('t-pago');
+  if (selectPago && ticketPago) {
+    ticketPago.innerText = selectPago.value;
+  }
+}
+
+// ==========================================
+// GUARDAR E IMPRIMIR RECIBOS (FLUJO UNIFICADO)
+// ==========================================
+async function confirmarGuardarRecibo() {
+  if (carrito.length === 0) {
+    Swal.fire('Atención', 'El recibo está vacío. Agregue al menos un paciente.', 'warning');
+    return;
+  }
+
+  // 1. ADVERTENCIA PREVIA AL GUARDADO
+  const confirmacionGuardar = await Swal.fire({
+    title: '¿Deseas guardar este registro?',
+    text: 'Asegúrate de que los datos del paciente y el desglose del recibo sean correctos.',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#107c41', // Verde del sistema
+    cancelButtonColor: '#dc3545',
+    confirmButtonText: 'Sí, guardar',
+    cancelButtonText: 'Cancelar'
+  });
+
+  if (!confirmacionGuardar.isConfirmed) return;
+
+  const folioVenta = await obtenerSiguienteFolioVenta();
+  const formaPago = document.getElementById('forma_pago').value;
+  const fechaActual = new Date().toISOString();
+
+  const inserts = carrito.map(item => ({
+    folio: folioVenta,
+    matricula: item.matricula,
+    nombre: item.nombre,
+    familia: item.familia,
+    seccion: item.seccion,
+    grupo: item.grupo,
+    concepto: item.concepto,
+    cantidad: item.cantidad,
+    importe: item.importe,
+    total: item.subtotal,
+    forma_pago: formaPago,
+    fecha: fechaActual,
+    created_at: fechaActual,
+    estado: 'Activo',
+    tipo_movimiento: 'INGRESO',
+    monto_reembolsado: 0.00
+  }));
+
+  // Clonamos el contenido del ticket ANTES de limpiar el carrito
+  const ticketClon = document.getElementById('ticketPrint')?.cloneNode(true);
+
+  if (!supabaseClient) {
+    // Modo Demo sin backend
+    const pregImpresionDemo = await Swal.fire({
+      title: '¡Modo Demo!',
+      text: `Se guardaría el Folio ${folioVenta} con ${carrito.length} registros. ¿Deseas imprimir el recibo ahora?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#1259a7',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Sí, imprimir',
+      cancelButtonText: 'No, finalizar'
+    });
+
+    if (pregImpresionDemo.isConfirmed && ticketClon) {
+      const printArea = document.getElementById('print-area');
+      if (printArea) {
+        printArea.innerHTML = '';
+        printArea.appendChild(ticketClon);
+      }
+      window.print();
+    }
+
+    carrito = [];
+    renderCarrito();
+    return;
+  }
+
+  try {
+    const { error } = await supabaseClient.from('historial_cobros').insert(inserts);
+    if (error) throw error;
+
+    // 2. CONFIRMACIÓN POST-GUARDADO Y PREGUNTA DE IMPRESIÓN
+    const pregImpresion = await Swal.fire({
+      title: '¡Éxito!',
+      text: `El recibo ${folioVenta} ha sido guardado correctamente. ¿Deseas imprimir el recibo ahora?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#1259a7', // Azul de impresión
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Sí, imprimir',
+      cancelButtonText: 'No, finalizar'
+    });
+
+    if (pregImpresion.isConfirmed && ticketClon) {
+      const printArea = document.getElementById('print-area');
+      if (printArea) {
+        printArea.innerHTML = '';
+        printArea.appendChild(ticketClon);
+      }
+      window.print();
+    }
+
+    carrito = [];
+    renderCarrito();
+    await obtenerSiguienteFolioVenta();
+    cargarHistorial();
+  } catch (e) {
+    console.error("Error al guardar recibo:", e);
+    Swal.fire('Error', 'No se pudo guardar el registro en la base de datos: ' + e.message, 'error');
+  }
+}
+
+function confirmarImprimirRecibo() {
+  if (carrito.length === 0) {
+    Swal.fire('Atención', 'No hay datos en el recibo para imprimir.', 'warning');
+    return;
+  }
+  const ticketClon = document.getElementById('ticketPrint').cloneNode(true);
+  const printArea = document.getElementById('print-area');
+  printArea.innerHTML = '';
+  printArea.appendChild(ticketClon);
+  window.print();
+}
+
+// ==========================================
+// HISTORIAL DE REGISTROS Y REPORTES (ADMIN)
+// ==========================================
+async function cargarHistorial() {
+  const tbody = document.getElementById('historialBody');
+  if (!tbody) return;
+
+  tbody.innerHTML = `<tr><td colspan="14" class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm text-primary me-2"></div>Cargando registros desde Supabase...</td></tr>`;
+
+  if (!supabaseClient) {
+    tbody.innerHTML = `<tr><td colspan="14" class="text-center py-4 text-muted">Configura las claves de Supabase en config.js.</td></tr>`;
+    return;
+  }
+
+  try {
+    const { data, error } = await supabaseClient
+      .from('historial_cobros')
+      .select('*')
+      .order('id', { ascending: false });
+
+    if (error) throw error;
+
+    historialMemoria = data || [];
+    renderTablaHistorial(historialMemoria);
+  } catch (e) {
+    console.error("Error al cargar historial:", e);
+    tbody.innerHTML = `<tr><td colspan="14" class="text-center py-4 text-danger">Error al obtener historial: ${e.message}</td></tr>`;
+  }
+}
+
+function renderTablaHistorial(lista) {
+  const tbody = document.getElementById('historialBody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  let ingresoBruto = 0;
+  let totalReembolsadoSum = 0;
+  let devolucionesCount = 0;
+  let vacunasAplicadasCount = 0;
+  const foliosSet = new Set();
+  let efectivoNeto = 0;
+  let otrosNeto = 0;
+
+  if (lista.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="14" class="text-center py-4 text-muted">No se encontraron registros.</td></tr>`;
+    actualizarKPIs(0, 0, 0, 0, 0, 0, 0, 0);
+    return;
+  }
+
+  lista.forEach(item => {
+    const esEgreso = item.tipo_movimiento === 'EGRESO' || (item.folio && item.folio.startsWith('R-'));
+    const esCancelado = item.estado === 'Cancelado' || item.estado === 'CANCELADO';
+    const esReembolsadoTotal = item.estado === 'Reembolsado' || item.estado === 'REEMBOLSADO';
+    const esReembolsadoParcial = item.estado === 'Reembolso Parcial';
+
+    const cantidad = parseInt(item.cantidad, 10) || 1;
+    const importe = parseFloat(item.importe) || 0;
+    const subtotal = item.total ? parseFloat(item.total) : (cantidad * importe);
+
+    if (!esCancelado) {
+      if (esEgreso) {
+        totalReembolsadoSum += Math.abs(subtotal);
+        devolucionesCount++;
+        if (item.forma_pago === 'Efectivo') efectivoNeto -= Math.abs(subtotal);
+        else otrosNeto -= Math.abs(subtotal);
+      } else {
+        ingresoBruto += subtotal;
+        if (item.folio) foliosSet.add(item.folio);
+
+        if (!esReembolsadoTotal) {
+          vacunasAplicadasCount += cantidad;
+        }
+
+        const montoReembolsadoPartida = parseFloat(item.monto_reembolsado) || 0;
+        const subtotalNetoPartida = subtotal - montoReembolsadoPartida;
+
+        if (item.forma_pago === 'Efectivo') efectivoNeto += subtotalNetoPartida;
+        else otrosNeto += subtotalNetoPartida;
+      }
+    }
+
+    let claseFila = '';
+    if (esCancelado) claseFila = 'fila-cancelada';
+    else if (esEgreso) claseFila = 'fila-reembolso-egreso';
+    else if (esReembolsadoTotal) claseFila = 'fila-reembolsada-total';
+    else if (esReembolsadoParcial) claseFila = 'fila-reembolsada-parcial';
+
+    const fechaRaw = item.fecha || item.created_at;
+    const fObj = new Date(fechaRaw);
+    const fechaTxt = isNaN(fObj.getTime()) 
+      ? '—' 
+      : fObj.toLocaleDateString('es-MX') + ' ' + fObj.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+
+    let badgeEstado = `<span class="badge bg-success">Activo</span>`;
+    if (esCancelado) badgeEstado = `<span class="badge bg-danger">Cancelado</span>`;
+    else if (esEgreso) badgeEstado = `<span class="badge bg-warning text-dark">Egreso (R)</span>`;
+    else if (esReembolsadoTotal) badgeEstado = `<span class="badge bg-secondary">Reembolsado</span>`;
+    else if (esReembolsadoParcial) badgeEstado = `<span class="badge bg-warning text-dark">Parcial (-$${item.monto_reembolsado})</span>`;
+
+    let accionesHtml = '';
+    const itemJson = JSON.stringify(item).replace(/"/g, '&quot;');
+
+    if (!esCancelado && !esEgreso && !esReembolsadoTotal) {
+      accionesHtml = `
+        <button class="btn btn-sm btn-outline-primary me-1" title="Reimprimir Ticket" onclick="reimprimirFolio('${item.folio}')"><i class="bi bi-printer"></i></button>
+        <button class="btn btn-sm btn-outline-warning text-dark me-1" title="Procesar Reembolso Auditado" onclick="abrirModalReembolso(${itemJson})"><i class="bi bi-arrow-counterclockwise"></i></button>
+      `;
+      if (modoSuperUsuario) {
+        accionesHtml += `<button class="btn btn-sm btn-outline-danger" title="Cancelar Registro" onclick="cancelarRegistro('${item.id}', '${item.nombre}')"><i class="bi bi-trash"></i></button>`;
+      }
+    } else {
+      accionesHtml = `<button class="btn btn-sm btn-outline-primary" title="Reimprimir" onclick="reimprimirFolio('${item.folio}')"><i class="bi bi-printer"></i></button>`;
+    }
+
+    const tr = document.createElement('tr');
+    if (claseFila) tr.className = claseFila;
+    tr.innerHTML = `
+      <td><small>${fechaTxt}</small></td>
+      <td><strong class="${esEgreso ? 'text-warning-emphasis' : 'text-dark'}">${item.folio || '—'}</strong></td>
+      <td>${item.folio_referencia ? `<span class="badge bg-light text-dark border">${item.folio_referencia}</span>` : '—'}</td>
+      <td><small>${item.matricula || '---'}</small></td>
+      <td><strong>${item.nombre || ''}</strong></td>
+      <td>${item.familia || '---'}</td>
+      <td><small>${item.seccion || ''} / ${item.grupo || ''}</small></td>
+      <td>${item.concepto || ''}${item.motivo_reembolso ? `<br><small class="text-muted">Motivo: ${item.motivo_reembolso}</small>` : ''}</td>
+      <td class="text-center">${cantidad}</td>
+      <td>$${importe.toFixed(2)}</td>
+      <td><strong class="${esEgreso ? 'text-danger' : 'text-dark'}">${esEgreso ? '-' : ''}$${Math.abs(subtotal).toFixed(2)}</strong></td>
+      <td><span class="badge bg-light text-dark border">${item.forma_pago || 'Efectivo'}</span></td>
+      <td class="text-center">${badgeEstado}</td>
+      <td class="text-center">${accionesHtml}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  const ingresoNetoReal = ingresoBruto - totalReembolsadoSum;
+  actualizarKPIs(ingresoNetoReal, ingresoBruto, totalReembolsadoSum, devolucionesCount, vacunasAplicadasCount, foliosSet.size, efectivoNeto, otrosNeto);
+}
+
+function actualizarKPIs(neto, bruto, reembolsado, devCount, vacunasCount, foliosCount, efectivo, otros) {
+  const elNeto = document.getElementById('kpi-total');
+  const elBruto = document.getElementById('kpi-bruto-sub');
+  const elReembolsos = document.getElementById('kpi-reembolsos');
+  const elReembolsosCant = document.getElementById('kpi-reembolsos-cant');
+  const elCount = document.getElementById('kpi-count');
+  const elFolios = document.getElementById('kpi-folios');
+  const elEfectivo = document.getElementById('kpi-efectivo');
+  const elOtros = document.getElementById('kpi-otros');
+
+  if (elNeto) elNeto.innerText = `$${neto.toFixed(2)}`;
+  if (elBruto) elBruto.innerText = `Bruto: $${bruto.toFixed(2)}`;
+  if (elReembolsos) elReembolsos.innerText = `$${reembolsado.toFixed(2)}`;
+  if (elReembolsosCant) elReembolsosCant.innerText = `${devCount} Devoluciones`;
+  if (elCount) elCount.innerText = vacunasCount;
+  if (elFolios) elFolios.innerText = foliosCount;
+  if (elEfectivo) elEfectivo.innerText = `$${efectivo.toFixed(2)}`;
+  if (elOtros) elOtros.innerText = `$${otros.toFixed(2)}`;
+}
+
+function toggleSuperUsuario(checked) {
+  modoSuperUsuario = checked;
+  if (checked) {
+    Swal.fire({
+      title: 'Modo Superusuario Activado',
+      text: 'Permisos habilitados para cancelación directa de registros.',
+      icon: 'info',
+      timer: 1500,
+      showConfirmButton: false
+    });
+  }
+  renderTablaHistorial(historialMemoria);
+}
+
+// ==========================================
+// REEMBOLSOS AUDITADOS Y CANCELACIÓN
+// ==========================================
+function abrirModalReembolso(item) {
+  itemReembolsoActual = item;
+
+  const subtotalOriginal = item.total ? parseFloat(item.total) : (item.cantidad || 1) * (item.importe || 0);
+  const reembolsadoPrevio = parseFloat(item.monto_reembolsado) || 0;
+  const maxReembolsable = subtotalOriginal - reembolsadoPrevio;
+
+  document.getElementById('rf-item-id').value = item.id;
+  document.getElementById('rf-folio-origen').value = item.folio;
+  document.getElementById('rf-monto-maximo').value = maxReembolsable;
+
+  document.getElementById('rf-txt-folio').innerText = item.folio || '--';
+  document.getElementById('rf-txt-paciente').innerText = item.nombre || '--';
+  document.getElementById('rf-txt-concepto').innerText = `${item.concepto} (${item.cantidad || 1} unidad/es)`;
+  document.getElementById('rf-txt-total').innerText = `$${subtotalOriginal.toFixed(2)}`;
+
+  document.getElementById('rfTipoTotal').checked = true;
+  const montoInput = document.getElementById('rf-monto-input');
+  montoInput.value = maxReembolsable.toFixed(2);
+  montoInput.readOnly = true;
+
+  document.getElementById('rf-motivo-input').value = '';
+  document.getElementById('rf-monto-help').innerText = 'Devolución por el monto total disponible de esta partida.';
+
+  if (modalReembolsoBS) modalReembolsoBS.show();
+}
+
+function toggleTipoReembolso() {
+  const esTotal = document.getElementById('rfTipoTotal').checked;
+  const maxMonto = parseFloat(document.getElementById('rf-monto-maximo').value) || 0;
+  const montoInput = document.getElementById('rf-monto-input');
+  const helpTxt = document.getElementById('rf-monto-help');
+
+  if (esTotal) {
+    montoInput.value = maxMonto.toFixed(2);
+    montoInput.readOnly = true;
+    helpTxt.innerText = 'Devolución por el monto total disponible de esta partida.';
+  } else {
+    montoInput.readOnly = false;
+    montoInput.focus();
+    helpTxt.innerText = `Ingrese la cantidad a devolver (Máximo $${maxMonto.toFixed(2)}).`;
+  }
+}
+
+async function ejecutarReembolsoAuditado() {
+  const id = document.getElementById('rf-item-id').value;
+  const folioOrigen = document.getElementById('rf-folio-origen').value;
+  const maxMonto = parseFloat(document.getElementById('rf-monto-maximo').value) || 0;
+  const esTotal = document.getElementById('rfTipoTotal').checked;
+  const montoReembolso = parseFloat(document.getElementById('rf-monto-input').value) || 0;
+  const motivo = document.getElementById('rf-motivo-input').value.trim();
+
+  if (!motivo) {
+    Swal.fire('Atención', 'Por favor capture el motivo del reembolso para efectos de auditoría.', 'warning');
+    return;
+  }
+
+  if (montoReembolso <= 0 || montoReembolso > maxMonto) {
+    Swal.fire('Atención', `El monto a reembolsar debe ser mayor a $0 y no superar $${maxMonto.toFixed(2)}.`, 'warning');
+    return;
+  }
+
+  const itemOriginal = historialMemoria.find(x => x.id == id);
+  if (!itemOriginal) return;
+
+  const folioEgreso = await obtenerSiguienteFolioReembolso();
+  const fechaActual = new Date().toISOString();
+  const nuevoEstadoOriginal = (esTotal || montoReembolso === maxMonto) ? 'Reembolsado' : 'Reembolso Parcial';
+  const acumuladoReembolsado = (parseFloat(itemOriginal.monto_reembolsado) || 0) + montoReembolso;
+
+  try {
+    const { error: errUpdate } = await supabaseClient
+      .from('historial_cobros')
+      .update({
+        estado: nuevoEstadoOriginal,
+        monto_reembolsado: acumuladoReembolsado,
+        motivo_reembolso: motivo
+      })
+      .eq('id', id);
+
+    if (errUpdate) throw errUpdate;
+
+    const registroEgreso = {
+      folio: folioEgreso,
+      folio_referencia: folioOrigen,
+      matricula: itemOriginal.matricula,
+      nombre: itemOriginal.nombre,
+      familia: itemOriginal.familia,
+      seccion: itemOriginal.seccion,
+      grupo: itemOriginal.grupo,
+      concepto: `REEMBOLSO: ${itemOriginal.concepto}`,
+      cantidad: itemOriginal.cantidad,
+      importe: -montoReembolso,
+      total: -montoReembolso,
+      forma_pago: itemOriginal.forma_pago,
+      fecha: fechaActual,
+      created_at: fechaActual,
+      estado: 'Reembolsado',
+      tipo_movimiento: 'EGRESO',
+      motivo_reembolso: motivo
+    };
+
+    const { error: errInsert } = await supabaseClient.from('historial_cobros').insert([registroEgreso]);
+    if (errInsert) throw errInsert;
+
+    if (modalReembolsoBS) modalReembolsoBS.hide();
+
+    Swal.fire({
+      title: '¡Reembolso Procesado!',
+      html: `Se generó exitosamente el folio de egreso <strong>${folioEgreso}</strong> amarrado al folio <strong>${folioOrigen}</strong>.`,
+      icon: 'success'
+    });
+
+    await cargarHistorial();
+  } catch (e) {
+    console.error("Error al ejecutar reembolso:", e);
+    Swal.fire('Error', 'No se pudo procesar el reembolso en la base de datos: ' + e.message, 'error');
+  }
+}
+
+async function cancelarRegistro(id, nombrePaciente) {
+  const result = await Swal.fire({
+    title: '¿Cancelar Registro?',
+    text: `¿Confirma que desea cancelar el registro de ${nombrePaciente}? Quedará anulado en auditoría.`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#dc2626',
+    confirmButtonText: 'Sí, cancelar'
+  });
+
+  if (result.isConfirmed) {
+    try {
+      const { error } = await supabaseClient
+        .from('historial_cobros')
+        .update({ estado: 'Cancelado' })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      Swal.fire('Cancelado', 'El registro ha sido marcado como cancelado.', 'success');
+      await cargarHistorial();
+    } catch (e) {
+      console.error("Error al cancelar:", e);
+      Swal.fire('Error', 'No se pudo cancelar el registro: ' + e.message, 'error');
+    }
+  }
+}
+
+// ==========================================
+// REIMPRESIÓN, FILTROS Y EXPORTACIÓN
+// ==========================================
+function reimprimirFolio(folio) {
+  const items = historialMemoria.filter(x => x.folio === folio && x.estado !== 'Cancelado' && x.estado !== 'CANCELADO');
+  if (items.length === 0) {
+    Swal.fire('Atención', 'No se encontraron registros activos para este folio.', 'info');
+    return;
+  }
+
+  const primerItem = items[0];
+  let total = 0;
+  let htmlItems = '';
+
+  items.forEach(item => {
+    const sub = item.total ? parseFloat(item.total) : ((item.cantidad || 1) * (item.importe || 0));
+    total += sub;
+    htmlItems += `
+      <div class="ticket-item border-bottom py-1">
+        <div class="d-flex justify-content-between">
+          <strong class="ticket-nombre">${item.nombre}</strong>
+          <span class="fw-bold">$${sub.toFixed(2)}</span>
+        </div>
+        <div class="d-flex justify-content-between text-muted ticket-concepto">
+          <span>${item.concepto}</span>
+          <span>${item.familia}</span>
+        </div>
+      </div>
+    `;
+  });
+
+  const fechaRaw = primerItem.fecha || primerItem.created_at;
+  const fObj = new Date(fechaRaw);
+  const fechaStr = isNaN(fObj.getTime()) ? '' : fObj.toLocaleDateString('es-MX') + ' ' + fObj.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+
+  const printArea = document.getElementById('print-area');
+  printArea.innerHTML = `
+    <div class="ticket-paper mb-3" style="max-width:350px; margin:auto;">
+      <div class="text-center mb-2">
+        <h5 class="fw-bold text-dark ticket-header-title">COLEGIO CIUDAD DE MÉXICO</h5>
+        <p class="text-muted ticket-header-sub">Comprobante de Vacunación</p>
+        <span class="badge bg-dark text-white fw-bold px-3 py-1">FOLIO: ${folio}</span>
+      </div>
+      <div class="border-top border-bottom py-1 my-2 small text-secondary ticket-info-block">
+        <div class="d-flex justify-content-between"><span>Fecha/Hora:</span><strong class="text-dark">${fechaStr}</strong></div>
+        <div class="d-flex justify-content-between"><span>Forma de Pago:</span><strong class="text-dark">${primerItem.forma_pago || 'Efectivo'}</strong></div>
+      </div>
+      <div class="py-1 border-bottom">${htmlItems}</div>
+      <div class="pt-2 d-flex justify-content-between align-items-center ticket-total-block">
+        <span class="fw-bold text-dark ticket-total-title">TOTAL</span>
+        <span class="fw-bold text-success ticket-total-amount">$${total.toFixed(2)}</span>
       </div>
     </div>
+  `;
 
-    <div class="text-start mb-4">
-      <label class="form-label small fw-semibold text-dark">Contraseña</label>
-      <div class="input-group">
-        <span class="input-group-text bg-light text-muted"><i class="bi bi-lock"></i></span>
-        <input type="password" id="loginPassword" class="form-control" placeholder="••••••••" onkeydown="if(event.key==='Enter') iniciarSesion()">
-      </div>
-    </div>
+  window.print();
+}
 
-    <button type="button" class="btn btn-primary w-100 py-2.5 fw-bold shadow-sm" onclick="iniciarSesion()">
-      <i class="bi bi-box-arrow-in-right me-2"></i>Iniciar Sesión
-    </button>
-  </div>
-</div>
+function filtrarTabla() {
+  const query = (document.getElementById('filterInput')?.value || '').toLowerCase().trim();
+  const fp = document.getElementById('filterPago')?.value || '';
 
-<!-- CONTENIDO PRINCIPAL DE LA APLICACIÓN -->
-<div id="appContent" style="display: none;">
-  <div class="container-fluid px-4 pt-3">
-    
-    <!-- ENCABEZADO PRINCIPAL -->
-    <div class="header-banner d-flex justify-content-between align-items-center mb-3 no-print">
-      <div class="d-flex align-items-center gap-3">
-        <img src="https://lh3.googleusercontent.com/d/17IUhG3ADvHxHm4wg9CpszjbiEfS5f2Ms" alt="Logo CCM" class="header-logo" onerror="this.src='https://via.placeholder.com/48?text=CCM'">
-        <div>
-          <h1 class="header-title">Colegio Ciudad de México</h1>
-          <p class="header-subtitle">Módulo de Vacunación - Sistema de Gestión y Cobro</p>
-        </div>
-      </div>
+  const filtrados = historialMemoria.filter(item => {
+    const matchTexto = !query ||
+      (item.folio && item.folio.toLowerCase().includes(query)) ||
+      (item.folio_referencia && item.folio_referencia.toLowerCase().includes(query)) ||
+      (item.nombre && item.nombre.toLowerCase().includes(query)) ||
+      (item.familia && item.familia.toLowerCase().includes(query)) ||
+      (item.concepto && item.concepto.toLowerCase().includes(query)) ||
+      (item.matricula && item.matricula.toLowerCase().includes(query));
 
-      <div class="d-flex align-items-center gap-3">
-        <div class="text-end border-end pe-3 border-secondary">
-          <span class="small text-white-50 d-block" id="userEmailDisplay">usuario@colegiociudad.edu.mx</span>
-          <div class="mt-1">
-            <button class="btn btn-sm btn-outline-light py-0 px-2 small me-1" data-bs-toggle="modal" data-bs-target="#modalCambiarPassword">
-              <i class="bi bi-key me-1"></i>Contraseña
-            </button>
-            <button class="btn btn-sm btn-danger py-0 px-2 small" onclick="cerrarSesion()">
-              <i class="bi bi-power me-1"></i>Salir
-            </button>
-          </div>
-        </div>
+    const matchPago = !fp || item.forma_pago === fp;
 
-        <div class="text-end">
-          <span class="small text-white-50 d-block">Siguiente Folio</span>
-          <span class="folio-badge" id="display-folio">V-0001</span>
-        </div>
-      </div>
-    </div>
+    return matchTexto && matchPago;
+  });
 
-    <!-- NAVEGACIÓN ENTRE PESTAÑAS -->
-    <ul class="nav nav-tabs mb-4 border-bottom no-print" id="mainTab" role="tablist">
-      <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="cobro-tab" data-bs-toggle="tab" data-bs-target="#cobro-pane" type="button">
-          <i class="bi bi-cash-stack me-2"></i>Nuevo Cobro (Multi-paciente)
-        </button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" id="reportes-tab" data-bs-toggle="tab" data-bs-target="#reportes-pane" type="button" onclick="cargarHistorial()">
-          <i class="bi bi-bar-chart-line-fill me-2"></i>Historial y Reportes Admin
-        </button>
-      </li>
-    </ul>
+  renderTablaHistorial(filtrados);
+}
 
-    <div class="tab-content" id="mainTabContent">
-      
-      <!-- PESTAÑA 1: NUEVO COBRO -->
-      <div class="tab-pane fade show active" id="cobro-pane" role="tabpanel">
-        <div class="row g-4">
-          
-          <!-- FORMULARIO PACIENTES -->
-          <div class="col-lg-7 no-print">
-            
-            <!-- DATOS DEL PACIENTE -->
-            <div class="custom-card p-4 mb-3">
-              <div class="d-flex justify-content-between align-items-center mb-3">
-                <div class="d-flex align-items-center gap-2 text-primary card-title-custom">
-                  <i class="bi bi-person-plus-fill fs-5"></i>
-                  <span>1. Datos del Paciente</span>
-                </div>
-                <div class="btn-group" role="group">
-                  <button type="button" class="btn btn-outline-primary btn-mode active" id="btnModeAlumno" onclick="setModo('alumno')"><i class="bi bi-search me-1"></i>Buscar Alumno</button>
-                  <button type="button" class="btn btn-outline-secondary btn-mode" id="btnModeExterno" onclick="setModo('externo')"><i class="bi bi-person-plus me-1"></i>Persona Externa</button>
-                </div>
-              </div>
+function exportarExcel() {
+  if (!historialMemoria || historialMemoria.length === 0) {
+    Swal.fire('Atención', 'No hay datos para exportar.', 'warning');
+    return;
+  }
 
-              <div id="modoAlumnoView">
-                <div class="position-relative mb-3">
-                  <div class="input-group">
-                    <span class="input-group-text bg-white text-muted"><i class="bi bi-search"></i></span>
-                    <input type="text" id="searchInput" class="form-control" placeholder="Escriba matrícula, nombre o familia..." oninput="buscarPersona()" autocomplete="off">
-                  </div>
-                  <div id="results" class="list-group results-list shadow-lg mt-1"></div>
-                </div>
-              </div>
+  let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+  csvContent += "Fecha,Folio,Folio Referencia,Matricula,Paciente,Familia,Seccion,Grupo,Concepto,Cantidad,Importe,Total,Forma Pago,Estado,Tipo Movimiento,Motivo Reembolso\n";
 
-              <div class="row g-2 bg-light p-3 rounded-3 border">
-                <div class="col-md-2">
-                  <label class="form-label text-muted small fw-semibold mb-1">Matrícula / ID</label>
-                  <input type="text" id="matricula" class="form-control form-control-sm bg-white" placeholder="---" readonly>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label text-muted small fw-semibold mb-1">Nombre Completo</label>
-                  <input type="text" id="nombre" class="form-control form-control-sm bg-white" placeholder="Nombre del paciente">
-                </div>
-                <div class="col-md-3">
-                  <label class="form-label text-muted small fw-semibold mb-1">Familia</label>
-                  <input type="text" id="familia" class="form-control form-control-sm bg-white" placeholder="Familia / Apellidos">
-                </div>
-                <div class="col-md-1">
-                  <label class="form-label text-muted small fw-semibold mb-1">Sección</label>
-                  <input type="text" id="seccion" class="form-control form-control-sm bg-white" placeholder="---">
-                </div>
-                <div class="col-md-2">
-                  <label class="form-label text-muted small fw-semibold mb-1">Grupo</label>
-                  <input type="text" id="grupo" class="form-control form-control-sm bg-white" placeholder="---">
-                </div>
-              </div>
-            </div>
+  historialMemoria.forEach(row => {
+    const fecha = row.fecha || row.created_at ? new Date(row.fecha || row.created_at).toLocaleString('es-MX') : '';
+    const subtotal = row.total ? row.total : ((row.cantidad || 1) * (row.importe || 0));
+    const line = [
+      `"${fecha}"`,
+      `"${row.folio || ''}"`,
+      `"${row.folio_referencia || ''}"`,
+      `"${row.matricula || ''}"`,
+      `"${row.nombre || ''}"`,
+      `"${row.familia || ''}"`,
+      `"${row.seccion || ''}"`,
+      `"${row.grupo || ''}"`,
+      `"${row.concepto || ''}"`,
+      row.cantidad || 1,
+      row.importe || 0,
+      subtotal,
+      `"${row.forma_pago || ''}"`,
+      `"${row.estado || ''}"`,
+      `"${row.tipo_movimiento || 'INGRESO'}"`,
+      `"${row.motivo_reembolso || ''}"`
+    ].join(",");
+    csvContent += line + "\n";
+  });
 
-            <!-- VACUNA E IMPORTE -->
-            <div class="custom-card p-4 mb-3">
-              <div class="d-flex align-items-center gap-2 mb-3 text-success card-title-custom">
-                <i class="bi bi-capsule fs-5"></i>
-                <span>2. Detalle de la Vacuna / Importe</span>
-              </div>
-              <div class="row g-3 align-items-end">
-                <div class="col-md-5">
-                  <label class="form-label text-muted small fw-semibold mb-1">Vacuna / Concepto</label>
-                  <input type="text" id="concepto" class="form-control" list="vacunasLista" value="Influenza" placeholder="Seleccione o escriba la vacuna">
-                  <datalist id="vacunasLista">
-                    <option value="Influenza">
-                    <option value="VPH">
-                    <option value="COVID">
-                    <option value="Herpes Zoster">
-                  </datalist>
-                </div>
-                <div class="col-md-3">
-                  <label class="form-label text-muted small fw-semibold mb-1">Cantidad</label>
-                  <input type="number" id="cantidad" class="form-control" value="1" min="1">
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label text-muted small fw-semibold mb-1">Importe ($)</label>
-                  <input type="number" step="0.01" id="importe" class="form-control" placeholder="100.00" value="100.00">
-                </div>
-                <div class="col-12 mt-3">
-                  <button type="button" class="btn btn-primary w-100 fw-bold shadow-sm" onclick="agregarAlRecibo()">
-                    <i class="bi bi-plus-circle-fill me-2"></i> + Agregar Paciente al Recibo
-                  </button>
-                </div>
-              </div>
-            </div>
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement("a");
+  link.setAttribute("href", encodedUri);
+  link.setAttribute("download", `Reporte_Vacunacion_${new Date().toISOString().slice(0, 10)}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
 
-            <!-- CARRITO MULTI-PACIENTE -->
-            <div class="custom-card p-4">
-              <div class="d-flex justify-content-between align-items-center mb-3">
-                <span class="card-title-custom text-dark"><i class="bi bi-list-check me-1"></i> Lista de Pacientes en este Recibo</span>
-                <span class="badge bg-secondary" id="count-items">0 Pacientes</span>
-              </div>
-              <div class="table-responsive">
-                <table class="table table-hover align-middle border text-center" style="font-size: 0.9rem;">
-                  <thead class="table-light">
-                    <tr>
-                      <th>#</th>
-                      <th class="text-start">Paciente / Familia</th>
-                      <th>Vacuna</th>
-                      <th>Cant.</th>
-                      <th>Precio</th>
-                      <th>Subtotal</th>
-                      <th>Acción</th>
-                    </tr>
-                  </thead>
-                  <tbody id="tablaCarritoBody">
-                    <tr><td colspan="7" class="text-muted py-3">No hay pacientes agregados al recibo aún.</td></tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-          </div>
-
-          <!-- RECIBO Y VISTA PREVIA -->
-          <div class="col-lg-5">
-            <div class="custom-card p-4 sticky-top" style="top: 20px;">
-              <div class="d-flex justify-content-between align-items-center mb-3 no-print">
-                <span class="card-title-custom text-secondary"><i class="bi bi-receipt-cutoff me-1"></i> Vista Previa del Recibo</span>
-                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">En preparación</span>
-              </div>
-
-              <div class="ticket-paper mb-3" id="ticketPrint">
-                <div class="text-center mb-2">
-                  <h5 class="fw-bold text-dark ticket-header-title">COLEGIO CIUDAD DE MÉXICO</h5>
-                  <p class="text-muted ticket-header-sub">Comprobante de Vacunación</p>
-                  <span class="badge bg-dark text-white fw-bold px-3 py-1" id="t-folio">FOLIO: V-0001</span>
-                </div>
-
-                <div class="border-top border-bottom py-1 my-2 small text-secondary ticket-info-block">
-                  <div class="d-flex justify-content-between"><span>Fecha/Hora:</span><strong class="text-dark" id="t-fecha">--/--/----</strong></div>
-                  <div class="d-flex justify-content-between"><span>Forma de Pago:</span><strong class="text-dark" id="t-pago">Efectivo</strong></div>
-                </div>
-
-                <div id="t-lista-items" class="py-1 border-bottom">
-                  <p class="text-muted text-center my-2">Agregue pacientes para ver el desglose aquí.</p>
-                </div>
-
-                <div class="pt-2 d-flex justify-content-between align-items-center ticket-total-block">
-                  <span class="fw-bold text-dark ticket-total-title">TOTAL A PAGAR</span>
-                  <span class="fw-bold text-success ticket-total-amount">$<span id="t-total">0.00</span></span>
-                </div>
-              </div>
-
-              <div class="mb-3 no-print">
-                <label class="form-label text-muted small fw-semibold">Forma de Pago del Recibo</label>
-                <select id="forma_pago" class="form-select fw-bold" onchange="actualizarFormaPagoTicket()">
-                  <option value="Efectivo">Efectivo</option>
-                  <option value="Tarjeta">Tarjeta de Crédito / Débito</option>
-                  <option value="Transferencia">Transferencia Electrónica</option>
-                </select>
-              </div>
-
-              <div class="d-grid gap-2 no-print">
-                <button type="button" class="btn btn-success py-2.5 fw-bold text-white shadow-sm" onclick="confirmarGuardarRecibo()">
-                  <i class="bi bi-floppy-fill me-2"></i> Guardar Registro
-                </button>
-                <button type="button" class="btn btn-outline-primary py-2 fw-bold" onclick="confirmarImprimirRecibo()">
-                  <i class="bi bi-printer-fill me-2"></i> Imprimir Recibo
-                </button>
-              </div>
-
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-      <!-- PESTAÑA 2: REPORTES Y AUDITORÍA -->
-      <div class="tab-pane fade no-print" id="reportes-pane" role="tabpanel">
-        
-        <!-- TARJETAS KPI METRICAS -->
-        <div class="row g-3 mb-4">
-          <div class="col-md-3">
-            <div class="kpi-card shadow-sm" style="border-left-color: #059669;">
-              <div class="text-muted small fw-semibold">Ingreso Neto Real</div>
-              <div class="fs-3 fw-bold text-success" id="kpi-total">$0.00</div>
-              <div class="small text-muted" id="kpi-bruto-sub">Bruto: $0.00</div>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="kpi-card shadow-sm" style="border-left-color: #dc2626;">
-              <div class="text-muted small fw-semibold">Total Reembolsado</div>
-              <div class="fs-3 fw-bold text-danger" id="kpi-reembolsos">$0.00</div>
-              <div class="small text-muted" id="kpi-reembolsos-cant">0 Devoluciones</div>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="kpi-card shadow-sm" style="border-left-color: #2563eb;">
-              <div class="text-muted small fw-semibold">Vacunas Aplicadas</div>
-              <div class="fs-3 fw-bold text-primary" id="kpi-count">0</div>
-              <div class="small text-muted"><span id="kpi-folios">0</span> Folios Registrados</div>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="kpi-card shadow-sm" style="border-left-color: #7c3aed;">
-              <div class="text-muted small fw-semibold">Efectivo vs Otros (Neto)</div>
-              <div class="fs-6 fw-bold text-dark mt-1">Efec: <span id="kpi-efectivo" class="text-success">$0.00</span></div>
-              <div class="fs-6 fw-bold text-dark">Otros: <span id="kpi-otros" class="text-primary">$0.00</span></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="custom-card p-4">
-          <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
-            <h5 class="fw-bold m-0 text-dark"><i class="bi bi-journal-check me-2 text-primary"></i> Historial General de Registros (Supabase)</h5>
-            
-            <div class="d-flex align-items-center gap-3">
-              <div class="form-check form-switch bg-light border px-3 py-1 rounded-3">
-                <input class="form-check-input" type="checkbox" id="switchSuperUsuario" onchange="toggleSuperUsuario(this.checked)">
-                <label class="form-check-label small fw-bold text-dark" for="switchSuperUsuario">
-                  <i class="bi bi-shield-lock-fill text-warning me-1"></i>Modo Superusuario
-                </label>
-              </div>
-              
-              <button class="btn btn-outline-success fw-bold btn-sm rounded-2" onclick="exportarExcel()">
-                <i class="bi bi-file-earmark-excel me-1"></i> Exportar a Excel
-              </button>
-            </div>
-          </div>
-
-          <div class="row g-2 mb-3">
-            <div class="col-md-6">
-              <input type="text" id="filterInput" class="form-control" placeholder="Buscar por Folio (ej. V-0001, R-0001), Nombre, Familia o Vacuna..." oninput="filtrarTabla()">
-            </div>
-            <div class="col-md-4">
-              <select id="filterPago" class="form-select" onchange="filtrarTabla()">
-                <option value="">Todas las formas de pago</option>
-                <option value="Efectivo">Efectivo</option>
-                <option value="Tarjeta">Tarjeta</option>
-                <option value="Transferencia">Transferencia</option>
-              </select>
-            </div>
-            <div class="col-md-2">
-              <button class="btn btn-secondary w-100 fw-semibold" onclick="cargarHistorial()"><i class="bi bi-arrow-clockwise me-1"></i> Actualizar</button>
-            </div>
-          </div>
-
-          <div class="table-responsive" style="max-height: 480px; overflow-y: auto;">
-            <table class="table table-hover align-middle border" id="tablaHistorial" style="font-size: 0.88rem;">
-              <thead class="table-light">
-                <tr>
-                  <th>Fecha / Hora</th>
-                  <th>Folio</th>
-                  <th>Folio Ref.</th>
-                  <th>Matrícula</th>
-                  <th>Paciente</th>
-                  <th>Familia</th>
-                  <th>Sección / Grupo</th>
-                  <th>Concepto / Vacuna</th>
-                  <th>Cant.</th>
-                  <th>Importe</th>
-                  <th>Total</th>
-                  <th>Forma Pago</th>
-                  <th class="text-center">Estado</th>
-                  <th class="text-center">Acciones</th>
-                </tr>
-              </thead>
-              <tbody id="historialBody">
-                <tr><td colspan="14" class="text-center py-4 text-muted">Cargando registros desde la base de datos...</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-      </div>
-
-    </div>
-  </div>
-</div>
-
-<!-- MODAL DE REEMBOLSO AUDITADO -->
-<div class="modal fade" id="modalReembolso" tabindex="-1" aria-labelledby="modalReembolsoLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg">
-      <div class="modal-header bg-warning text-dark border-0">
-        <h5 class="modal-title fw-bold" id="modalReembolsoLabel">
-          <i class="bi bi-arrow-counterclockwise me-2"></i>Procesar Reembolso Auditado
-        </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body p-4">
-        <input type="hidden" id="rf-item-id">
-        <input type="hidden" id="rf-folio-origen">
-        <input type="hidden" id="rf-monto-maximo">
-
-        <div class="alert alert-light border p-3 mb-3" style="font-size: 0.88rem;">
-          <div class="d-flex justify-content-between"><span>Folio Venta Original:</span> <strong id="rf-txt-folio">--</strong></div>
-          <div class="d-flex justify-content-between"><span>Paciente:</span> <strong id="rf-txt-paciente">--</strong></div>
-          <div class="d-flex justify-content-between"><span>Vacuna / Cant:</span> <strong id="rf-txt-concepto">--</strong></div>
-          <div class="d-flex justify-content-between text-primary"><span>Total de la Transacción:</span> <strong id="rf-txt-total">$0.00</strong></div>
-        </div>
-
-        <div class="mb-3">
-          <label class="form-label fw-bold text-dark small">Tipo de Reembolso</label>
-          <div class="d-flex gap-3">
-            <div class="form-check">
-              <input class="form-check-input" type="radio" name="radioTipoReembolso" id="rfTipoTotal" value="TOTAL" checked onchange="toggleTipoReembolso()">
-              <label class="form-check-label fw-semibold" for="rfTipoTotal">Total (Devolución completa)</label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="radio" name="radioTipoReembolso" id="rfTipoParcial" value="PARCIAL" onchange="toggleTipoReembolso()">
-              <label class="form-check-label fw-semibold" for="rfTipoParcial">Parcial (Ajuste / Cantidad menor)</label>
-            </div>
-          </div>
-        </div>
-
-        <div class="mb-3">
-          <label class="form-label fw-bold text-dark small">Monto a Reembolsar ($)</label>
-          <div class="input-group">
-            <span class="input-group-text bg-light fw-bold">$</span>
-            <input type="number" step="0.01" class="form-control fw-bold fs-5 text-danger" id="rf-monto-input" readonly>
-          </div>
-          <div class="form-text text-muted" id="rf-monto-help">Devolución por el monto completo del concepto.</div>
-        </div>
-
-        <div class="mb-3">
-          <label class="form-label fw-bold text-dark small">Motivo del Reembolso (Obligatorio para Auditoría)</label>
-          <textarea class="form-control" id="rf-motivo-input" rows="2" placeholder="Ej: Paciente canceló aplicación, error en cobro, contraindicación médica..."></textarea>
-        </div>
-
-        <div class="p-2 rounded bg-warning-subtle text-warning-emphasis small border border-warning">
-          <i class="bi bi-shield-exclamation me-1"></i> Se generará un nuevo Folio de Egreso <strong>R-XXXX</strong> vinculado a este movimiento para el corte de caja.
-        </div>
-      </div>
-      <div class="modal-footer border-0 bg-light">
-        <button type="button" class="btn btn-secondary fw-semibold" data-bs-dismiss="modal">Cancelar</button>
-        <button type="button" class="btn btn-warning fw-bold text-dark" onclick="ejecutarReembolsoAuditado()">
-          <i class="bi bi-check-circle-fill me-1"></i> Confirmar y Generar Folio R-
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL CAMBIAR CONTRASEÑA -->
-<div class="modal fade" id="modalCambiarPassword" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg">
-      <div class="modal-header bg-primary text-white border-0">
-        <h5 class="modal-title fw-bold"><i class="bi bi-key me-2"></i>Cambiar Contraseña</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body p-4">
-        <div class="mb-3">
-          <label class="form-label fw-bold small text-dark">Nueva Contraseña</label>
-          <input type="password" id="newPasswordInput" class="form-control" placeholder="Mínimo 6 caracteres">
-        </div>
-        <div class="mb-3">
-          <label class="form-label fw-bold small text-dark">Confirmar Nueva Contraseña</label>
-          <input type="password" id="confirmPasswordInput" class="form-control" placeholder="Repite la contraseña">
-        </div>
-      </div>
-      <div class="modal-footer bg-light border-0">
-        <button type="button" class="btn btn-secondary fw-semibold" data-bs-dismiss="modal">Cancelar</button>
-        <button type="button" class="btn btn-primary fw-bold" onclick="cambiarPassword()">Guardar Contraseña</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div id="print-area"></div>
-
-<!-- Scripts JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="config.js"></script>
-<script src="app.js"></script>
-
-</body>
-</html>
+// Exposición explícita de funciones a window para eventos HTML inline
+window.iniciarSesion = iniciarSesion;
+window.cerrarSesion = cerrarSesion;
+window.cambiarPassword = cambiarPassword;
+window.setModo = setModo;
+window.buscarPersona = buscarPersona;
+window.seleccionarPersona = seleccionarPersona;
+window.agregarAlRecibo = agregarAlRecibo;
+window.eliminarDelRecibo = eliminarDelRecibo;
+window.actualizarFormaPagoTicket = actualizarFormaPagoTicket;
+window.confirmarGuardarRecibo = confirmarGuardarRecibo;
+window.confirmarImprimirRecibo = confirmarImprimirRecibo;
+window.cargarHistorial = cargarHistorial;
+window.filtrarTabla = filtrarTabla;
+window.toggleSuperUsuario = toggleSuperUsuario;
+window.abrirModalReembolso = abrirModalReembolso;
+window.toggleTipoReembolso = toggleTipoReembolso;
+window.ejecutarReembolsoAuditado = ejecutarReembolsoAuditado;
+window.cancelarRegistro = cancelarRegistro;
+window.reimprimirFolio = reimprimirFolio;
+window.exportarExcel = exportarExcel;
