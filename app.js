@@ -102,9 +102,17 @@ function mostrarAplicacion(user) {
   const appContent = document.getElementById('appContent');
   const userDisplay = document.getElementById('userEmailDisplay');
 
-  if (loginOverlay) loginOverlay.style.display = 'none';
-  if (appContent) appContent.style.display = 'block';
-  if (userDisplay && user) userDisplay.innerText = user.email;
+  if (loginOverlay) {
+    loginOverlay.classList.add('d-none');
+    loginOverlay.classList.remove('d-flex');
+    loginOverlay.style.display = 'none';
+  }
+  if (appContent) {
+    appContent.style.display = 'block';
+  }
+  if (userDisplay && user) {
+    userDisplay.innerText = user.email;
+  }
 
   obtenerSiguienteFolioVenta();
   actualizarFechaTicket();
@@ -115,8 +123,15 @@ function mostrarAplicacion(user) {
 function mostrarLogin() {
   const loginOverlay = document.getElementById('loginOverlay');
   const appContent = document.getElementById('appContent');
-  if (loginOverlay) loginOverlay.style.display = 'flex';
-  if (appContent) appContent.style.display = 'none';
+
+  if (loginOverlay) {
+    loginOverlay.classList.remove('d-none');
+    loginOverlay.classList.add('d-flex');
+    loginOverlay.style.display = 'flex';
+  }
+  if (appContent) {
+    appContent.style.display = 'none';
+  }
 }
 
 // ==========================================
