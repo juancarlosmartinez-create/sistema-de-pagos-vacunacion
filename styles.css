@@ -119,11 +119,16 @@ body {
 .results-list tr,
 .results-list div,
 button,
-.nav-link {
+.nav-link,
+.btn {
   cursor: pointer !important;
 }
 
-/* 1. PESTAÑAS PRINCIPALES EN 3D (NUEVO COBRO Y HISTORIAL) */
+/* =========================================================
+   ESTILOS DE BOTONES 3D DE TODO EL MÓDULO
+   ========================================================= */
+
+/* 1. PESTAÑAS PRINCIPALES (NUEVO COBRO Y HISTORIAL) */
 .nav-tabs {
   border-bottom: none !important;
   gap: 10px;
@@ -131,116 +136,117 @@ button,
 }
 
 .nav-tabs .nav-link {
-  color: #475569;
-  font-weight: 700;
+  color: #475569 !important;
+  font-weight: 700 !important;
   border: 1px solid #cbd5e1 !important;
-  background: linear-gradient(180deg, #ffffff 0%, #e2e8f0 100%);
+  background: linear-gradient(180deg, #ffffff 0%, #e2e8f0 100%) !important;
   border-radius: 10px !important;
-  padding: 8px 20px;
-  font-size: 0.9rem;
-  box-shadow: 0 4px 0 #94a3b8, 0 3px 6px rgba(0, 0, 0, 0.1);
-  transition: all 0.15s ease-in-out;
+  padding: 8px 20px !important;
+  font-size: 0.9rem !important;
+  box-shadow: 0 4px 0 #94a3b8, 0 3px 6px rgba(0, 0, 0, 0.1) !important;
+  transition: all 0.15s ease-in-out !important;
 }
 
 .nav-tabs .nav-link:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 0 #94a3b8, 0 5px 10px rgba(0, 0, 0, 0.15);
-  background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 0 #94a3b8, 0 5px 10px rgba(0, 0, 0, 0.15) !important;
+  background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%) !important;
+}
+
+.nav-tabs .nav-link:active {
+  transform: translateY(2px) !important;
+  box-shadow: 0 2px 0 #94a3b8 !important;
 }
 
 .nav-tabs .nav-link.active {
   color: #ffffff !important;
   background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%) !important;
-  border-color: #1e40af !important;
+  border: 1px solid #1e40af !important;
   box-shadow: 0 4px 0 #1e3a8a, 0 4px 10px rgba(37, 99, 235, 0.3) !important;
 }
 
-.nav-tabs .nav-link:active {
-  transform: translateY(2px);
-  box-shadow: 0 2px 0 #94a3b8;
-}
-
 .nav-tabs .nav-link.active:active {
-  transform: translateY(2px);
-  box-shadow: 0 2px 0 #1e3a8a;
+  transform: translateY(2px) !important;
+  box-shadow: 0 2px 0 #1e3a8a !important;
 }
 
-/* 2. BOTONES "BUSCAR ALUMNO" (AZUL 3D) Y "PERSONA EXTERNA" (GRIS CLARO 3D) */
-.btn-mode,
-.btn-group .btn {
-  font-weight: 700 !important;
-  border-radius: 20px !important;
-  padding: 6px 18px !important;
-  font-size: 0.85rem !important;
-  transition: all 0.15s ease-in-out !important;
-}
-
-/* BUSCAR ALUMNO (AZUL 3D) */
+/* 2. BOTONES "BUSCAR ALUMNO" (AZUL 3D) Y "PERSONA EXTERNA" (GRIS 3D) */
 #btnBuscarAlumno,
+.btn-group .btn-primary,
 .btn-mode.active,
-.btn-group .btn-primary {
+.btn-mode-active {
   color: #ffffff !important;
   background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%) !important;
   border: 1px solid #1e40af !important;
+  border-radius: 20px !important;
+  padding: 6px 18px !important;
+  font-size: 0.85rem !important;
+  font-weight: 700 !important;
   box-shadow: 0 4px 0 #1e3a8a, 0 3px 6px rgba(37, 99, 235, 0.3) !important;
+  transition: all 0.15s ease-in-out !important;
 }
 
 #btnBuscarAlumno:hover,
-.btn-mode.active:hover,
-.btn-group .btn-primary:hover {
+.btn-group .btn-primary:hover,
+.btn-mode.active:hover {
   transform: translateY(-2px) !important;
   box-shadow: 0 6px 0 #1e3a8a, 0 5px 10px rgba(37, 99, 235, 0.4) !important;
 }
 
 #btnBuscarAlumno:active,
-.btn-mode.active:active,
-.btn-group .btn-primary:active {
+.btn-group .btn-primary:active,
+.btn-mode.active:active {
   transform: translateY(2px) !important;
   box-shadow: 0 2px 0 #1e3a8a !important;
 }
 
-/* PERSONA EXTERNA (GRIS CLARO 3D) */
 #btnPersonaExterna,
-.btn-mode:not(.active),
 .btn-group .btn-outline-primary,
-.btn-group .btn-light {
+.btn-group .btn-light,
+.btn-mode:not(.active) {
   color: #475569 !important;
   background: linear-gradient(180deg, #ffffff 0%, #e2e8f0 100%) !important;
   border: 1px solid #cbd5e1 !important;
+  border-radius: 20px !important;
+  padding: 6px 18px !important;
+  font-size: 0.85rem !important;
+  font-weight: 700 !important;
   box-shadow: 0 4px 0 #94a3b8, 0 3px 6px rgba(0, 0, 0, 0.1) !important;
+  transition: all 0.15s ease-in-out !important;
 }
 
 #btnPersonaExterna:hover,
-.btn-mode:not(.active):hover,
-.btn-group .btn-outline-primary:hover {
+.btn-group .btn-outline-primary:hover,
+.btn-mode:not(.active):hover {
   transform: translateY(-2px) !important;
   box-shadow: 0 6px 0 #94a3b8, 0 5px 10px rgba(0, 0, 0, 0.15) !important;
   background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%) !important;
 }
 
 #btnPersonaExterna:active,
-.btn-mode:not(.active):active,
-.btn-group .btn-outline-primary:active {
+.btn-group .btn-outline-primary:active,
+.btn-mode:not(.active):active {
   transform: translateY(2px) !important;
   box-shadow: 0 2px 0 #94a3b8 !important;
 }
 
 /* 3. BOTÓN "AGREGAR PACIENTE AL RECIBO" (AZUL 3D, PEQUEÑO Y CENTRADO) */
-.btn-agregar-paciente,
 #btnAgregarPaciente,
 #btnAgregar,
 button[id*="Agregar"],
-button[id*="agregar"] {
-  display: flex !important;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
+button[id*="agregar"],
+.btn-agregar-paciente,
+.custom-card .btn-primary:not(#btnBuscarAlumno):not(.btn-mode) {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
   width: auto !important;
   max-width: fit-content !important;
-  margin: 14px auto 6px auto !important;
+  margin: 12px auto !important;
   font-size: 0.85rem !important;
   font-weight: 700 !important;
-  padding: 8px 24px !important;
+  padding: 8px 22px !important;
   border-radius: 8px !important;
   background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%) !important;
   color: #ffffff !important;
@@ -250,41 +256,50 @@ button[id*="agregar"] {
   cursor: pointer !important;
 }
 
-.btn-agregar-paciente:hover,
+/* Forzar centrado del contenedor del botón agregar */
+.custom-card div:has(> #btnAgregarPaciente),
+.custom-card div:has(> button[id*="Agregar"]) {
+  display: flex !important;
+  justify-content: center !important;
+}
+
 #btnAgregarPaciente:hover,
 #btnAgregar:hover,
 button[id*="Agregar"]:hover,
-button[id*="agregar"]:hover {
+button[id*="agregar"]:hover,
+.btn-agregar-paciente:hover,
+.custom-card .btn-primary:not(#btnBuscarAlumno):not(.btn-mode):hover {
   transform: translateY(-2px) !important;
   box-shadow: 0 6px 0 #1e3a8a, 0 6px 12px rgba(37, 99, 235, 0.4) !important;
 }
 
-.btn-agregar-paciente:active,
 #btnAgregarPaciente:active,
 #btnAgregar:active,
 button[id*="Agregar"]:active,
-button[id*="agregar"]:active {
+button[id*="agregar"]:active,
+.btn-agregar-paciente:active,
+.custom-card .btn-primary:not(#btnBuscarAlumno):not(.btn-mode):active {
   transform: translateY(2px) !important;
   box-shadow: 0 2px 0 #1e3a8a !important;
 }
 
 /* 4. BOTÓN "GUARDAR REGISTRO" (VERDE 3D, PEQUEÑO Y CENTRADO) */
-.btn-guardar-registro,
 #btnGuardarRegistro,
 #btnGuardar,
 button[id*="Guardar"],
 button[id*="guardar"],
+.btn-guardar-registro,
 .btn-success {
-  display: flex !important;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
   width: auto !important;
   max-width: fit-content !important;
-  margin: 16px auto 6px auto !important;
+  margin: 16px auto 8px auto !important;
   font-size: 0.88rem !important;
   font-weight: 800 !important;
-  padding: 9px 26px !important;
+  padding: 9px 28px !important;
   border-radius: 8px !important;
   background: linear-gradient(180deg, #00c853 0%, #009624 100%) !important;
   color: #ffffff !important;
@@ -292,25 +307,34 @@ button[id*="guardar"],
   box-shadow: 0 4px 0 #005c14, 0 4px 8px rgba(0, 200, 83, 0.35) !important;
   transition: all 0.15s ease-in-out !important;
   cursor: pointer !important;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.5px !important;
+  text-transform: uppercase !important;
 }
 
-.btn-guardar-registro:hover,
+/* Forzar centrado del contenedor del botón guardar */
+div:has(> #btnGuardarRegistro),
+div:has(> button[id*="Guardar"]) {
+  text-align: center !important;
+  display: flex !important;
+  justify-content: center !important;
+}
+
 #btnGuardarRegistro:hover,
 #btnGuardar:hover,
 button[id*="Guardar"]:hover,
 button[id*="guardar"]:hover,
+.btn-guardar-registro:hover,
 .btn-success:hover {
   transform: translateY(-2px) !important;
   box-shadow: 0 6px 0 #005c14, 0 6px 12px rgba(0, 200, 83, 0.45) !important;
   background: linear-gradient(180deg, #00e676 0%, #00a844 100%) !important;
 }
 
-.btn-guardar-registro:active,
 #btnGuardarRegistro:active,
 #btnGuardar:active,
 button[id*="Guardar"]:active,
 button[id*="guardar"]:active,
+.btn-guardar-registro:active,
 .btn-success:active {
   transform: translateY(2px) !important;
   box-shadow: 0 2px 0 #005c14 !important;
