@@ -179,8 +179,53 @@ button,
   box-shadow: 0 2px 0 #1e3a8a !important;
 }
 
-/* 2. BOTONES "BUSCAR ALUMNO" (AZUL 3D) Y "PERSONA EXTERNA" (GRIS 3D) */
+/* 2. BOTONES "BUSCAR ALUMNO" Y "PERSONA EXTERNA" (ESTADO ACTIVO AZUL 3D / INACTIVO GRIS 3D) */
+
+/* Estado Inactivo (Gris 3D por defecto) */
 #btnBuscarAlumno,
+#btnPersonaExterna,
+.btn-group .btn-outline-primary,
+.btn-group .btn-light,
+.btn-mode:not(.active),
+#btnBuscarAlumno:not(.active):not(.btn-primary),
+#btnPersonaExterna:not(.active):not(.btn-primary) {
+  color: #475569 !important;
+  background: linear-gradient(180deg, #ffffff 0%, #e2e8f0 100%) !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 20px !important;
+  padding: 6px 18px !important;
+  font-size: 0.85rem !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 0 #94a3b8, 0 3px 6px rgba(0, 0, 0, 0.1) !important;
+  transition: all 0.15s ease-in-out !important;
+}
+
+#btnBuscarAlumno:hover,
+#btnPersonaExterna:hover,
+.btn-group .btn-outline-primary:hover,
+.btn-mode:not(.active):hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 0 #94a3b8, 0 5px 10px rgba(0, 0, 0, 0.15) !important;
+  background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%) !important;
+}
+
+#btnBuscarAlumno:active,
+#btnPersonaExterna:active,
+.btn-group .btn-outline-primary:active,
+.btn-mode:not(.active):active {
+  transform: translateY(2px) !important;
+  box-shadow: 0 2px 0 #94a3b8 !important;
+}
+
+/* Estado Activo (Azul 3D con texto blanco) */
+#btnBuscarAlumno.active,
+#btnPersonaExterna.active,
+#btnBuscarAlumno.btn-primary,
+#btnPersonaExterna.btn-primary,
+#btnBuscarAlumno.btn-mode-active,
+#btnPersonaExterna.btn-mode-active,
+#btnBuscarAlumno[aria-pressed="true"],
+#btnPersonaExterna[aria-pressed="true"],
 .btn-group .btn-primary,
 .btn-mode.active,
 .btn-mode-active {
@@ -195,48 +240,29 @@ button,
   transition: all 0.15s ease-in-out !important;
 }
 
-#btnBuscarAlumno:hover,
+#btnBuscarAlumno.active:hover,
+#btnPersonaExterna.active:hover,
+#btnBuscarAlumno.btn-primary:hover,
+#btnPersonaExterna.btn-primary:hover,
+#btnBuscarAlumno.btn-mode-active:hover,
+#btnPersonaExterna.btn-mode-active:hover,
 .btn-group .btn-primary:hover,
 .btn-mode.active:hover {
   transform: translateY(-2px) !important;
   box-shadow: 0 6px 0 #1e3a8a, 0 5px 10px rgba(37, 99, 235, 0.4) !important;
+  background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%) !important;
 }
 
-#btnBuscarAlumno:active,
+#btnBuscarAlumno.active:active,
+#btnPersonaExterna.active:active,
+#btnBuscarAlumno.btn-primary:active,
+#btnPersonaExterna.btn-primary:active,
+#btnBuscarAlumno.btn-mode-active:active,
+#btnPersonaExterna.btn-mode-active:active,
 .btn-group .btn-primary:active,
 .btn-mode.active:active {
   transform: translateY(2px) !important;
   box-shadow: 0 2px 0 #1e3a8a !important;
-}
-
-#btnPersonaExterna,
-.btn-group .btn-outline-primary,
-.btn-group .btn-light,
-.btn-mode:not(.active) {
-  color: #475569 !important;
-  background: linear-gradient(180deg, #ffffff 0%, #e2e8f0 100%) !important;
-  border: 1px solid #cbd5e1 !important;
-  border-radius: 20px !important;
-  padding: 6px 18px !important;
-  font-size: 0.85rem !important;
-  font-weight: 700 !important;
-  box-shadow: 0 4px 0 #94a3b8, 0 3px 6px rgba(0, 0, 0, 0.1) !important;
-  transition: all 0.15s ease-in-out !important;
-}
-
-#btnPersonaExterna:hover,
-.btn-group .btn-outline-primary:hover,
-.btn-mode:not(.active):hover {
-  transform: translateY(-2px) !important;
-  box-shadow: 0 6px 0 #94a3b8, 0 5px 10px rgba(0, 0, 0, 0.15) !important;
-  background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%) !important;
-}
-
-#btnPersonaExterna:active,
-.btn-group .btn-outline-primary:active,
-.btn-mode:not(.active):active {
-  transform: translateY(2px) !important;
-  box-shadow: 0 2px 0 #94a3b8 !important;
 }
 
 /* 3. BOTÓN "AGREGAR PACIENTE AL RECIBO" (AZUL 3D, PEQUEÑO Y CENTRADO) */
