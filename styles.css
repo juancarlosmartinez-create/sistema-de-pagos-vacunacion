@@ -129,20 +129,128 @@ body {
   font-weight: 600;
 }
 
-/* PESTAÑAS Y NAVEGACIÓN */
+/* 1. PESTAÑAS Y NAVEGACIÓN EN 3D (NUEVO COBRO / HISTORIAL Y REPORTES) */
+.nav-tabs {
+  border-bottom: none !important;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
 .nav-tabs .nav-link {
-  color: #64748b;
+  color: #475569;
   font-weight: 700;
-  border: none;
-  border-bottom: 3px solid transparent;
-  padding: 12px 24px;
-  font-size: 0.95rem;
+  border: 1px solid #cbd5e1 !important;
+  background: linear-gradient(180deg, #ffffff 0%, #e2e8f0 100%);
+  border-radius: 10px !important;
+  padding: 8px 20px;
+  font-size: 0.9rem;
+  box-shadow: 0 4px 0 #94a3b8, 0 3px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.15s ease-in-out;
+}
+
+.nav-tabs .nav-link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 #94a3b8, 0 5px 10px rgba(0, 0, 0, 0.15);
+  background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
 }
 
 .nav-tabs .nav-link.active {
-  color: var(--accent-blue);
-  border-bottom-color: var(--accent-blue);
-  background: transparent;
+  color: #ffffff !important;
+  background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%) !important;
+  border-color: #1e40af !important;
+  box-shadow: 0 4px 0 #1e3a8a, 0 4px 10px rgba(37, 99, 235, 0.3) !important;
+}
+
+.nav-tabs .nav-link:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 #94a3b8;
+}
+
+.nav-tabs .nav-link.active:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 #1e3a8a;
+}
+
+/* 2. BOTÓN AGREGAR PACIENTE (3D, MÁS PEQUEÑO Y CENTRADO) */
+.btn-agregar-paciente,
+#btnAgregarPaciente,
+button[id*="Agregar"],
+button[id*="agregar"] {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 0.82rem !important;
+  font-weight: 700 !important;
+  padding: 6px 18px !important;
+  width: auto !important;
+  max-width: fit-content;
+  margin: 12px auto 0 auto !important;
+  background: linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid #1e40af !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 0 #1e3a8a, 0 3px 6px rgba(37, 99, 235, 0.3) !important;
+  transition: all 0.15s ease !important;
+  cursor: pointer !important;
+}
+
+.btn-agregar-paciente:hover,
+#btnAgregarPaciente:hover,
+button[id*="Agregar"]:hover,
+button[id*="agregar"]:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 0 #1e3a8a, 0 6px 12px rgba(37, 99, 235, 0.4) !important;
+}
+
+.btn-agregar-paciente:active,
+#btnAgregarPaciente:active,
+button[id*="Agregar"]:active,
+button[id*="agregar"]:active {
+  transform: translateY(2px) !important;
+  box-shadow: 0 2px 0 #1e3a8a !important;
+}
+
+/* 4. BOTÓN GUARDAR REGISTRO (3D, MÁS PEQUEÑO Y ALINEADO A LA DERECHA) */
+.btn-guardar-registro,
+#btnGuardarRegistro,
+button[id*="Guardar"],
+button[id*="guardar"] {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 0.85rem !important;
+  font-weight: 800 !important;
+  padding: 8px 22px !important;
+  width: auto !important;
+  max-width: fit-content;
+  margin: 14px 0 0 auto !important;
+  background: linear-gradient(180deg, #00e676 0%, #00a844 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid #008a37 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 0 #006628, 0 4px 8px rgba(0, 200, 83, 0.35) !important;
+  transition: all 0.15s ease !important;
+  cursor: pointer !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.btn-guardar-registro:hover,
+#btnGuardarRegistro:hover,
+button[id*="Guardar"]:hover,
+button[id*="guardar"]:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 0 #006628, 0 6px 12px rgba(0, 200, 83, 0.45) !important;
+}
+
+.btn-guardar-registro:active,
+#btnGuardarRegistro:active,
+button[id*="Guardar"]:active,
+button[id*="guardar"]:active {
+  transform: translateY(2px) !important;
+  box-shadow: 0 2px 0 #006628 !important;
 }
 
 /* TARJETAS KPI */
