@@ -60,13 +60,13 @@
         <img src="https://lh3.googleusercontent.com/d/17IUhG3ADvHxHm4wg9CpszjbiEfS5f2Ms" alt="Logo CCM" class="header-logo" onerror="this.src='https://via.placeholder.com/48?text=CCM'">
         <div>
           <h1 class="header-title">Colegio Ciudad de México</h1>
-          <p class="header-subtitle">Módulo de Vacunación - Sistema de Gestión y Cobro</p>
+          <p class="header-subtitle">Módulo de Vacunación - Sistema de Registro, Cobro y Aplicación</p>
         </div>
       </div>
 
       <div class="d-flex align-items-center gap-3">
         <div class="text-end border-end pe-3 border-secondary">
-          <span class="small text-white-50 d-block" id="userEmailDisplay">usuario@colegiociudad.edu.mx</span>
+          <span class="small text-white d-block fw-bold" id="userEmailDisplay">MITZEL (auxiliar.caja@colegiociudad.edu.mx)</span>
           <div class="mt-1">
             <button class="btn btn-sm btn-outline-light py-0 px-2 small me-1" data-bs-toggle="modal" data-bs-target="#modalCambiarPassword">
               <i class="bi bi-key me-1"></i>Contraseña
@@ -87,13 +87,18 @@
     <!-- NAVEGACIÓN ENTRE PESTAÑAS -->
     <ul class="nav nav-tabs mb-4 border-bottom no-print" id="mainTab" role="tablist">
       <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="cobro-tab" data-bs-toggle="tab" data-bs-target="#cobro-pane" type="button">
+        <button class="nav-link active fw-bold" id="cobro-tab" data-bs-toggle="tab" data-bs-target="#cobro-pane" type="button">
           <i class="bi bi-cash-stack me-2"></i>Nuevo Cobro (Multi-paciente)
         </button>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link" id="reportes-tab" data-bs-toggle="tab" data-bs-target="#reportes-pane" type="button" onclick="cargarHistorial()">
+        <button class="nav-link fw-bold" id="reportes-tab" data-bs-toggle="tab" data-bs-target="#reportes-pane" type="button" onclick="cargarHistorial()">
           <i class="bi bi-bar-chart-line-fill me-2"></i>Historial y Reportes Admin
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link fw-bold" id="observaciones-tab" data-bs-toggle="tab" data-bs-target="#observaciones-pane" type="button" onclick="cargarObservaciones()">
+          <i class="bi bi-journal-bookmark-fill me-2"></i>Observaciones y Aprendizaje
         </button>
       </li>
     </ul>
@@ -240,125 +245,146 @@
                 </div>
 
                 <div class="pt-2 d-flex justify-content-between align-items-center ticket-total-block">
-                  <span class="fw-bold text-dark ticket-total-title">TOTAL A PAGAR</span>
+                  <span class="fw-bold text-dark ticket-total-title">TOTAL</span>
                   <span class="fw-bold text-success ticket-total-amount">$<span id="t-total">0.00</span></span>
                 </div>
               </div>
 
               <div class="mb-3 no-print">
-                <label class="form-label text-muted small fw-semibold">Forma de Pago del Recibo</label>
-                <select id="forma_pago" class="form-select fw-bold" onchange="actualizarFormaPagoTicket()">
-                  <option value="Efectivo">Efectivo</option>
-                  <option value="Tarjeta">Tarjeta de Crédito / Débito</option>
-                  <option value="Transferencia">Transferencia Electrónica</option>
+                <label class="form-label small fw-semibold text-dark">Forma de Pago</label>
+                <select id="forma_pago" class="form-select" onchange="actualizarFormaPagoTicket()">
+                  <option value="Efectivo" selected>Efectivo</option>
+                  <option value="Tarjeta de Débito/Crédito">Tarjeta de Débito/Crédito</option>
+                  <option value="Transferencia">Transferencia</option>
                 </select>
               </div>
 
-              <!-- BOTÓN UNIFICADO -->
               <div class="d-grid gap-2 no-print">
-                <button type="button" class="btn btn-success py-2.5 fw-bold text-white shadow-sm" onclick="confirmarGuardarRecibo()">
-                  <i class="bi bi-floppy-fill me-2"></i> Guardar Registro
+                <button type="button" class="btn btn-success py-2.5 fw-bold shadow-sm" onclick="confirmarGuardarRecibo()">
+                  <i class="bi bi-check-circle-fill me-2"></i>Guardar e Imprimir Recibo
+                </button>
+                <button type="button" class="btn btn-outline-danger btn-sm" onclick="resetearFormularioVenta()">
+                  <i class="bi bi-x-circle me-1"></i> Cancelar Venta Actual
                 </button>
               </div>
-
             </div>
           </div>
 
         </div>
       </div>
 
-      <!-- PESTAÑA 2: REPORTES Y AUDITORÍA -->
-      <div class="tab-pane fade no-print" id="reportes-pane" role="tabpanel">
+      <!-- PESTAÑA 2: HISTORIAL Y REPORTES ADMIN -->
+      <div class="tab-pane fade" id="reportes-pane" role="tabpanel">
         
-        <!-- TARJETAS KPI METRICAS -->
-        <div class="row g-3 mb-4">
+        <!-- CARDS KPIS -->
+        <div class="row g-3 mb-4 no-print">
           <div class="col-md-3">
-            <div class="kpi-card shadow-sm" style="border-left-color: #059669;">
-              <div class="text-muted small fw-semibold">Ingreso Neto Real</div>
-              <div class="fs-3 fw-bold text-success" id="kpi-total">$0.00</div>
-              <div class="small text-muted" id="kpi-bruto-sub">Bruto: $0.00</div>
+            <div class="custom-card p-3 border-start border-4 border-success">
+              <span class="text-muted small fw-semibold d-block mb-1">Ingreso Neto Real</span>
+              <h3 class="fw-bold text-success mb-0" id="kpi-total">$0.00</h3>
+              <small class="text-muted" id="kpi-bruto-sub">Bruto: $0.00</small>
             </div>
           </div>
           <div class="col-md-3">
-            <div class="kpi-card shadow-sm" style="border-left-color: #dc2626;">
-              <div class="text-muted small fw-semibold">Total Reembolsado</div>
-              <div class="fs-3 fw-bold text-danger" id="kpi-reembolsos">$0.00</div>
-              <div class="small text-muted" id="kpi-reembolsos-cant">0 Devoluciones</div>
+            <div class="custom-card p-3 border-start border-4 border-warning">
+              <span class="text-muted small fw-semibold d-block mb-1">Reembolsos / Devoluciones</span>
+              <h3 class="fw-bold text-warning-emphasis mb-0" id="kpi-reembolsos">$0.00</h3>
+              <small class="text-muted" id="kpi-reembolsos-cant">0 Devoluciones</small>
             </div>
           </div>
           <div class="col-md-3">
-            <div class="kpi-card shadow-sm" style="border-left-color: #2563eb;">
-              <div class="text-muted small fw-semibold">Vacunas Aplicadas</div>
-              <div class="fs-3 fw-bold text-primary" id="kpi-count">0</div>
-              <div class="small text-muted"><span id="kpi-folios">0</span> Folios Registrados</div>
+            <div class="custom-card p-3 border-start border-4 border-primary">
+              <span class="text-muted small fw-semibold d-block mb-1">Vacunas Vendidas</span>
+              <h3 class="fw-bold text-primary mb-0" id="kpi-count">0</h3>
+              <small class="text-muted"><span id="kpi-folios">0</span> Folios de Venta</small>
             </div>
           </div>
           <div class="col-md-3">
-            <div class="kpi-card shadow-sm" style="border-left-color: #7c3aed;">
-              <div class="text-muted small fw-semibold">Efectivo vs Otros (Neto)</div>
-              <div class="fs-6 fw-bold text-dark mt-1">Efec: <span id="kpi-efectivo" class="text-success">$0.00</span></div>
-              <div class="fs-6 fw-bold text-dark">Otros: <span id="kpi-otros" class="text-primary">$0.00</span></div>
+            <div class="custom-card p-3 border-start border-4 border-info">
+              <span class="text-muted small fw-semibold d-block mb-1">Efectivo vs Otros</span>
+              <h4 class="fw-bold text-dark mb-0"><span id="kpi-efectivo">$0.00</span> / <span id="kpi-otros">$0.00</span></h4>
+              <small class="text-muted">Desglose neto de ingresos</small>
             </div>
           </div>
         </div>
 
-        <div class="custom-card p-4">
-          <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
-            <h5 class="fw-bold m-0 text-dark"><i class="bi bi-journal-check me-2 text-primary"></i> Historial General de Registros (Supabase)</h5>
-            
-            <div class="d-flex align-items-center gap-3">
-              <div class="form-check form-switch bg-light border px-3 py-1 rounded-3">
-                <input class="form-check-input" type="checkbox" id="switchSuperUsuario" onchange="toggleSuperUsuario(this.checked)">
-                <label class="form-check-label small fw-bold text-dark" for="switchSuperUsuario">
-                  <i class="bi bi-shield-lock-fill text-warning me-1"></i>Modo Superusuario
-                </label>
-              </div>
-              
-              <button class="btn btn-outline-success fw-bold btn-sm rounded-2" onclick="exportarExcel()">
-                <i class="bi bi-file-earmark-excel me-1"></i> Exportar a Excel
-              </button>
+        <!-- FILTROS Y ACCIONES DE REPORTES -->
+        <div class="custom-card p-3 mb-4 no-print">
+          <div class="row g-3 align-items-end">
+            <div class="col-md-2">
+              <label class="form-label small fw-bold text-dark mb-1"><i class="bi bi-calendar-event me-1"></i>Fecha Inicial</label>
+              <input type="date" id="filterFechaInicio" class="form-control form-control-sm" onchange="filtrarTabla()">
             </div>
-          </div>
-
-          <div class="row g-2 mb-3">
-            <div class="col-md-6">
-              <input type="text" id="filterInput" class="form-control" placeholder="Buscar por Folio (ej. V-0001, R-0001), Nombre, Familia o Vacuna..." oninput="filtrarTabla()">
+            <div class="col-md-2">
+              <label class="form-label small fw-bold text-dark mb-1"><i class="bi bi-calendar-event-fill me-1"></i>Fecha Final</label>
+              <input type="date" id="filterFechaFin" class="form-control form-control-sm" onchange="filtrarTabla()">
             </div>
-            <div class="col-md-4">
-              <select id="filterPago" class="form-select" onchange="filtrarTabla()">
-                <option value="">Todas las formas de pago</option>
+            <div class="col-md-3">
+              <label class="form-label small fw-bold text-dark mb-1"><i class="bi bi-search me-1"></i>Buscar en Historial</label>
+              <input type="text" id="filterInput" class="form-control form-control-sm" placeholder="Folio, paciente, vacuna, usuario..." oninput="filtrarTabla()">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label small fw-bold text-dark mb-1">Forma Pago</label>
+              <select id="filterPago" class="form-select form-select-sm" onchange="filtrarTabla()">
+                <option value="">Todas</option>
                 <option value="Efectivo">Efectivo</option>
-                <option value="Tarjeta">Tarjeta</option>
+                <option value="Tarjeta de Débito/Crédito">Tarjeta</option>
                 <option value="Transferencia">Transferencia</option>
               </select>
             </div>
-            <div class="col-md-2">
-              <button class="btn btn-secondary w-100 fw-semibold" onclick="cargarHistorial()"><i class="bi bi-arrow-clockwise me-1"></i> Actualizar</button>
+            <div class="col-md-3 d-flex gap-1 justify-content-end">
+              <button class="btn btn-outline-secondary btn-sm" onclick="filtrarHoy()" title="Filtrar Hoy"><i class="bi bi-calendar-day me-1"></i>Hoy</button>
+              <button class="btn btn-outline-danger btn-sm" onclick="limpiarFiltros()" title="Limpiar Filtros"><i class="bi bi-x-circle"></i></button>
             </div>
           </div>
 
-          <div class="table-responsive" style="max-height: 480px; overflow-y: auto;">
-            <table class="table table-hover align-middle border" id="tablaHistorial" style="font-size: 0.88rem;">
+          <hr class="my-3">
+
+          <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div class="d-flex gap-2">
+              <button class="btn btn-primary fw-bold btn-sm shadow-sm" onclick="abrirModalReporteUsuario()">
+                <i class="bi bi-calculator me-1"></i> Reporte por Usuario / Corte
+              </button>
+              <button class="btn btn-success fw-bold btn-sm shadow-sm" onclick="exportarExcel()">
+                <i class="bi bi-file-earmark-excel me-1"></i> Descargar Excel
+              </button>
+              <button class="btn btn-secondary fw-bold btn-sm shadow-sm" onclick="imprimirReporte()">
+                <i class="bi bi-printer me-1"></i> Imprimir Reporte PDF
+              </button>
+            </div>
+
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="checkSuperUsuario" onchange="toggleSuperUsuario(this.checked)">
+              <label class="form-check-label small fw-semibold text-dark" for="checkSuperUsuario">Modo Superusuario (Permitir Anulaciones)</label>
+            </div>
+          </div>
+        </div>
+
+        <!-- TABLA DE HISTORIAL -->
+        <div class="custom-card p-3">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle border text-center" style="font-size: 0.85rem;">
               <thead class="table-light">
                 <tr>
-                  <th>Fecha / Hora</th>
+                  <th>Fecha/Hora</th>
                   <th>Folio</th>
                   <th>Folio Ref.</th>
                   <th>Matrícula</th>
                   <th>Paciente</th>
                   <th>Familia</th>
-                  <th>Sección / Grupo</th>
+                  <th>Sección / Gpo</th>
                   <th>Concepto / Vacuna</th>
                   <th>Cant.</th>
                   <th>Importe</th>
                   <th>Total</th>
-                  <th>Forma Pago</th>
-                  <th class="text-center">Estado</th>
-                  <th class="text-center">Acciones</th>
+                  <th>Pago</th>
+                  <th>Vendedor</th>
+                  <th>Estado / Aplicación</th>
+                  <th class="no-print">Acciones</th>
                 </tr>
               </thead>
               <tbody id="historialBody">
-                <tr><td colspan="14" class="text-center py-4 text-muted">Cargando registros desde la base de datos...</td></tr>
+                <tr><td colspan="15" class="text-center py-4 text-muted">Cargando historial...</td></tr>
               </tbody>
             </table>
           </div>
@@ -366,70 +392,76 @@
 
       </div>
 
-    </div>
-  </div>
-</div>
-
-<!-- MODAL DE REEMBOLSO AUDITADO -->
-<div class="modal fade" id="modalReembolso" tabindex="-1" aria-labelledby="modalReembolsoLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg">
-      <div class="modal-header bg-warning text-dark border-0">
-        <h5 class="modal-title fw-bold" id="modalReembolsoLabel">
-          <i class="bi bi-arrow-counterclockwise me-2"></i>Procesar Reembolso Auditado
-        </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body p-4">
-        <input type="hidden" id="rf-item-id">
-        <input type="hidden" id="rf-folio-origen">
-        <input type="hidden" id="rf-monto-maximo">
-
-        <div class="alert alert-light border p-3 mb-3" style="font-size: 0.88rem;">
-          <div class="d-flex justify-content-between"><span>Folio Venta Original:</span> <strong id="rf-txt-folio">--</strong></div>
-          <div class="d-flex justify-content-between"><span>Paciente:</span> <strong id="rf-txt-paciente">--</strong></div>
-          <div class="d-flex justify-content-between"><span>Vacuna / Cant:</span> <strong id="rf-txt-concepto">--</strong></div>
-          <div class="d-flex justify-content-between text-primary"><span>Total de la Transacción:</span> <strong id="rf-txt-total">$0.00</strong></div>
-        </div>
-
-        <div class="mb-3">
-          <label class="form-label fw-bold text-dark small">Tipo de Reembolso</label>
-          <div class="d-flex gap-3">
-            <div class="form-check">
-              <input class="form-check-input" type="radio" name="radioTipoReembolso" id="rfTipoTotal" value="TOTAL" checked onchange="toggleTipoReembolso()">
-              <label class="form-check-label fw-semibold" for="rfTipoTotal">Total (Devolución completa)</label>
+      <!-- PESTAÑA 3: OBSERVACIONES Y APRENDIZAJE -->
+      <div class="tab-pane fade" id="observaciones-pane" role="tabpanel">
+        <div class="custom-card p-4">
+          <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2 no-print">
+            <div>
+              <h5 class="fw-bold m-0 text-dark">
+                <i class="bi bi-journal-bookmark-fill me-2 text-primary"></i> Módulo de Observaciones y Aprendizaje
+              </h5>
+              <small class="text-muted">Registro manual de notas, incidencias y aprendizaje continuo para el personal aplicador</small>
             </div>
-            <div class="form-check">
-              <input class="form-check-input" type="radio" name="radioTipoReembolso" id="rfTipoParcial" value="PARCIAL" onchange="toggleTipoReembolso()">
-              <label class="form-check-label fw-semibold" for="rfTipoParcial">Parcial (Ajuste / Cantidad menor)</label>
+
+            <div class="d-flex gap-2">
+              <button class="btn btn-outline-success fw-bold btn-sm" onclick="exportarObservacionesExcel()">
+                <i class="bi bi-file-earmark-excel me-1"></i> Exportar a Excel
+              </button>
+              <button class="btn btn-outline-primary fw-bold btn-sm" onclick="imprimirObservaciones()">
+                <i class="bi bi-printer me-1"></i> Imprimir / PDF
+              </button>
             </div>
           </div>
-        </div>
 
-        <div class="mb-3">
-          <label class="form-label fw-bold text-dark small">Monto a Reembolsar ($)</label>
-          <div class="input-group">
-            <span class="input-group-text bg-light fw-bold">$</span>
-            <input type="number" step="0.01" class="form-control fw-bold fs-5 text-danger" id="rf-monto-input" readonly>
+          <!-- CONTENEDOR DE DOS COLUMNAS -->
+          <div class="row g-4">
+            
+            <!-- COLUMNA 1: OBSERVACIONES CICLO 2026-2027 -->
+            <div class="col-md-6">
+              <div class="card border-info h-100 shadow-sm">
+                <div class="card-header bg-info text-dark fw-bold d-flex justify-content-between align-items-center">
+                  <span><i class="bi bi-calendar-check me-2"></i>OBSERVACIONES CICLO 2026-2027</span>
+                  <span class="badge bg-white text-dark border" id="count-obs-2026">0 Notas</span>
+                </div>
+                <div class="card-body d-flex flex-column">
+                  <div class="mb-3 bg-light p-3 rounded border no-print">
+                    <label class="form-label small fw-bold text-dark">Nueva Nota / Observación (2026-2027)</label>
+                    <textarea id="txtNota2026" class="form-control form-control-sm mb-2" rows="2" placeholder="Escriba la observación o incidencia del ciclo actual..."></textarea>
+                    <button class="btn btn-info btn-sm fw-bold text-dark w-100" onclick="agregarObservacion('2026-2027')">
+                      <i class="bi bi-plus-circle-fill me-1"></i> Guardar Observación 2026-2027
+                    </button>
+                  </div>
+
+                  <div id="listaObs2026" class="flex-grow-1 overflow-auto" style="max-height: 450px;"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- COLUMNA 2: IMPORTANTE PARA EL CICLO 2027-2028 -->
+            <div class="col-md-6">
+              <div class="card border-warning h-100 shadow-sm">
+                <div class="card-header bg-warning text-dark fw-bold d-flex justify-content-between align-items-center">
+                  <span><i class="bi bi-exclamation-triangle-fill me-2"></i>IMPORTANTE PARA EL CICLO 2027-2028</span>
+                  <span class="badge bg-white text-dark border" id="count-obs-2027">0 Notas</span>
+                </div>
+                <div class="card-body d-flex flex-column">
+                  <div class="mb-3 bg-light p-3 rounded border no-print">
+                    <label class="form-label small fw-bold text-dark">Punto Clave / Recomendación (2027-2028)</label>
+                    <textarea id="txtNota2027" class="form-control form-control-sm mb-2" rows="2" placeholder="Escriba lo importante a considerar para el siguiente ciclo..."></textarea>
+                    <button class="btn btn-warning btn-sm fw-bold text-dark w-100" onclick="agregarObservacion('2027-2028')">
+                      <i class="bi bi-plus-circle-fill me-1"></i> Guardar Nota 2027-2028
+                    </button>
+                  </div>
+
+                  <div id="listaObs2027" class="flex-grow-1 overflow-auto" style="max-height: 450px;"></div>
+                </div>
+              </div>
+            </div>
+
           </div>
-          <div class="form-text text-muted" id="rf-monto-help">Devolución por el monto completo del concepto.</div>
-        </div>
-
-        <div class="mb-3">
-          <label class="form-label fw-bold text-dark small">Motivo del Reembolso (Obligatorio para Auditoría)</label>
-          <textarea class="form-control" id="rf-motivo-input" rows="2" placeholder="Ej: Paciente canceló aplicación, error en cobro, contraindicación médica..."></textarea>
-        </div>
-
-        <div class="p-2 rounded bg-warning-subtle text-warning-emphasis small border border-warning">
-          <i class="bi bi-shield-exclamation me-1"></i> Se generará un nuevo Folio de Egreso <strong>R-XXXX</strong> vinculado a este movimiento para el corte de caja.
         </div>
       </div>
-      <div class="modal-footer border-0 bg-light">
-        <button type="button" class="btn btn-secondary fw-semibold" data-bs-dismiss="modal">Cancelar</button>
-        <button type="button" class="btn btn-warning fw-bold text-dark" onclick="ejecutarReembolsoAuditado()">
-          <i class="bi bi-check-circle-fill me-1"></i> Confirmar y Generar Folio R-
-        </button>
-      </div>
+
     </div>
   </div>
 </div>
@@ -437,35 +469,137 @@
 <!-- MODAL CAMBIAR CONTRASEÑA -->
 <div class="modal fade" id="modalCambiarPassword" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg">
-      <div class="modal-header bg-primary text-white border-0">
-        <h5 class="modal-title fw-bold"><i class="bi bi-key me-2"></i>Cambiar Contraseña</h5>
+    <div class="modal-content">
+      <div class="modal-header bg-dark text-white">
+        <h5 class="modal-title fs-6"><i class="bi bi-key me-2"></i>Cambiar Contraseña</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body p-4">
+      <div class="modal-body">
         <div class="mb-3">
-          <label class="form-label fw-bold small text-dark">Nueva Contraseña</label>
+          <label class="form-label small fw-bold">Nueva Contraseña</label>
           <input type="password" id="newPasswordInput" class="form-control" placeholder="Mínimo 6 caracteres">
         </div>
         <div class="mb-3">
-          <label class="form-label fw-bold small text-dark">Confirmar Nueva Contraseña</label>
-          <input type="password" id="confirmPasswordInput" class="form-control" placeholder="Repite la contraseña">
+          <label class="form-label small fw-bold">Confirmar Nueva Contraseña</label>
+          <input type="password" id="confirmPasswordInput" class="form-control" placeholder="Repita la contraseña">
         </div>
       </div>
-      <div class="modal-footer bg-light border-0">
-        <button type="button" class="btn btn-secondary fw-semibold" data-bs-dismiss="modal">Cancelar</button>
-        <button type="button" class="btn btn-primary fw-bold" onclick="cambiarPassword()">Guardar Contraseña</button>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary btn-sm fw-bold" onclick="cambiarPassword()">Actualizar Contraseña</button>
       </div>
     </div>
   </div>
 </div>
 
+<!-- MODAL REEMBOLSO AUDITADO -->
+<div class="modal fade" id="modalReembolso" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-warning text-dark">
+        <h5 class="modal-title fs-6 fw-bold"><i class="bi bi-arrow-counterclockwise me-2"></i>Procesar Reembolso Auditado</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="rf-item-id">
+        <input type="hidden" id="rf-folio-origen">
+        <input type="hidden" id="rf-monto-maximo">
+
+        <div class="bg-light p-3 rounded mb-3 border">
+          <div class="d-flex justify-content-between mb-1">
+            <span class="text-muted small">Folio Venta:</span>
+            <strong id="rf-txt-folio" class="text-dark">--</strong>
+          </div>
+          <div class="d-flex justify-content-between mb-1">
+            <span class="text-muted small">Paciente:</span>
+            <strong id="rf-txt-paciente" class="text-dark">--</strong>
+          </div>
+          <div class="d-flex justify-content-between mb-1">
+            <span class="text-muted small">Concepto:</span>
+            <span id="rf-txt-concepto" class="fw-semibold">--</span>
+          </div>
+          <div class="d-flex justify-content-between">
+            <span class="text-muted small">Total Partida Original:</span>
+            <strong id="rf-txt-total" class="text-success">--</strong>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label small fw-bold">Tipo de Reembolso</label>
+          <div class="d-flex gap-3">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="rfTipo" id="rfTipoTotal" checked onchange="toggleTipoReembolso()">
+              <label class="form-check-label small" for="rfTipoTotal">Reembolso Total</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="rfTipo" id="rfTipoParcial" onchange="toggleTipoReembolso()">
+              <label class="form-check-label small" for="rfTipoParcial">Reembolso Parcial</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label small fw-bold">Monto a Devolver ($)</label>
+          <input type="number" step="0.01" id="rf-monto-input" class="form-control" readonly>
+          <small class="text-muted" id="rf-monto-help">Devolución por el monto total disponible de esta partida.</small>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label small fw-bold">Motivo del Reembolso (Obligatorio para Auditoría)</label>
+          <textarea id="rf-motivo-input" class="form-control" rows="2" placeholder="Describa la razón del reembolso..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-warning btn-sm fw-bold text-dark" onclick="ejecutarReembolsoAuditado()">Procesar Reembolso</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL REPORTE DE CORTE POR USUARIO (ENTREGA DE DINERO) -->
+<div class="modal fade" id="modalReporteUsuario" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title fs-6 fw-bold"><i class="bi bi-shield-check me-2"></i>VERIFICACIÓN / VISTA PREVIA (CORTE DE CAJA POR USUARIO)</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4" id="corteUsuarioPrintArea">
+        <div class="card border-primary mb-3">
+          <div class="card-header bg-primary text-white fw-bold d-flex justify-content-between align-items-center">
+            <span>COLEGIO CIUDAD DE MÉXICO - CORTE DE VACUNACIÓN</span>
+            <span class="badge bg-light text-primary fw-bold">Reporte: GENERADO</span>
+          </div>
+          <div class="card-body">
+            <div class="row g-2 mb-3 small border-bottom pb-2">
+              <div class="col-md-6"><strong>Módulo:</strong> HISTORIAL_Y_REPORTES</div>
+              <div class="col-md-6"><strong>Concepto(s):</strong> TODOS LOS CONCEPTOS</div>
+              <div class="col-md-6"><strong>Rango Fechas:</strong> <span id="rpt-rango-fechas" class="fw-bold text-dark">--</span></div>
+              <div class="col-md-3"><strong>Registros:</strong> <span id="rpt-cant-registros" class="fw-bold">0</span></div>
+              <div class="col-md-3"><strong>Total Cobrado:</strong> <span id="rpt-total-general" class="text-success fw-bold">$0.00</span></div>
+            </div>
+
+            <h6 class="fw-bold text-dark mb-3"><i class="bi bi-people-fill me-2 text-primary"></i>Total Cobrado por Usuario (Monto a Entregar):</h6>
+            <div class="list-group list-group-flush border rounded" id="rpt-lista-usuarios"></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer bg-light">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>
+        <button type="button" class="btn btn-success btn-sm fw-bold" onclick="exportarCorteUsuarioExcel()"><i class="bi bi-file-earmark-excel me-1"></i> Excel</button>
+        <button type="button" class="btn btn-primary btn-sm fw-bold" onclick="imprimirCorteUsuario()"><i class="bi bi-printer me-1"></i> Imprimir / PDF</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ÁREA OCULTA PARA IMPRESIÓN DIRECTA -->
 <div id="print-area"></div>
 
-<!-- Scripts JS -->
+<!-- JS de Bootstrap y Script Principal -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="config.js"></script>
 <script src="app.js"></script>
-
 </body>
 </html>
