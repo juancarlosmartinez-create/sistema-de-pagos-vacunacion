@@ -237,7 +237,7 @@ async function obtenerSiguienteFolioReembolso() {
 }
 
 // ==========================================
-// BÚSQUEDA Y SELECCIÓN DE PACIENTES
+// BÚSQUEDA Y SELECCIÓN DE PACIENTES (3D CONTROLS)
 // ==========================================
 function setModo(modo) {
   modoPaciente = modo;
@@ -246,14 +246,8 @@ function setModo(modo) {
   const vistaAlumno = document.getElementById('modoAlumnoView');
 
   if (modo === 'alumno') {
-    if (btnAlumno) {
-      btnAlumno.classList.add('active', 'btn-outline-primary');
-      btnAlumno.classList.remove('btn-secondary');
-    }
-    if (btnExterno) {
-      btnExterno.classList.add('btn-outline-secondary');
-      btnExterno.classList.remove('active', 'btn-primary');
-    }
+    if (btnAlumno) btnAlumno.classList.add('active');
+    if (btnExterno) btnExterno.classList.remove('active');
     if (vistaAlumno) vistaAlumno.style.display = 'block';
 
     const nomEl = document.getElementById('nombre');
@@ -261,14 +255,8 @@ function setModo(modo) {
     if (nomEl) nomEl.readOnly = true;
     if (famEl) famEl.readOnly = true;
   } else {
-    if (btnExterno) {
-      btnExterno.classList.add('active', 'btn-primary');
-      btnExterno.classList.remove('btn-outline-secondary');
-    }
-    if (btnAlumno) {
-      btnAlumno.classList.add('btn-outline-primary');
-      btnAlumno.classList.remove('active');
-    }
+    if (btnExterno) btnExterno.classList.add('active');
+    if (btnAlumno) btnAlumno.classList.remove('active');
     if (vistaAlumno) vistaAlumno.style.display = 'none';
 
     const matEl = document.getElementById('matricula');
@@ -278,14 +266,8 @@ function setModo(modo) {
     const gruEl = document.getElementById('grupo');
 
     if (matEl) matEl.value = 'EXTERNO';
-    if (nomEl) {
-      nomEl.readOnly = false;
-      nomEl.value = '';
-    }
-    if (famEl) {
-      famEl.readOnly = false;
-      famEl.value = '';
-    }
+    if (nomEl) { nomEl.readOnly = false; nomEl.value = ''; }
+    if (famEl) { famEl.readOnly = false; famEl.value = ''; }
     if (secEl) secEl.value = 'EXTERNO';
     if (gruEl) gruEl.value = 'EXTERNO';
   }
@@ -607,7 +589,7 @@ async function cargarHistorial() {
   const tbody = document.getElementById('historialBody');
   if (!tbody) return;
 
-  tbody.innerHTML = `<tr><td colspan="15" class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm text-primary me-2"></div>Cargando registros...</td></tr>`;
+  tbody.innerHTML = `<tr><td colspan="15" class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm text-primary me-2"></div>Cargando registros desde Supabase...</td></tr>`;
 
   if (!supabaseClient) {
     tbody.innerHTML = `<tr><td colspan="15" class="text-center py-4 text-muted">Configura las claves de Supabase en config.js.</td></tr>`;
@@ -696,14 +678,12 @@ function renderTablaHistorial(lista) {
       ? '—' 
       : fObj.toLocaleDateString('es-MX') + ' ' + fObj.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
 
-    // Estado y Aplicación de Vacuna
     let badgeEstado = `<span class="badge bg-success">Activo</span>`;
     if (esCancelado) badgeEstado = `<span class="badge bg-danger">Cancelado</span>`;
     else if (esEgreso) badgeEstado = `<span class="badge bg-warning text-dark">Egreso (R)</span>`;
     else if (esReembolsadoTotal) badgeEstado = `<span class="badge bg-secondary">Reembolsado</span>`;
     else if (esReembolsadoParcial) badgeEstado = `<span class="badge bg-warning text-dark">Parcial (-$${item.monto_reembolsado})</span>`;
 
-    // Badge / Botón Aplicación de Vacuna
     let btnAplicacionHtml = '';
     const esAplicada = item.estado_aplicacion === 'Aplicada' || item.fecha_aplicacion;
 
@@ -777,7 +757,7 @@ function actualizarKPIs(neto, bruto, reembolsado, devCount, vacunasCount, folios
 }
 
 // ==========================================
-// REGISTRO Y MARCADO DE APLICACIÓN DE VACUNA
+// REGISTRO DE APLICACIÓN DE VACUNA
 // ==========================================
 async function marcarAplicacionVacuna(id) {
   const item = historialMemoria.find(x => x.id == id);
@@ -789,8 +769,8 @@ async function marcarAplicacionVacuna(id) {
       <div class="text-start">
         <p class="mb-2"><strong>Paciente:</strong> ${item.nombre} (${item.familia})</p>
         <p class="mb-2"><strong>Vacuna:</strong> ${item.concepto}</p>
-        <p class="mb-0 text-danger fw-bold"><i class="bi bi-exclamation-triangle-fill me-1"></i> ¿Confirma que la vacuna ha sido administrada físicamente al paciente?</p>
-        <small class="text-muted d-block mt-2">Al responder afirmativamente se dejará registro del día, la hora exacta y la persona que confirma la aplicación.</small>
+        <p class="mb-0 text-danger fw-bold"><i class="bi bi-exclamation-triangle-fill me-1"></i> ¿Confirms que la vacuna ha sido administrada físicamente al paciente?</p>
+        <small class="text-muted d-block mt-2">Al responder afirmativamente se dejará registro del día, hora exacta y la persona que confirma la aplicación.</small>
       </div>
     `,
     icon: 'warning',
@@ -820,7 +800,7 @@ async function marcarAplicacionVacuna(id) {
           })
           .eq('id', id);
       } catch (e) {
-        console.warn("Actualizado localmente (columna Supabase opcional):", e);
+        console.warn("Actualizado localmente:", e);
       }
     }
 
@@ -1027,7 +1007,7 @@ function imprimirCorteUsuario() {
 }
 
 // ==========================================
-// REEMBOLSOS Y CANCELACIÓN
+// REEMBOLSOS AUDITADOS Y CANCELACIÓN
 // ==========================================
 function abrirModalReembolso(item) {
   const subtotalOriginal = item.total ? parseFloat(item.total) : (item.cantidad || 1) * (item.importe || 0);
@@ -1338,7 +1318,6 @@ function renderObservaciones() {
   if (count2026) count2026.innerText = `${obs2026.length} Nota/s`;
   if (count2027) count2027.innerText = `${obs2027.length} Nota/s`;
 
-  // Render 2026-2027
   if (obs2026.length === 0) {
     list2026.innerHTML = `<p class="text-muted text-center py-3 small">Sin observaciones registradas para este ciclo.</p>`;
   } else {
@@ -1355,7 +1334,6 @@ function renderObservaciones() {
     `).join('');
   }
 
-  // Render 2027-2028
   if (obs2027.length === 0) {
     list2027.innerHTML = `<p class="text-muted text-center py-3 small">Sin observaciones registradas para este ciclo.</p>`;
   } else {
@@ -1445,7 +1423,7 @@ function imprimirObservaciones() {
   window.print();
 }
 
-// Exposición explícita de funciones a window
+// EXPOSICIÓN GLOBAL DE FUNCIONES A WINDOW
 window.iniciarSesion = iniciarSesion;
 window.cerrarSesion = cerrarSesion;
 window.cambiarPassword = cambiarPassword;
