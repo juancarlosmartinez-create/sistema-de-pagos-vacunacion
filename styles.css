@@ -313,6 +313,65 @@ button,
   box-shadow: 0 2px 0 #7f1d1d !important;
 }
 
+/* BOTONES GUARDAR OBSERVACIONES 3D (CYAN Y AMARILLO) */
+#btnGuardarObs2026 {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  width: 100% !important;
+  font-size: 0.85rem !important;
+  font-weight: 800 !important;
+  padding: 9px 18px !important;
+  border-radius: 8px !important;
+  background: linear-gradient(180deg, #0dcaf0 0%, #0aa2c0 100%) !important;
+  color: #0f172a !important;
+  border: 1px solid #087990 !important;
+  box-shadow: 0 4px 0 #055160, 0 4px 8px rgba(13, 202, 240, 0.35) !important;
+  transition: all 0.15s ease-in-out !important;
+  letter-spacing: 0.3px !important;
+}
+
+#btnGuardarObs2026:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 0 #055160, 0 6px 12px rgba(13, 202, 240, 0.45) !important;
+  background: linear-gradient(180deg, #31d2f2 0%, #0dcaf0 100%) !important;
+}
+
+#btnGuardarObs2026:active {
+  transform: translateY(2px) !important;
+  box-shadow: 0 2px 0 #055160 !important;
+}
+
+#btnGuardarObs2027 {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  width: 100% !important;
+  font-size: 0.85rem !important;
+  font-weight: 800 !important;
+  padding: 9px 18px !important;
+  border-radius: 8px !important;
+  background: linear-gradient(180deg, #ffc107 0%, #d39e00 100%) !important;
+  color: #0f172a !important;
+  border: 1px solid #b28500 !important;
+  box-shadow: 0 4px 0 #856404, 0 4px 8px rgba(255, 193, 7, 0.35) !important;
+  transition: all 0.15s ease-in-out !important;
+  letter-spacing: 0.3px !important;
+}
+
+#btnGuardarObs2027:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 0 #856404, 0 6px 12px rgba(255, 193, 7, 0.45) !important;
+  background: linear-gradient(180deg, #ffca2c 0%, #ffc107 100%) !important;
+}
+
+#btnGuardarObs2027:active {
+  transform: translateY(2px) !important;
+  box-shadow: 0 2px 0 #856404 !important;
+}
+
 /* TARJETAS KPI */
 .kpi-card {
   border-left: 4px solid var(--accent-blue);
