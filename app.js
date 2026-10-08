@@ -10,23 +10,40 @@ const supabaseClient = (window.supabase && SUPABASE_URL && SUPABASE_ANON_KEY) ? 
 ) : null;
 
 // ==========================================
+// MAPEO DE CORREOS A NOMBRES CORTOS
+// ==========================================
+function obtenerNombreCorto(email) {
+  if (!email) return 'MITZEL';
+  const emailLower = email.toLowerCase().trim();
+  if (emailLower.includes('auxiliar.caja')) return 'MITZEL';
+  if (emailLower.includes('caja.polanco')) return 'GUSTAVO';
+  if (emailLower.includes('juancarlos.martinez')) return 'CHARLY';
+  
+  const usuario = emailLower.split('@')[0];
+  return usuario.toUpperCase();
+}
+
+// ==========================================
 // ESTADO GLOBAL DE LA APLICACIÓN
 // ==========================================
 let carrito = [];
 let historialMemoria = [];
+let observacionesMemoria = [];
 let modoSuperUsuario = false;
 let modoPaciente = 'alumno'; // 'alumno' | 'externo'
+let usuarioActual = null;
 let modalReembolsoBS = null;
-let itemReembolsoActual = null;
+let modalReporteUsuarioBS = null;
 
 // ==========================================
 // INICIALIZACIÓN Y CONTROL DE SESIÓN
 // ==========================================
 document.addEventListener('DOMContentLoaded', async () => {
   const modalEl = document.getElementById('modalReembolso');
-  if (modalEl) {
-    modalReembolsoBS = new bootstrap.Modal(modalEl);
-  }
+  if (modalEl) modalReembolsoBS = new bootstrap.Modal(modalEl);
+
+  const modalRptEl = document.getElementById('modalReporteUsuario');
+  if (modalRptEl) modalReporteUsuarioBS = new bootstrap.Modal(modalRptEl);
 
   if (supabaseClient) {
     supabaseClient.auth.onAuthStateChange((event, session) => {
@@ -87,18 +104,24 @@ async function cerrarSesion() {
 }
 
 function mostrarAplicacion(user) {
+  usuarioActual = user;
   const loginOverlay = document.getElementById('loginOverlay');
   const appContent = document.getElementById('appContent');
   const userDisplay = document.getElementById('userEmailDisplay');
 
   if (loginOverlay) loginOverlay.style.display = 'none';
   if (appContent) appContent.style.display = 'block';
-  if (userDisplay && user) userDisplay.innerText = user.email;
+
+  if (userDisplay && user) {
+    const alias = obtenerNombreCorto(user.email);
+    userDisplay.innerText = `${alias} (${user.email})`;
+  }
 
   obtenerSiguienteFolioVenta();
   actualizarFechaTicket();
   renderCarrito();
   cargarHistorial();
+  cargarObservaciones();
 }
 
 function mostrarLogin() {
@@ -310,9 +333,6 @@ function seleccionarPersona(p) {
   document.getElementById('searchInput').value = '';
 }
 
-// ==========================================
-// RESTABLECIMIENTO Y REINICIO DE VENTA
-// ==========================================
 function resetearFormularioVenta() {
   carrito = [];
   renderCarrito();
@@ -331,14 +351,12 @@ function resetearFormularioVenta() {
   setModo('alumno');
 
   if (searchInput) {
-    setTimeout(() => {
-      searchInput.focus();
-    }, 150);
+    setTimeout(() => searchInput.focus(), 150);
   }
 }
 
 // ==========================================
-// CARRITO MULTI-PACIENTE Y VISTA PREVIA RECIBO
+// CARRITO MULTI-PACIENTE Y RECIBO
 // ==========================================
 function agregarAlRecibo() {
   const nombre = document.getElementById('nombre').value.trim();
@@ -472,7 +490,7 @@ function actualizarFormaPagoTicket() {
 }
 
 // ==========================================
-// GUARDAR E IMPRIMIR RECIBOS (FLUJO UNIFICADO)
+// GUARDAR E IMPRIMIR RECIBOS
 // ==========================================
 async function confirmarGuardarRecibo() {
   if (carrito.length === 0) {
@@ -480,13 +498,12 @@ async function confirmarGuardarRecibo() {
     return;
   }
 
-  // 1. ADVERTENCIA PREVIA AL GUARDADO
   const confirmacionGuardar = await Swal.fire({
     title: '¿Deseas guardar este registro?',
     text: 'Asegúrate de que los datos del paciente y el desglose del recibo sean correctos.',
     icon: 'warning',
     showCancelButton: true,
-    confirmButtonColor: '#107c41', // Verde del sistema
+    confirmButtonColor: '#107c41',
     cancelButtonColor: '#dc3545',
     confirmButtonText: 'Sí, guardar',
     cancelButtonText: 'Cancelar'
@@ -497,6 +514,9 @@ async function confirmarGuardarRecibo() {
   const folioVenta = await obtenerSiguienteFolioVenta();
   const formaPago = document.getElementById('forma_pago').value;
   const fechaActual = new Date().toISOString();
+  
+  const emailUsuario = usuarioActual?.email || 'auxiliar.caja@colegiociudad.edu.mx';
+  const aliasVendedor = obtenerNombreCorto(emailUsuario);
 
   const inserts = carrito.map(item => ({
     folio: folioVenta,
@@ -514,14 +534,15 @@ async function confirmarGuardarRecibo() {
     created_at: fechaActual,
     estado: 'Activo',
     tipo_movimiento: 'INGRESO',
-    monto_reembolsado: 0.00
+    monto_reembolsado: 0.00,
+    usuario_email: emailUsuario,
+    vendedor: aliasVendedor,
+    estado_aplicacion: 'Pendiente'
   }));
 
-  // Clonamos el contenido del ticket ANTES de limpiar el carrito
   const ticketClon = document.getElementById('ticketPrint')?.cloneNode(true);
 
   if (!supabaseClient) {
-    // Modo Demo sin backend
     const pregImpresionDemo = await Swal.fire({
       title: '¡Modo Demo!',
       text: `Se guardaría el Folio ${folioVenta} con ${carrito.length} registros. ¿Deseas imprimir el recibo ahora?`,
@@ -550,13 +571,12 @@ async function confirmarGuardarRecibo() {
     const { error } = await supabaseClient.from('historial_cobros').insert(inserts);
     if (error) throw error;
 
-    // 2. CONFIRMACIÓN POST-GUARDADO Y PREGUNTA DE IMPRESIÓN
     const pregImpresion = await Swal.fire({
       title: '¡Éxito!',
-      text: `El recibo ${folioVenta} ha sido guardado correctamente. ¿Deseas imprimir el recibo ahora?`,
+      text: `El recibo ${folioVenta} ha sido guardado correctamente por ${aliasVendedor}. ¿Deseas imprimir el recibo ahora?`,
       icon: 'question',
       showCancelButton: true,
-      confirmButtonColor: '#1259a7', // Azul de impresión
+      confirmButtonColor: '#1259a7',
       cancelButtonColor: '#6c757d',
       confirmButtonText: 'Sí, imprimir',
       cancelButtonText: 'No, finalizar'
@@ -580,18 +600,6 @@ async function confirmarGuardarRecibo() {
   }
 }
 
-function confirmarImprimirRecibo() {
-  if (carrito.length === 0) {
-    Swal.fire('Atención', 'No hay datos en el recibo para imprimir.', 'warning');
-    return;
-  }
-  const ticketClon = document.getElementById('ticketPrint').cloneNode(true);
-  const printArea = document.getElementById('print-area');
-  printArea.innerHTML = '';
-  printArea.appendChild(ticketClon);
-  window.print();
-}
-
 // ==========================================
 // HISTORIAL DE REGISTROS Y REPORTES (ADMIN)
 // ==========================================
@@ -599,10 +607,10 @@ async function cargarHistorial() {
   const tbody = document.getElementById('historialBody');
   if (!tbody) return;
 
-  tbody.innerHTML = `<tr><td colspan="14" class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm text-primary me-2"></div>Cargando registros desde Supabase...</td></tr>`;
+  tbody.innerHTML = `<tr><td colspan="15" class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm text-primary me-2"></div>Cargando registros...</td></tr>`;
 
   if (!supabaseClient) {
-    tbody.innerHTML = `<tr><td colspan="14" class="text-center py-4 text-muted">Configura las claves de Supabase en config.js.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="15" class="text-center py-4 text-muted">Configura las claves de Supabase en config.js.</td></tr>`;
     return;
   }
 
@@ -615,10 +623,10 @@ async function cargarHistorial() {
     if (error) throw error;
 
     historialMemoria = data || [];
-    renderTablaHistorial(historialMemoria);
+    filtrarTabla();
   } catch (e) {
     console.error("Error al cargar historial:", e);
-    tbody.innerHTML = `<tr><td colspan="14" class="text-center py-4 text-danger">Error al obtener historial: ${e.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="15" class="text-center py-4 text-danger">Error al obtener historial: ${e.message}</td></tr>`;
   }
 }
 
@@ -636,7 +644,7 @@ function renderTablaHistorial(lista) {
   let otrosNeto = 0;
 
   if (lista.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="14" class="text-center py-4 text-muted">No se encontraron registros.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="15" class="text-center py-4 text-muted">No se encontraron registros en la búsqueda o fechas elegidas.</td></tr>`;
     actualizarKPIs(0, 0, 0, 0, 0, 0, 0, 0);
     return;
   }
@@ -651,6 +659,9 @@ function renderTablaHistorial(lista) {
     const importe = parseFloat(item.importe) || 0;
     const subtotal = item.total ? parseFloat(item.total) : (cantidad * importe);
 
+    const emailUsuario = item.usuario_email || item.created_by || '';
+    const vendedorAlias = item.vendedor || obtenerNombreCorto(emailUsuario);
+
     if (!esCancelado) {
       if (esEgreso) {
         totalReembolsadoSum += Math.abs(subtotal);
@@ -661,7 +672,7 @@ function renderTablaHistorial(lista) {
         ingresoBruto += subtotal;
         if (item.folio) foliosSet.add(item.folio);
 
-        if (!esReembolsadoTotal) {
+        if (item.estado_aplicacion === 'Aplicada' || item.fecha_aplicacion) {
           vacunasAplicadasCount += cantidad;
         }
 
@@ -685,11 +696,24 @@ function renderTablaHistorial(lista) {
       ? '—' 
       : fObj.toLocaleDateString('es-MX') + ' ' + fObj.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
 
+    // Estado y Aplicación de Vacuna
     let badgeEstado = `<span class="badge bg-success">Activo</span>`;
     if (esCancelado) badgeEstado = `<span class="badge bg-danger">Cancelado</span>`;
     else if (esEgreso) badgeEstado = `<span class="badge bg-warning text-dark">Egreso (R)</span>`;
     else if (esReembolsadoTotal) badgeEstado = `<span class="badge bg-secondary">Reembolsado</span>`;
     else if (esReembolsadoParcial) badgeEstado = `<span class="badge bg-warning text-dark">Parcial (-$${item.monto_reembolsado})</span>`;
+
+    // Badge / Botón Aplicación de Vacuna
+    let btnAplicacionHtml = '';
+    const esAplicada = item.estado_aplicacion === 'Aplicada' || item.fecha_aplicacion;
+
+    if (esAplicada) {
+      const fApp = new Date(item.fecha_aplicacion);
+      const txtFechaApp = isNaN(fApp.getTime()) ? 'Aplicada' : fApp.toLocaleDateString('es-MX') + ' ' + fApp.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+      btnAplicacionHtml = `<br><span class="badge bg-info text-dark mt-1" title="Aplicada por: ${item.usuario_aplicacion || 'Personal'}"><i class="bi bi-check2-circle me-1"></i>Aplicada ${txtFechaApp}</span>`;
+    } else if (!esCancelado && !esEgreso) {
+      btnAplicacionHtml = `<br><button class="btn btn-sm btn-outline-success fw-bold py-0 px-1 mt-1 no-print" onclick="marcarAplicacionVacuna(${item.id})"><i class="bi bi-syringe me-1"></i>APLICACIÓN VACUNA</button>`;
+    }
 
     let accionesHtml = '';
     const itemJson = JSON.stringify(item).replace(/"/g, '&quot;');
@@ -721,8 +745,9 @@ function renderTablaHistorial(lista) {
       <td>$${importe.toFixed(2)}</td>
       <td><strong class="${esEgreso ? 'text-danger' : 'text-dark'}">${esEgreso ? '-' : ''}$${Math.abs(subtotal).toFixed(2)}</strong></td>
       <td><span class="badge bg-light text-dark border">${item.forma_pago || 'Efectivo'}</span></td>
-      <td class="text-center">${badgeEstado}</td>
-      <td class="text-center">${accionesHtml}</td>
+      <td><span class="badge bg-secondary-subtle text-secondary border fw-bold">${vendedorAlias}</span></td>
+      <td class="text-center">${badgeEstado}${btnAplicacionHtml}</td>
+      <td class="text-center no-print">${accionesHtml}</td>
     `;
     tbody.appendChild(tr);
   });
@@ -751,6 +776,128 @@ function actualizarKPIs(neto, bruto, reembolsado, devCount, vacunasCount, folios
   if (elOtros) elOtros.innerText = `$${otros.toFixed(2)}`;
 }
 
+// ==========================================
+// REGISTRO Y MARCADO DE APLICACIÓN DE VACUNA
+// ==========================================
+async function marcarAplicacionVacuna(id) {
+  const item = historialMemoria.find(x => x.id == id);
+  if (!item) return;
+
+  const result = await Swal.fire({
+    title: '¡ADVERTENCIA DE APLICACIÓN!',
+    html: `
+      <div class="text-start">
+        <p class="mb-2"><strong>Paciente:</strong> ${item.nombre} (${item.familia})</p>
+        <p class="mb-2"><strong>Vacuna:</strong> ${item.concepto}</p>
+        <p class="mb-0 text-danger fw-bold"><i class="bi bi-exclamation-triangle-fill me-1"></i> ¿Confirma que la vacuna ha sido administrada físicamente al paciente?</p>
+        <small class="text-muted d-block mt-2">Al responder afirmativamente se dejará registro del día, la hora exacta y la persona que confirma la aplicación.</small>
+      </div>
+    `,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#107c41',
+    cancelButtonColor: '#dc3545',
+    confirmButtonText: 'Sí, confirmar aplicación',
+    cancelButtonText: 'Cancelar'
+  });
+
+  if (result.isConfirmed) {
+    const ahoraIso = new Date().toISOString();
+    const aliasAplicador = obtenerNombreCorto(usuarioActual?.email);
+
+    item.fecha_aplicacion = ahoraIso;
+    item.estado_aplicacion = 'Aplicada';
+    item.usuario_aplicacion = aliasAplicador;
+
+    if (supabaseClient) {
+      try {
+        await supabaseClient
+          .from('historial_cobros')
+          .update({
+            fecha_aplicacion: ahoraIso,
+            estado_aplicacion: 'Aplicada',
+            usuario_aplicacion: aliasAplicador
+          })
+          .eq('id', id);
+      } catch (e) {
+        console.warn("Actualizado localmente (columna Supabase opcional):", e);
+      }
+    }
+
+    const fObj = new Date(ahoraIso);
+    const fechaTxt = fObj.toLocaleDateString('es-MX') + ' ' + fObj.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+
+    Swal.fire({
+      title: '¡Aplicación Registrada!',
+      text: `Se registró correctamente la aplicación para ${item.nombre} el ${fechaTxt}.`,
+      icon: 'success',
+      timer: 2000,
+      showConfirmButton: false
+    });
+
+    filtrarTabla();
+  }
+}
+
+// ==========================================
+// FILTROS Y BÚSQUEDA POR FECHAS Y TEXTO
+// ==========================================
+function filtrarTabla() {
+  const query = (document.getElementById('filterInput')?.value || '').toLowerCase().trim();
+  const fp = document.getElementById('filterPago')?.value || '';
+  const fechaInicio = document.getElementById('filterFechaInicio')?.value || '';
+  const fechaFin = document.getElementById('filterFechaFin')?.value || '';
+
+  const filtrados = historialMemoria.filter(item => {
+    const matchTexto = !query ||
+      (item.folio && item.folio.toLowerCase().includes(query)) ||
+      (item.folio_referencia && item.folio_referencia.toLowerCase().includes(query)) ||
+      (item.nombre && item.nombre.toLowerCase().includes(query)) ||
+      (item.familia && item.familia.toLowerCase().includes(query)) ||
+      (item.concepto && item.concepto.toLowerCase().includes(query)) ||
+      (item.matricula && item.matricula.toLowerCase().includes(query)) ||
+      (item.vendedor && item.vendedor.toLowerCase().includes(query)) ||
+      (item.usuario_email && item.usuario_email.toLowerCase().includes(query));
+
+    const matchPago = !fp || item.forma_pago === fp;
+
+    let matchFecha = true;
+    const fechaRaw = item.fecha || item.created_at;
+    if (fechaRaw) {
+      const fechaStr = new Date(fechaRaw).toISOString().split('T')[0];
+      if (fechaInicio && fechaStr < fechaInicio) matchFecha = false;
+      if (fechaFin && fechaStr > fechaFin) matchFecha = false;
+    }
+
+    return matchTexto && matchPago && matchFecha;
+  });
+
+  renderTablaHistorial(filtrados);
+}
+
+function filtrarHoy() {
+  const hoyStr = new Date().toISOString().split('T')[0];
+  const elIn = document.getElementById('filterFechaInicio');
+  const elFin = document.getElementById('filterFechaFin');
+  if (elIn) elIn.value = hoyStr;
+  if (elFin) elFin.value = hoyStr;
+  filtrarTabla();
+}
+
+function limpiarFiltros() {
+  const elIn = document.getElementById('filterFechaInicio');
+  const elFin = document.getElementById('filterFechaFin');
+  const elTxt = document.getElementById('filterInput');
+  const elPago = document.getElementById('filterPago');
+
+  if (elIn) elIn.value = '';
+  if (elFin) elFin.value = '';
+  if (elTxt) elTxt.value = '';
+  if (elPago) elPago.value = '';
+
+  filtrarTabla();
+}
+
 function toggleSuperUsuario(checked) {
   modoSuperUsuario = checked;
   if (checked) {
@@ -762,15 +909,127 @@ function toggleSuperUsuario(checked) {
       showConfirmButton: false
     });
   }
-  renderTablaHistorial(historialMemoria);
+  filtrarTabla();
 }
 
 // ==========================================
-// REEMBOLSOS AUDITADOS Y CANCELACIÓN
+// REPORTE DE ENTREGAS / CORTE POR USUARIO
+// ==========================================
+function generarReportePorUsuario() {
+  const fechaInicio = document.getElementById('filterFechaInicio')?.value || '';
+  const fechaFin = document.getElementById('filterFechaFin')?.value || '';
+
+  const itemsFiltrados = historialMemoria.filter(item => {
+    if (item.estado === 'Cancelado' || item.estado === 'CANCELADO') return false;
+    const fechaRaw = item.fecha || item.created_at;
+    if (!fechaRaw) return true;
+    const fechaStr = new Date(fechaRaw).toISOString().split('T')[0];
+    if (fechaInicio && fechaStr < fechaInicio) return false;
+    if (fechaFin && fechaStr > fechaFin) return false;
+    return true;
+  });
+
+  const resumenUsuarios = {};
+  let totalGeneral = 0;
+
+  itemsFiltrados.forEach(item => {
+    const esEgreso = item.tipo_movimiento === 'EGRESO' || (item.folio && item.folio.startsWith('R-'));
+    const cantidad = parseInt(item.cantidad, 10) || 1;
+    const importe = parseFloat(item.importe) || 0;
+    const subtotal = item.total ? parseFloat(item.total) : (cantidad * importe);
+    const montoReembolsado = parseFloat(item.monto_reembolsado) || 0;
+
+    const emailRaw = item.usuario_email || item.created_by || '';
+    const alias = item.vendedor || obtenerNombreCorto(emailRaw);
+
+    if (!resumenUsuarios[alias]) {
+      resumenUsuarios[alias] = { alias, email: emailRaw, total: 0, cantidadOps: 0 };
+    }
+
+    if (esEgreso) {
+      resumenUsuarios[alias].total -= Math.abs(subtotal);
+      totalGeneral -= Math.abs(subtotal);
+    } else {
+      const neto = subtotal - montoReembolsado;
+      resumenUsuarios[alias].total += neto;
+      resumenUsuarios[alias].cantidadOps += 1;
+      totalGeneral += neto;
+    }
+  });
+
+  return {
+    fechaInicio: fechaInicio ? fechaInicio : 'Inicio',
+    fechaFin: fechaFin ? fechaFin : 'Actualidad',
+    registros: itemsFiltrados.length,
+    totalGeneral,
+    usuarios: Object.values(resumenUsuarios)
+  };
+}
+
+function abrirModalReporteUsuario() {
+  const datos = generarReportePorUsuario();
+
+  document.getElementById('rpt-rango-fechas').innerText = `${datos.fechaInicio} al ${datos.fechaFin}`;
+  document.getElementById('rpt-cant-registros').innerText = datos.registros;
+  document.getElementById('rpt-total-general').innerText = `$${datos.totalGeneral.toFixed(2)}`;
+
+  const containerList = document.getElementById('rpt-lista-usuarios');
+  containerList.innerHTML = '';
+
+  if (datos.usuarios.length === 0) {
+    containerList.innerHTML = `<div class="p-3 text-muted text-center">No hay cobros registrados en el rango seleccionado.</div>`;
+  } else {
+    datos.usuarios.forEach(u => {
+      const div = document.createElement('div');
+      div.className = 'list-group-item d-flex justify-content-between align-items-center py-3';
+      div.innerHTML = `
+        <div>
+          <strong class="text-primary fs-6">• ${u.alias}</strong>
+          <span class="text-muted small d-block">${u.email || 'Usuario registrado'} (${u.cantidadOps} transacciones)</span>
+        </div>
+        <span class="fs-5 fw-bold text-success">$${u.total.toFixed(2)}</span>
+      `;
+      containerList.appendChild(div);
+    });
+  }
+
+  if (modalReporteUsuarioBS) modalReporteUsuarioBS.show();
+}
+
+function exportarCorteUsuarioExcel() {
+  const datos = generarReportePorUsuario();
+  let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+  csvContent += "MÓDULO DE CORTE DE CAJA POR USUARIO - COLEGIO CIUDAD DE MÉXICO\n";
+  csvContent += `Rango Fechas,${datos.fechaInicio} al ${datos.fechaFin}\n`;
+  csvContent += `Total Registros,${datos.registros}\n`;
+  csvContent += `Total General,$${datos.totalGeneral.toFixed(2)}\n\n`;
+  csvContent += "Usuario / Alias,Correo Electrónico,Transacciones,Monto Total a Entregar ($)\n";
+
+  datos.usuarios.forEach(u => {
+    csvContent += `"${u.alias}","${u.email}",${u.cantidadOps},${u.total.toFixed(2)}\n`;
+  });
+
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement("a");
+  link.setAttribute("href", encodedUri);
+  link.setAttribute("download", `Corte_Caja_Usuarios_${new Date().toISOString().slice(0, 10)}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+function imprimirCorteUsuario() {
+  const printArea = document.getElementById('print-area');
+  const clon = document.getElementById('corteUsuarioPrintArea').cloneNode(true);
+  printArea.innerHTML = '';
+  printArea.appendChild(clon);
+  window.print();
+}
+
+// ==========================================
+// REEMBOLSOS Y CANCELACIÓN
 // ==========================================
 function abrirModalReembolso(item) {
-  itemReembolsoActual = item;
-
   const subtotalOriginal = item.total ? parseFloat(item.total) : (item.cantidad || 1) * (item.importe || 0);
   const reembolsadoPrevio = parseFloat(item.monto_reembolsado) || 0;
   const maxReembolsable = subtotalOriginal - reembolsadoPrevio;
@@ -867,7 +1126,9 @@ async function ejecutarReembolsoAuditado() {
       created_at: fechaActual,
       estado: 'Reembolsado',
       tipo_movimiento: 'EGRESO',
-      motivo_reembolso: motivo
+      motivo_reembolso: motivo,
+      usuario_email: usuarioActual?.email,
+      vendedor: obtenerNombreCorto(usuarioActual?.email)
     };
 
     const { error: errInsert } = await supabaseClient.from('historial_cobros').insert([registroEgreso]);
@@ -877,21 +1138,21 @@ async function ejecutarReembolsoAuditado() {
 
     Swal.fire({
       title: '¡Reembolso Procesado!',
-      html: `Se generó exitosamente el folio de egreso <strong>${folioEgreso}</strong> amarrado al folio <strong>${folioOrigen}</strong>.`,
+      html: `Se generó el folio de egreso <strong>${folioEgreso}</strong> asociado al folio <strong>${folioOrigen}</strong>.`,
       icon: 'success'
     });
 
     await cargarHistorial();
   } catch (e) {
     console.error("Error al ejecutar reembolso:", e);
-    Swal.fire('Error', 'No se pudo procesar el reembolso en la base de datos: ' + e.message, 'error');
+    Swal.fire('Error', 'No se pudo procesar el reembolso: ' + e.message, 'error');
   }
 }
 
 async function cancelarRegistro(id, nombrePaciente) {
   const result = await Swal.fire({
     title: '¿Cancelar Registro?',
-    text: `¿Confirma que desea cancelar el registro de ${nombrePaciente}? Quedará anulado en auditoría.`,
+    text: `¿Confirma la cancelación del registro de ${nombrePaciente}? Quedará anulado en auditoría.`,
     icon: 'warning',
     showCancelButton: true,
     confirmButtonColor: '#dc2626',
@@ -917,7 +1178,7 @@ async function cancelarRegistro(id, nombrePaciente) {
 }
 
 // ==========================================
-// REIMPRESIÓN, FILTROS Y EXPORTACIÓN
+// REIMPRESIÓN, IMPRESIÓN GENERAL Y EXPORTACIÓN
 // ==========================================
 function reimprimirFolio(folio) {
   const items = historialMemoria.filter(x => x.folio === folio && x.estado !== 'Cancelado' && x.estado !== 'CANCELADO');
@@ -962,6 +1223,7 @@ function reimprimirFolio(folio) {
       <div class="border-top border-bottom py-1 my-2 small text-secondary ticket-info-block">
         <div class="d-flex justify-content-between"><span>Fecha/Hora:</span><strong class="text-dark">${fechaStr}</strong></div>
         <div class="d-flex justify-content-between"><span>Forma de Pago:</span><strong class="text-dark">${primerItem.forma_pago || 'Efectivo'}</strong></div>
+        <div class="d-flex justify-content-between"><span>Vendedor:</span><strong class="text-dark">${primerItem.vendedor || obtenerNombreCorto(primerItem.usuario_email)}</strong></div>
       </div>
       <div class="py-1 border-bottom">${htmlItems}</div>
       <div class="pt-2 d-flex justify-content-between align-items-center ticket-total-block">
@@ -974,27 +1236,6 @@ function reimprimirFolio(folio) {
   window.print();
 }
 
-function filtrarTabla() {
-  const query = (document.getElementById('filterInput')?.value || '').toLowerCase().trim();
-  const fp = document.getElementById('filterPago')?.value || '';
-
-  const filtrados = historialMemoria.filter(item => {
-    const matchTexto = !query ||
-      (item.folio && item.folio.toLowerCase().includes(query)) ||
-      (item.folio_referencia && item.folio_referencia.toLowerCase().includes(query)) ||
-      (item.nombre && item.nombre.toLowerCase().includes(query)) ||
-      (item.familia && item.familia.toLowerCase().includes(query)) ||
-      (item.concepto && item.concepto.toLowerCase().includes(query)) ||
-      (item.matricula && item.matricula.toLowerCase().includes(query));
-
-    const matchPago = !fp || item.forma_pago === fp;
-
-    return matchTexto && matchPago;
-  });
-
-  renderTablaHistorial(filtrados);
-}
-
 function exportarExcel() {
   if (!historialMemoria || historialMemoria.length === 0) {
     Swal.fire('Atención', 'No hay datos para exportar.', 'warning');
@@ -1002,11 +1243,14 @@ function exportarExcel() {
   }
 
   let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
-  csvContent += "Fecha,Folio,Folio Referencia,Matricula,Paciente,Familia,Seccion,Grupo,Concepto,Cantidad,Importe,Total,Forma Pago,Estado,Tipo Movimiento,Motivo Reembolso\n";
+  csvContent += "Fecha,Folio,Folio Referencia,Matricula,Paciente,Familia,Seccion,Grupo,Concepto,Cantidad,Importe,Total,Forma Pago,Vendedor,Estado,Aplicacion Vacuna,Fecha Aplicacion\n";
 
   historialMemoria.forEach(row => {
     const fecha = row.fecha || row.created_at ? new Date(row.fecha || row.created_at).toLocaleString('es-MX') : '';
     const subtotal = row.total ? row.total : ((row.cantidad || 1) * (row.importe || 0));
+    const alias = row.vendedor || obtenerNombreCorto(row.usuario_email);
+    const fechaApp = row.fecha_aplicacion ? new Date(row.fecha_aplicacion).toLocaleString('es-MX') : 'Pendiente';
+
     const line = [
       `"${fecha}"`,
       `"${row.folio || ''}"`,
@@ -1021,9 +1265,10 @@ function exportarExcel() {
       row.importe || 0,
       subtotal,
       `"${row.forma_pago || ''}"`,
+      `"${alias}"`,
       `"${row.estado || ''}"`,
-      `"${row.tipo_movimiento || 'INGRESO'}"`,
-      `"${row.motivo_reembolso || ''}"`
+      `"${row.estado_aplicacion || 'Pendiente'}"`,
+      `"${fechaApp}"`
     ].join(",");
     csvContent += line + "\n";
   });
@@ -1037,7 +1282,170 @@ function exportarExcel() {
   document.body.removeChild(link);
 }
 
-// Exposición explícita de funciones a window para eventos HTML inline
+function imprimirReporte() {
+  window.print();
+}
+
+// ==========================================
+// MÓDULO OBSERVACIONES Y APRENDIZAJE
+// ==========================================
+function cargarObservaciones() {
+  const local = localStorage.getItem('ccm_observaciones_vacunacion');
+  if (local) {
+    try {
+      observacionesMemoria = JSON.parse(local);
+    } catch (e) {
+      observacionesMemoria = [];
+    }
+  } else {
+    observacionesMemoria = [
+      {
+        id: 1,
+        ciclo: '2026-2027',
+        texto: 'Asegurar buena ventilación en el área de enfermería durante la hora pico de cobro.',
+        fecha: new Date().toISOString(),
+        usuario: 'MITZEL'
+      },
+      {
+        id: 2,
+        ciclo: '2027-2028',
+        texto: 'Solicitar un lote adicional de vacunas VPH con 2 semanas de anticipación al inicio de ciclo.',
+        fecha: new Date().toISOString(),
+        usuario: 'CHARLY'
+      }
+    ];
+    guardarObservacionesLocal();
+  }
+
+  renderObservaciones();
+}
+
+function guardarObservacionesLocal() {
+  localStorage.setItem('ccm_observaciones_vacunacion', JSON.stringify(observacionesMemoria));
+}
+
+function renderObservaciones() {
+  const list2026 = document.getElementById('listaObs2026');
+  const list2027 = document.getElementById('listaObs2027');
+  const count2026 = document.getElementById('count-obs-2026');
+  const count2027 = document.getElementById('count-obs-2027');
+
+  if (!list2026 || !list2027) return;
+
+  const obs2026 = observacionesMemoria.filter(x => x.ciclo === '2026-2027');
+  const obs2027 = observacionesMemoria.filter(x => x.ciclo === '2027-2028');
+
+  if (count2026) count2026.innerText = `${obs2026.length} Nota/s`;
+  if (count2027) count2027.innerText = `${obs2027.length} Nota/s`;
+
+  // Render 2026-2027
+  if (obs2026.length === 0) {
+    list2026.innerHTML = `<p class="text-muted text-center py-3 small">Sin observaciones registradas para este ciclo.</p>`;
+  } else {
+    list2026.innerHTML = obs2026.map(item => `
+      <div class="card mb-2 border-info-subtle bg-light shadow-sm">
+        <div class="card-body p-2.5">
+          <p class="mb-1 text-dark small">${item.texto}</p>
+          <div class="d-flex justify-content-between align-items-center text-muted" style="font-size: 0.75rem;">
+            <span><i class="bi bi-person me-1"></i><strong>${item.usuario}</strong> • ${new Date(item.fecha).toLocaleString('es-MX')}</span>
+            <button class="btn btn-sm btn-link text-danger p-0 no-print" onclick="eliminarObservacion(${item.id})" title="Eliminar"><i class="bi bi-trash"></i></button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // Render 2027-2028
+  if (obs2027.length === 0) {
+    list2027.innerHTML = `<p class="text-muted text-center py-3 small">Sin observaciones registradas para este ciclo.</p>`;
+  } else {
+    list2027.innerHTML = obs2027.map(item => `
+      <div class="card mb-2 border-warning-subtle bg-light shadow-sm">
+        <div class="card-body p-2.5">
+          <p class="mb-1 text-dark small">${item.texto}</p>
+          <div class="d-flex justify-content-between align-items-center text-muted" style="font-size: 0.75rem;">
+            <span><i class="bi bi-person me-1"></i><strong>${item.usuario}</strong> • ${new Date(item.fecha).toLocaleString('es-MX')}</span>
+            <button class="btn btn-sm btn-link text-danger p-0 no-print" onclick="eliminarObservacion(${item.id})" title="Eliminar"><i class="bi bi-trash"></i></button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+}
+
+function agregarObservacion(ciclo) {
+  const inputId = ciclo === '2026-2027' ? 'txtNota2026' : 'txtNota2027';
+  const txt = document.getElementById(inputId)?.value.trim();
+
+  if (!txt) {
+    Swal.fire('Atención', 'Escriba una observación o nota válida antes de guardar.', 'warning');
+    return;
+  }
+
+  const aliasUser = obtenerNombreCorto(usuarioActual?.email);
+
+  const nuevaNota = {
+    id: Date.now(),
+    ciclo: ciclo,
+    texto: txt,
+    fecha: new Date().toISOString(),
+    usuario: aliasUser
+  };
+
+  observacionesMemoria.unshift(nuevaNota);
+  guardarObservacionesLocal();
+  renderObservaciones();
+
+  document.getElementById(inputId).value = '';
+  Swal.fire({
+    title: '¡Nota Guardada!',
+    text: 'La observación ha sido registrada exitosamente.',
+    icon: 'success',
+    timer: 1500,
+    showConfirmButton: false
+  });
+}
+
+function eliminarObservacion(id) {
+  observacionesMemoria = observacionesMemoria.filter(x => x.id !== id);
+  guardarObservacionesLocal();
+  renderObservaciones();
+}
+
+function exportarObservacionesExcel() {
+  if (observacionesMemoria.length === 0) {
+    Swal.fire('Atención', 'No hay observaciones para exportar.', 'warning');
+    return;
+  }
+
+  let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+  csvContent += "MÓDULO DE OBSERVACIONES Y APRENDIZAJE - COLEGIO CIUDAD DE MÉXICO\n";
+  csvContent += "Ciclo Escolar,Observación / Nota,Registrado Por,Fecha y Hora\n";
+
+  observacionesMemoria.forEach(item => {
+    const line = [
+      `"${item.ciclo}"`,
+      `"${item.texto.replace(/"/g, '""')}"`,
+      `"${item.usuario}"`,
+      `"${new Date(item.fecha).toLocaleString('es-MX')}"`
+    ].join(",");
+    csvContent += line + "\n";
+  });
+
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement("a");
+  link.setAttribute("href", encodedUri);
+  link.setAttribute("download", `Observaciones_Aprendizaje_${new Date().toISOString().slice(0, 10)}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+function imprimirObservaciones() {
+  window.print();
+}
+
+// Exposición explícita de funciones a window
 window.iniciarSesion = iniciarSesion;
 window.cerrarSesion = cerrarSesion;
 window.cambiarPassword = cambiarPassword;
@@ -1049,13 +1457,24 @@ window.agregarAlRecibo = agregarAlRecibo;
 window.eliminarDelRecibo = eliminarDelRecibo;
 window.actualizarFormaPagoTicket = actualizarFormaPagoTicket;
 window.confirmarGuardarRecibo = confirmarGuardarRecibo;
-window.confirmarImprimirRecibo = confirmarImprimirRecibo;
 window.cargarHistorial = cargarHistorial;
 window.filtrarTabla = filtrarTabla;
+window.filtrarHoy = filtrarHoy;
+window.limpiarFiltros = limpiarFiltros;
 window.toggleSuperUsuario = toggleSuperUsuario;
+window.marcarAplicacionVacuna = marcarAplicacionVacuna;
+window.abrirModalReporteUsuario = abrirModalReporteUsuario;
+window.exportarCorteUsuarioExcel = exportarCorteUsuarioExcel;
+window.imprimirCorteUsuario = imprimirCorteUsuario;
 window.abrirModalReembolso = abrirModalReembolso;
 window.toggleTipoReembolso = toggleTipoReembolso;
 window.ejecutarReembolsoAuditado = ejecutarReembolsoAuditado;
 window.cancelarRegistro = cancelarRegistro;
 window.reimprimirFolio = reimprimirFolio;
 window.exportarExcel = exportarExcel;
+window.imprimirReporte = imprimirReporte;
+window.cargarObservaciones = cargarObservaciones;
+window.agregarObservacion = agregarObservacion;
+window.eliminarObservacion = eliminarObservacion;
+window.exportarObservacionesExcel = exportarObservacionesExcel;
+window.imprimirObservaciones = imprimirObservaciones;
