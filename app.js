@@ -769,7 +769,7 @@ async function marcarAplicacionVacuna(id) {
       <div class="text-start">
         <p class="mb-2"><strong>Paciente:</strong> ${item.nombre} (${item.familia})</p>
         <p class="mb-2"><strong>Vacuna:</strong> ${item.concepto}</p>
-        <p class="mb-0 text-danger fw-bold"><i class="bi bi-exclamation-triangle-fill me-1"></i> ¿Confirms que la vacuna ha sido administrada físicamente al paciente?</p>
+        <p class="mb-0 text-danger fw-bold"><i class="bi bi-exclamation-triangle-fill me-1"></i> ¿Confirmas que la vacuna ha sido administrada físicamente al paciente?</p>
         <small class="text-muted d-block mt-2">Al responder afirmativamente se dejará registro del día, hora exacta y la persona que confirma la aplicación.</small>
       </div>
     `,
@@ -1327,7 +1327,7 @@ function renderObservaciones() {
           <p class="mb-1 text-dark small">${item.texto}</p>
           <div class="d-flex justify-content-between align-items-center text-muted" style="font-size: 0.75rem;">
             <span><i class="bi bi-person me-1"></i><strong>${item.usuario}</strong> • ${new Date(item.fecha).toLocaleString('es-MX')}</span>
-            <button class="btn btn-sm btn-link text-danger p-0 no-print" onclick="eliminarObservacion(${item.id})" title="Eliminar"><i class="bi bi-trash"></i></button>
+            <button class="btn btn-sm btn-link text-danger p-0 no-print" onclick="eliminarObservacion(${item.id})" title="Eliminar nota"><i class="bi bi-trash"></i></button>
           </div>
         </div>
       </div>
@@ -1343,7 +1343,7 @@ function renderObservaciones() {
           <p class="mb-1 text-dark small">${item.texto}</p>
           <div class="d-flex justify-content-between align-items-center text-muted" style="font-size: 0.75rem;">
             <span><i class="bi bi-person me-1"></i><strong>${item.usuario}</strong> • ${new Date(item.fecha).toLocaleString('es-MX')}</span>
-            <button class="btn btn-sm btn-link text-danger p-0 no-print" onclick="eliminarObservacion(${item.id})" title="Eliminar"><i class="bi bi-trash"></i></button>
+            <button class="btn btn-sm btn-link text-danger p-0 no-print" onclick="eliminarObservacion(${item.id})" title="Eliminar nota"><i class="bi bi-trash"></i></button>
           </div>
         </div>
       </div>
@@ -1353,31 +1353,31 @@ function renderObservaciones() {
 
 function agregarObservacion(ciclo) {
   const inputId = ciclo === '2026-2027' ? 'txtNota2026' : 'txtNota2027';
-  const txt = document.getElementById(inputId)?.value.trim();
+  const txtEl = document.getElementById(inputId);
+  if (!txtEl) return;
 
-  if (!txt) {
-    Swal.fire('Atención', 'Escriba una observación o nota válida antes de guardar.', 'warning');
+  const texto = txtEl.value.trim();
+  if (!texto) {
+    Swal.fire('Atención', 'Por favor escribe el contenido de la observación.', 'warning');
     return;
   }
 
-  const aliasUser = obtenerNombreCorto(usuarioActual?.email);
-
-  const nuevaNota = {
+  const nuevaObs = {
     id: Date.now(),
-    ciclo: ciclo,
-    texto: txt,
+    ciclo,
+    texto,
     fecha: new Date().toISOString(),
-    usuario: aliasUser
+    usuario: obtenerNombreCorto(usuarioActual?.email)
   };
 
-  observacionesMemoria.unshift(nuevaNota);
+  observacionesMemoria.unshift(nuevaObs);
   guardarObservacionesLocal();
   renderObservaciones();
 
-  document.getElementById(inputId).value = '';
+  txtEl.value = '';
   Swal.fire({
-    title: '¡Nota Guardada!',
-    text: 'La observación ha sido registrada exitosamente.',
+    title: '¡Guardado!',
+    text: 'Observación agregada correctamente.',
     icon: 'success',
     timer: 1500,
     showConfirmButton: false
@@ -1385,27 +1385,46 @@ function agregarObservacion(ciclo) {
 }
 
 function eliminarObservacion(id) {
-  observacionesMemoria = observacionesMemoria.filter(x => x.id !== id);
-  guardarObservacionesLocal();
-  renderObservaciones();
+  Swal.fire({
+    title: '¿Eliminar observación?',
+    text: 'Esta acción no se puede deshacer.',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#dc2626',
+    confirmButtonText: 'Sí, eliminar'
+  }).then(result => {
+    if (result.isConfirmed) {
+      observacionesMemoria = observacionesMemoria.filter(x => x.id !== id);
+      guardarObservacionesLocal();
+      renderObservaciones();
+      Swal.fire({
+        title: 'Eliminada',
+        text: 'La observación ha sido eliminada.',
+        icon: 'success',
+        timer: 1500,
+        showConfirmButton: false
+      });
+    }
+  });
 }
 
 function exportarObservacionesExcel() {
-  if (observacionesMemoria.length === 0) {
+  if (!observacionesMemoria || observacionesMemoria.length === 0) {
     Swal.fire('Atención', 'No hay observaciones para exportar.', 'warning');
     return;
   }
 
   let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
-  csvContent += "MÓDULO DE OBSERVACIONES Y APRENDIZAJE - COLEGIO CIUDAD DE MÉXICO\n";
-  csvContent += "Ciclo Escolar,Observación / Nota,Registrado Por,Fecha y Hora\n";
+  csvContent += "MÓDULO DE OBSERVACIONES Y APRENDIZAJE - COLEGIO CIUDAD DE MÉXICO\n\n";
+  csvContent += "Ciclo,Fecha,Usuario / Vendedor,Observación / Nota\n";
 
-  observacionesMemoria.forEach(item => {
+  observacionesMemoria.forEach(row => {
+    const fecha = new Date(row.fecha).toLocaleString('es-MX');
     const line = [
-      `"${item.ciclo}"`,
-      `"${item.texto.replace(/"/g, '""')}"`,
-      `"${item.usuario}"`,
-      `"${new Date(item.fecha).toLocaleString('es-MX')}"`
+      `"${row.ciclo}"`,
+      `"${fecha}"`,
+      `"${row.usuario}"`,
+      `"${row.texto.replace(/"/g, '""')}"`
     ].join(",");
     csvContent += line + "\n";
   });
@@ -1413,46 +1432,18 @@ function exportarObservacionesExcel() {
   const encodedUri = encodeURI(csvContent);
   const link = document.createElement("a");
   link.setAttribute("href", encodedUri);
-  link.setAttribute("download", `Observaciones_Aprendizaje_${new Date().toISOString().slice(0, 10)}.csv`);
+  link.setAttribute("download", `Observaciones_Vacunacion_${new Date().toISOString().slice(0, 10)}.csv`);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
 }
 
 function imprimirObservaciones() {
-  window.print();
+  const printArea = document.getElementById('print-area');
+  const content = document.getElementById('observaciones-pane')?.cloneNode(true);
+  if (printArea && content) {
+    printArea.innerHTML = '';
+    printArea.appendChild(content);
+    window.print();
+  }
 }
-
-// EXPOSICIÓN GLOBAL DE FUNCIONES A WINDOW
-window.iniciarSesion = iniciarSesion;
-window.cerrarSesion = cerrarSesion;
-window.cambiarPassword = cambiarPassword;
-window.setModo = setModo;
-window.buscarPersona = buscarPersona;
-window.seleccionarPersona = seleccionarPersona;
-window.resetearFormularioVenta = resetearFormularioVenta;
-window.agregarAlRecibo = agregarAlRecibo;
-window.eliminarDelRecibo = eliminarDelRecibo;
-window.actualizarFormaPagoTicket = actualizarFormaPagoTicket;
-window.confirmarGuardarRecibo = confirmarGuardarRecibo;
-window.cargarHistorial = cargarHistorial;
-window.filtrarTabla = filtrarTabla;
-window.filtrarHoy = filtrarHoy;
-window.limpiarFiltros = limpiarFiltros;
-window.toggleSuperUsuario = toggleSuperUsuario;
-window.marcarAplicacionVacuna = marcarAplicacionVacuna;
-window.abrirModalReporteUsuario = abrirModalReporteUsuario;
-window.exportarCorteUsuarioExcel = exportarCorteUsuarioExcel;
-window.imprimirCorteUsuario = imprimirCorteUsuario;
-window.abrirModalReembolso = abrirModalReembolso;
-window.toggleTipoReembolso = toggleTipoReembolso;
-window.ejecutarReembolsoAuditado = ejecutarReembolsoAuditado;
-window.cancelarRegistro = cancelarRegistro;
-window.reimprimirFolio = reimprimirFolio;
-window.exportarExcel = exportarExcel;
-window.imprimirReporte = imprimirReporte;
-window.cargarObservaciones = cargarObservaciones;
-window.agregarObservacion = agregarObservacion;
-window.eliminarObservacion = eliminarObservacion;
-window.exportarObservacionesExcel = exportarObservacionesExcel;
-window.imprimirObservaciones = imprimirObservaciones;
