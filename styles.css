@@ -1,225 +1,371 @@
-/* ==========================================
-   ESTILOS GENERALES Y FUENTES
-   ========================================== */
-body {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  background-color: #f4f6f9;
-  color: #2b3674;
+:root {
+  --bg-main: #f8fafc;
+  --header-bg: linear-gradient(135deg, #0b1736 0%, #081026 100%);
+  --accent-green: #00c853;
+  --accent-blue: #2563eb;
+  --border-color: #e2e8f0;
 }
 
-/* Pantalla de Login Overlay */
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background-color: var(--bg-main);
+  color: #1e293b;
+}
+
+/* OVERLAY Y CARD DE LOGIN */
 #loginOverlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  background: var(--header-bg);
+  z-index: 9999;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
+  padding: 1rem;
 }
 
 .login-card {
-  background: #ffffff;
-  border-radius: 16px;
-  padding: 2.5rem;
   width: 100%;
   max-width: 420px;
+  background: #ffffff;
+  border-radius: 16px;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+  padding: 2.5rem;
+  border: 1px solid var(--border-color);
 }
 
 .login-logo {
-  max-height: 70px;
+  height: 60px;
+  width: auto;
   object-fit: contain;
 }
 
-/* Encabezado Principal */
+/* ENCABEZADO Y BANNER PRINCIPAL */
 .header-banner {
-  background: linear-gradient(90deg, #107c41 0%, #0b582e 100%);
-  color: white;
-  padding: 1rem 1.5rem;
+  background: var(--header-bg) !important;
   border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border-bottom: 4px solid var(--accent-green);
+  padding: 16px 24px;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(18, 33, 71, 0.15);
 }
 
 .header-logo {
   height: 48px;
   width: auto;
-  border-radius: 6px;
-  background: white;
-  padding: 3px;
+  object-fit: contain;
+  background: #ffffff;
+  padding: 4px 8px;
+  border-radius: 8px;
 }
 
 .header-title {
-  font-size: 1.35rem;
   font-weight: 800;
+  font-size: 1.3rem;
   margin: 0;
   line-height: 1.2;
+  color: #ffffff !important;
 }
 
 .header-subtitle {
   font-size: 0.85rem;
+  color: #93c5fd !important;
   margin: 0;
-  opacity: 0.9;
 }
 
 .folio-badge {
-  background: rgba(255, 255, 255, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  padding: 0.25rem 0.75rem;
-  border-radius: 20px;
-  font-weight: 700;
-  font-size: 1rem;
+  background-color: #1e293b;
+  color: #ffffff;
+  border: 1px solid #334155;
+  font-weight: 800;
+  font-size: 1.1rem;
+  padding: 4px 14px;
+  border-radius: 6px;
+  display: inline-block;
 }
 
-/* Cards Personalizadas */
+/* TARJETAS Y CONTENEDORES */
 .custom-card {
   background: #ffffff;
+  border: 1px solid var(--border-color);
   border-radius: 12px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
 }
 
 .card-title-custom {
+  font-size: 0.85rem;
   font-weight: 700;
-  font-size: 1.05rem;
-}
-
-/* Tablas */
-.table th {
-  font-weight: 600;
-  font-size: 0.82rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: #64748b;
-  background-color: #f8fafc;
 }
 
-.table td {
-  vertical-align: middle;
-  font-size: 0.88rem;
-}
-
-/* Estados de filas en historial */
-.fila-cancelada {
-  background-color: #fef2f2 !important;
-  text-decoration: line-through;
-  color: #991b1b !important;
-}
-
-.fila-reembolso-egreso {
-  background-color: #fffbe8 !important;
-}
-
-.fila-reembolsada-total {
-  background-color: #f1f5f9 !important;
-  color: #64748b !important;
-}
-
-.fila-reembolsada-parcial {
-  background-color: #ffedd5 !important;
-}
-
-/* Ticket de Impresión */
-.ticket-paper {
-  background: #fff8eb;
-  border: 1px dashed #d97706;
-  border-radius: 8px;
-  padding: 1.25rem;
-  font-family: 'Courier New', Courier, monospace;
-}
-
-.ticket-header-title {
-  font-size: 1.1rem;
-  margin-bottom: 2px;
-}
-
-.ticket-header-sub {
-  font-size: 0.8rem;
-  margin-bottom: 8px;
-}
-
-.ticket-item {
-  font-size: 0.85rem;
-}
-
-.ticket-total-title {
-  font-size: 1.1rem;
-}
-
-.ticket-total-amount {
-  font-size: 1.3rem;
-}
-
-.cursor-pointer {
-  cursor: pointer;
-}
-
-/* Búsqueda de alumnos */
+/* BÚSQUEDA PREDICTIVA Y CURSOR MANITA */
 .results-list {
+  max-height: 240px;
+  overflow-y: auto;
   position: absolute;
   top: 100%;
   left: 0;
   right: 0;
-  z-index: 1000;
-  max-height: 220px;
-  overflow-y: auto;
+  z-index: 1050;
+  border-radius: 8px;
 }
 
-/* ==========================================
-   ESTILOS DE IMPRESIÓN (PDF / FISICA)
-   ========================================== */
+.results-list > *,
+.results-list .list-group-item,
+.results-list tr,
+.results-list div,
+button,
+.nav-link,
+.btn {
+  cursor: pointer !important;
+}
+
+/* =========================================================
+   ESTILOS DE BOTONES 3D DE TODO EL MÓDULO
+   ========================================================= */
+
+/* NAVEGACIÓN ENTRE PESTAÑAS (3D) */
+.nav-tabs,
+.nav-tabs .nav-item,
+.nav-tabs .nav-link {
+  position: relative !important;
+  z-index: 1100 !important;
+  pointer-events: auto !important;
+}
+
+.nav-tabs {
+  border-bottom: none !important;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.nav-tabs .nav-link {
+  color: #475569 !important;
+  font-weight: 700 !important;
+  border: 1px solid #cbd5e1 !important;
+  background: linear-gradient(180deg, #ffffff 0%, #e2e8f0 100%) !important;
+  border-radius: 10px !important;
+  padding: 8px 20px !important;
+  font-size: 0.9rem !important;
+  box-shadow: 0 4px 0 #94a3b8, 0 3px 6px rgba(0, 0, 0, 0.1) !important;
+  transition: all 0.15s ease-in-out !important;
+}
+
+.nav-tabs .nav-link:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 0 #94a3b8, 0 5px 10px rgba(0, 0, 0, 0.15) !important;
+  background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%) !important;
+}
+
+.nav-tabs .nav-link:active {
+  transform: translateY(2px) !important;
+  box-shadow: 0 2px 0 #94a3b8 !important;
+}
+
+.nav-tabs .nav-link.active {
+  color: #ffffff !important;
+  background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%) !important;
+  border: 1px solid #1e40af !important;
+  box-shadow: 0 4px 0 #1e3a8a, 0 4px 10px rgba(37, 99, 235, 0.3) !important;
+}
+
+.nav-tabs .nav-link.active:active {
+  transform: translateY(2px) !important;
+  box-shadow: 0 2px 0 #1e3a8a !important;
+}
+
+/* BOTONES BUSCAR ALUMNO Y PERSONA EXTERNA (3D) */
+#btnModeAlumno,
+#btnModeExterno,
+.btn-mode {
+  color: #475569 !important;
+  background: linear-gradient(180deg, #ffffff 0%, #e2e8f0 100%) !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 20px !important;
+  padding: 6px 18px !important;
+  font-size: 0.85rem !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 0 #94a3b8, 0 3px 6px rgba(0, 0, 0, 0.1) !important;
+  transition: all 0.15s ease-in-out !important;
+}
+
+#btnModeAlumno:hover,
+#btnModeExterno:hover,
+.btn-mode:not(.active):hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 0 #94a3b8, 0 5px 10px rgba(0, 0, 0, 0.15) !important;
+  background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%) !important;
+}
+
+#btnModeAlumno.active,
+#btnModeExterno.active,
+.btn-mode.active {
+  color: #ffffff !important;
+  background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%) !important;
+  border: 1px solid #1e40af !important;
+  box-shadow: 0 4px 0 #1e3a8a, 0 3px 6px rgba(37, 99, 235, 0.3) !important;
+}
+
+#btnModeAlumno.active:hover,
+#btnModeExterno.active:hover,
+.btn-mode.active:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 0 #1e3a8a, 0 5px 10px rgba(37, 99, 235, 0.4) !important;
+}
+
+/* BOTÓN AGREGAR PACIENTE AL RECIBO (3D AZUL CENTRADO) */
+#btnAgregarPaciente {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  width: auto !important;
+  max-width: fit-content !important;
+  margin: 12px auto !important;
+  font-size: 0.85rem !important;
+  font-weight: 700 !important;
+  padding: 8px 22px !important;
+  border-radius: 8px !important;
+  background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid #1e40af !important;
+  box-shadow: 0 4px 0 #1e3a8a, 0 4px 8px rgba(37, 99, 235, 0.3) !important;
+  transition: all 0.15s ease-in-out !important;
+}
+
+#btnAgregarPaciente:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 0 #1e3a8a, 0 6px 12px rgba(37, 99, 235, 0.4) !important;
+}
+
+#btnAgregarPaciente:active {
+  transform: translateY(2px) !important;
+  box-shadow: 0 2px 0 #1e3a8a !important;
+}
+
+/* BOTÓN GUARDAR REGISTRO (3D VERDE CENTRADO) */
+#btnGuardarRegistro {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  width: auto !important;
+  max-width: fit-content !important;
+  margin: 16px auto 8px auto !important;
+  font-size: 0.88rem !important;
+  font-weight: 800 !important;
+  padding: 9px 28px !important;
+  border-radius: 8px !important;
+  background: linear-gradient(180deg, #00c853 0%, #009624 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid #007a1c !important;
+  box-shadow: 0 4px 0 #005c14, 0 4px 8px rgba(0, 200, 83, 0.35) !important;
+  transition: all 0.15s ease-in-out !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+}
+
+#btnGuardarRegistro:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 0 #005c14, 0 6px 12px rgba(0, 200, 83, 0.45) !important;
+  background: linear-gradient(180deg, #00e676 0%, #00a844 100%) !important;
+}
+
+#btnGuardarRegistro:active {
+  transform: translateY(2px) !important;
+  box-shadow: 0 2px 0 #005c14 !important;
+}
+
+/* TARJETAS KPI */
+.kpi-card {
+  border-left: 4px solid var(--accent-blue);
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 16px;
+  border-top: 1px solid var(--border-color);
+  border-right: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* REGISTROS CANCELADOS Y REEMBOLSADOS EN HISTORIAL */
+.fila-cancelada {
+  background-color: #fef2f2 !important;
+  opacity: 0.75;
+}
+
+.fila-cancelada td {
+  color: #991b1b;
+  text-decoration: line-through;
+}
+
+.fila-reembolso-egreso {
+  background-color: #fff7ed !important;
+  font-weight: 500;
+}
+
+.fila-reembolsada-total {
+  background-color: #f8fafc !important;
+  opacity: 0.8;
+}
+
+.fila-reembolsada-parcial {
+  background-color: #fffbeb !important;
+}
+
+/* CONGELAR ENCABEZADO Y SCROLLBAR DE TABLAS */
+#tablaHistorial thead th {
+  position: sticky;
+  top: 0;
+  background-color: #f8f9fa;
+  z-index: 2;
+  box-shadow: inset 0 -2px 0 #dee2e6;
+}
+
+.table-responsive::-webkit-scrollbar {
+  width: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 4px;
+}
+
+/* TICKET Y VISTA PREVIA */
+.ticket-paper {
+  background: #ffffff;
+  border: 2px dashed #cbd5e1;
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.ticket-header-title { font-size: 1.1rem; margin-bottom: 2px; }
+.ticket-header-sub { font-size: 0.8rem; margin-bottom: 6px; }
+.ticket-info-block { font-size: 0.82rem; }
+.ticket-item { font-size: 0.85rem; padding-bottom: 6px; margin-bottom: 6px; }
+.ticket-total-title { font-size: 1.1rem; }
+.ticket-total-amount { font-size: 1.4rem; }
+
+#print-area, .print-only {
+  display: none !important;
+}
+
 @media print {
-  .no-print, 
-  .nav-tabs, 
-  .header-banner, 
-  #loginOverlay, 
-  .btn, 
-  .card-header button, 
-  .dataTables_filter, 
-  .dataTables_length {
-    display: none !important;
-  }
-
-  body {
-    background-color: #ffffff !important;
-    padding: 0 !important;
-    margin: 0 !important;
-  }
-
-  .container-fluid {
-    width: 100% !important;
-    padding: 0 !important;
-  }
-
-  .tab-content > .tab-pane {
+  body > * { display: none !important; }
+  body > #print-area, #print-area {
     display: block !important;
-    opacity: 1 !important;
+    position: absolute !important;
+    left: 0 !important; top: 0 !important;
+    width: 100% !important; margin: 0 !important; padding: 0 !important;
+    background: #ffffff !important;
   }
-
-  .custom-card {
-    border: none !important;
-    box-shadow: none !important;
-  }
-
-  .table {
-    width: 100% !important;
-    border-collapse: collapse !important;
-  }
-
-  .table th, .table td {
-    border: 1px solid #cbd5e1 !important;
-    padding: 6px 8px !important;
-    font-size: 8pt !important;
-  }
-
-  #print-area {
-    display: block !important;
-  }
-}
-
-#print-area {
-  display: none;
+  body > #print-area *, #print-area * { display: revert !important; visibility: visible !important; }
 }
