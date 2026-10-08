@@ -84,20 +84,20 @@
       </div>
     </div>
 
-    <!-- NAVEGACIÓN ENTRE PESTAÑAS -->
+    <!-- NAVEGACIÓN ENTRE PESTAÑAS (3 PESTAÑAS CON ESTILO 3D) -->
     <ul class="nav nav-tabs mb-4 border-bottom no-print" id="mainTab" role="tablist">
       <li class="nav-item" role="presentation">
-        <button class="nav-link active fw-bold" id="cobro-tab" data-bs-toggle="tab" data-bs-target="#cobro-pane" type="button">
+        <button class="nav-link active" id="cobro-tab" data-bs-toggle="tab" data-bs-target="#cobro-pane" type="button">
           <i class="bi bi-cash-stack me-2"></i>Nuevo Cobro (Multi-paciente)
         </button>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link fw-bold" id="reportes-tab" data-bs-toggle="tab" data-bs-target="#reportes-pane" type="button" onclick="cargarHistorial()">
+        <button class="nav-link" id="reportes-tab" data-bs-toggle="tab" data-bs-target="#reportes-pane" type="button" onclick="cargarHistorial()">
           <i class="bi bi-bar-chart-line-fill me-2"></i>Historial y Reportes Admin
         </button>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link fw-bold" id="observaciones-tab" data-bs-toggle="tab" data-bs-target="#observaciones-pane" type="button" onclick="cargarObservaciones()">
+        <button class="nav-link" id="observaciones-tab" data-bs-toggle="tab" data-bs-target="#observaciones-pane" type="button" onclick="cargarObservaciones()">
           <i class="bi bi-journal-bookmark-fill me-2"></i>Observaciones y Aprendizaje
         </button>
       </li>
@@ -120,8 +120,8 @@
                   <span>1. Datos del Paciente</span>
                 </div>
                 <div class="btn-group" role="group">
-                  <button type="button" class="btn btn-outline-primary btn-mode active" id="btnModeAlumno" onclick="setModo('alumno')"><i class="bi bi-search me-1"></i>Buscar Alumno</button>
-                  <button type="button" class="btn btn-outline-secondary btn-mode" id="btnModeExterno" onclick="setModo('externo')"><i class="bi bi-person-plus me-1"></i>Persona Externa</button>
+                  <button type="button" class="btn btn-mode active" id="btnModeAlumno" onclick="setModo('alumno')"><i class="bi bi-search me-1"></i>Buscar Alumno</button>
+                  <button type="button" class="btn btn-mode" id="btnModeExterno" onclick="setModo('externo')"><i class="bi bi-person-plus me-1"></i>Persona Externa</button>
                 </div>
               </div>
 
@@ -184,9 +184,9 @@
                   <label class="form-label text-muted small fw-semibold mb-1">Importe ($)</label>
                   <input type="number" step="0.01" id="importe" class="form-control" placeholder="100.00" value="100.00">
                 </div>
-                <div class="col-12 mt-3">
-                  <button type="button" class="btn btn-primary w-100 fw-bold shadow-sm" onclick="agregarAlRecibo()">
-                    <i class="bi bi-plus-circle-fill me-2"></i> + Agregar Paciente al Recibo
+                <div class="col-12 mt-3 text-center">
+                  <button type="button" id="btnAgregarPaciente" onclick="agregarAlRecibo()">
+                    <i class="bi bi-plus-circle-fill me-1"></i> + Agregar Paciente al Recibo
                   </button>
                 </div>
               </div>
@@ -252,20 +252,22 @@
 
               <div class="mb-3 no-print">
                 <label class="form-label small fw-semibold text-dark">Forma de Pago</label>
-                <select id="forma_pago" class="form-select" onchange="actualizarFormaPagoTicket()">
+                <select id="forma_pago" class="form-select fw-bold" onchange="actualizarFormaPagoTicket()">
                   <option value="Efectivo" selected>Efectivo</option>
                   <option value="Tarjeta de Débito/Crédito">Tarjeta de Débito/Crédito</option>
                   <option value="Transferencia">Transferencia</option>
                 </select>
               </div>
 
-              <div class="d-grid gap-2 no-print">
-                <button type="button" class="btn btn-success py-2.5 fw-bold shadow-sm" onclick="confirmarGuardarRecibo()">
-                  <i class="bi bi-check-circle-fill me-2"></i>Guardar e Imprimir Recibo
+              <div class="no-print text-center">
+                <button type="button" id="btnGuardarRegistro" onclick="confirmarGuardarRecibo()">
+                  <i class="bi bi-check-circle-fill me-2"></i> Guardar e Imprimir Recibo
                 </button>
-                <button type="button" class="btn btn-outline-danger btn-sm" onclick="resetearFormularioVenta()">
-                  <i class="bi bi-x-circle me-1"></i> Cancelar Venta Actual
-                </button>
+                <div class="mt-2">
+                  <button type="button" class="btn btn-outline-danger btn-sm" onclick="resetearFormularioVenta()">
+                    <i class="bi bi-x-circle me-1"></i> Cancelar Venta Actual
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -274,42 +276,42 @@
       </div>
 
       <!-- PESTAÑA 2: HISTORIAL Y REPORTES ADMIN -->
-      <div class="tab-pane fade" id="reportes-pane" role="tabpanel">
+      <div class="tab-pane fade no-print" id="reportes-pane" role="tabpanel">
         
-        <!-- CARDS KPIS -->
-        <div class="row g-3 mb-4 no-print">
+        <!-- CARDS KPIS METRICAS -->
+        <div class="row g-3 mb-4">
           <div class="col-md-3">
-            <div class="custom-card p-3 border-start border-4 border-success">
+            <div class="kpi-card shadow-sm" style="border-left-color: #059669;">
               <span class="text-muted small fw-semibold d-block mb-1">Ingreso Neto Real</span>
               <h3 class="fw-bold text-success mb-0" id="kpi-total">$0.00</h3>
               <small class="text-muted" id="kpi-bruto-sub">Bruto: $0.00</small>
             </div>
           </div>
           <div class="col-md-3">
-            <div class="custom-card p-3 border-start border-4 border-warning">
+            <div class="kpi-card shadow-sm" style="border-left-color: #dc2626;">
               <span class="text-muted small fw-semibold d-block mb-1">Reembolsos / Devoluciones</span>
-              <h3 class="fw-bold text-warning-emphasis mb-0" id="kpi-reembolsos">$0.00</h3>
+              <h3 class="fw-bold text-danger mb-0" id="kpi-reembolsos">$0.00</h3>
               <small class="text-muted" id="kpi-reembolsos-cant">0 Devoluciones</small>
             </div>
           </div>
           <div class="col-md-3">
-            <div class="custom-card p-3 border-start border-4 border-primary">
+            <div class="kpi-card shadow-sm" style="border-left-color: #2563eb;">
               <span class="text-muted small fw-semibold d-block mb-1">Vacunas Vendidas</span>
               <h3 class="fw-bold text-primary mb-0" id="kpi-count">0</h3>
               <small class="text-muted"><span id="kpi-folios">0</span> Folios de Venta</small>
             </div>
           </div>
           <div class="col-md-3">
-            <div class="custom-card p-3 border-start border-4 border-info">
+            <div class="kpi-card shadow-sm" style="border-left-color: #7c3aed;">
               <span class="text-muted small fw-semibold d-block mb-1">Efectivo vs Otros</span>
-              <h4 class="fw-bold text-dark mb-0"><span id="kpi-efectivo">$0.00</span> / <span id="kpi-otros">$0.00</span></h4>
+              <h4 class="fw-bold text-dark mb-0"><span id="kpi-efectivo" class="text-success">$0.00</span> / <span id="kpi-otros" class="text-primary">$0.00</span></h4>
               <small class="text-muted">Desglose neto de ingresos</small>
             </div>
           </div>
         </div>
 
-        <!-- FILTROS Y ACCIONES DE REPORTES -->
-        <div class="custom-card p-3 mb-4 no-print">
+        <!-- FILTROS Y REPORTES -->
+        <div class="custom-card p-3 mb-4">
           <div class="row g-3 align-items-end">
             <div class="col-md-2">
               <label class="form-label small fw-bold text-dark mb-1"><i class="bi bi-calendar-event me-1"></i>Fecha Inicial</label>
@@ -362,8 +364,8 @@
 
         <!-- TABLA DE HISTORIAL -->
         <div class="custom-card p-3">
-          <div class="table-responsive">
-            <table class="table table-hover align-middle border text-center" style="font-size: 0.85rem;">
+          <div class="table-responsive" style="max-height: 480px; overflow-y: auto;">
+            <table class="table table-hover align-middle border text-center" id="tablaHistorial" style="font-size: 0.85rem;">
               <thead class="table-light">
                 <tr>
                   <th>Fecha/Hora</th>
@@ -393,9 +395,9 @@
       </div>
 
       <!-- PESTAÑA 3: OBSERVACIONES Y APRENDIZAJE -->
-      <div class="tab-pane fade" id="observaciones-pane" role="tabpanel">
+      <div class="tab-pane fade no-print" id="observaciones-pane" role="tabpanel">
         <div class="custom-card p-4">
-          <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2 no-print">
+          <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
             <div>
               <h5 class="fw-bold m-0 text-dark">
                 <i class="bi bi-journal-bookmark-fill me-2 text-primary"></i> Módulo de Observaciones y Aprendizaje
@@ -413,9 +415,7 @@
             </div>
           </div>
 
-          <!-- CONTENEDOR DE DOS COLUMNAS -->
           <div class="row g-4">
-            
             <!-- COLUMNA 1: OBSERVACIONES CICLO 2026-2027 -->
             <div class="col-md-6">
               <div class="card border-info h-100 shadow-sm">
@@ -424,7 +424,7 @@
                   <span class="badge bg-white text-dark border" id="count-obs-2026">0 Notas</span>
                 </div>
                 <div class="card-body d-flex flex-column">
-                  <div class="mb-3 bg-light p-3 rounded border no-print">
+                  <div class="mb-3 bg-light p-3 rounded border">
                     <label class="form-label small fw-bold text-dark">Nueva Nota / Observación (2026-2027)</label>
                     <textarea id="txtNota2026" class="form-control form-control-sm mb-2" rows="2" placeholder="Escriba la observación o incidencia del ciclo actual..."></textarea>
                     <button class="btn btn-info btn-sm fw-bold text-dark w-100" onclick="agregarObservacion('2026-2027')">
@@ -445,7 +445,7 @@
                   <span class="badge bg-white text-dark border" id="count-obs-2027">0 Notas</span>
                 </div>
                 <div class="card-body d-flex flex-column">
-                  <div class="mb-3 bg-light p-3 rounded border no-print">
+                  <div class="mb-3 bg-light p-3 rounded border">
                     <label class="form-label small fw-bold text-dark">Punto Clave / Recomendación (2027-2028)</label>
                     <textarea id="txtNota2027" class="form-control form-control-sm mb-2" rows="2" placeholder="Escriba lo importante a considerar para el siguiente ciclo..."></textarea>
                     <button class="btn btn-warning btn-sm fw-bold text-dark w-100" onclick="agregarObservacion('2027-2028')">
@@ -457,7 +457,6 @@
                 </div>
               </div>
             </div>
-
           </div>
         </div>
       </div>
@@ -557,7 +556,7 @@
   </div>
 </div>
 
-<!-- MODAL REPORTE DE CORTE POR USUARIO (ENTREGA DE DINERO) -->
+<!-- MODAL REPORTE DE CORTE POR USUARIO -->
 <div class="modal fade" id="modalReporteUsuario" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content border-0 shadow-lg">
@@ -594,10 +593,9 @@
   </div>
 </div>
 
-<!-- ÁREA OCULTA PARA IMPRESIÓN DIRECTA -->
 <div id="print-area"></div>
 
-<!-- JS de Bootstrap y Script Principal -->
+<!-- Scripts JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="config.js"></script>
 <script src="app.js"></script>
