@@ -280,6 +280,39 @@ button,
   box-shadow: 0 2px 0 #005c14 !important;
 }
 
+/* BOTÓN CANCELAR VENTA ACTUAL (3D ROJO CENTRADO) */
+#btnCancelarVenta {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  width: auto !important;
+  max-width: fit-content !important;
+  margin: 6px auto !important;
+  font-size: 0.82rem !important;
+  font-weight: 700 !important;
+  padding: 7px 22px !important;
+  border-radius: 8px !important;
+  background: linear-gradient(180deg, #dc2626 0%, #b91c1c 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid #991b1b !important;
+  box-shadow: 0 4px 0 #7f1d1d, 0 4px 8px rgba(220, 38, 38, 0.3) !important;
+  transition: all 0.15s ease-in-out !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+}
+
+#btnCancelarVenta:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 0 #7f1d1d, 0 6px 12px rgba(220, 38, 38, 0.4) !important;
+  background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%) !important;
+}
+
+#btnCancelarVenta:active {
+  transform: translateY(2px) !important;
+  box-shadow: 0 2px 0 #7f1d1d !important;
+}
+
 /* TARJETAS KPI */
 .kpi-card {
   border-left: 4px solid var(--accent-blue);
