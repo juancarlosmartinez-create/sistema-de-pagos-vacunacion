@@ -125,7 +125,7 @@ button,
 }
 
 /* =========================================================
-   ESTILOS DE BOTONES 3D DE TODO EL MÓDULO
+   ESTILOS DE BOTONES 3D DE TODO EL MÓDULO (TAMAÑO COMPACTO)
    ========================================================= */
 
 /* NAVEGACIÓN ENTRE PESTAÑAS (3D) */
@@ -149,33 +149,33 @@ button,
   border: 1px solid #cbd5e1 !important;
   background: linear-gradient(180deg, #ffffff 0%, #e2e8f0 100%) !important;
   border-radius: 10px !important;
-  padding: 8px 20px !important;
-  font-size: 0.9rem !important;
-  box-shadow: 0 4px 0 #94a3b8, 0 3px 6px rgba(0, 0, 0, 0.1) !important;
+  padding: 7px 18px !important;
+  font-size: 0.85rem !important;
+  box-shadow: 0 3px 0 #94a3b8, 0 3px 6px rgba(0, 0, 0, 0.1) !important;
   transition: all 0.15s ease-in-out !important;
 }
 
 .nav-tabs .nav-link:hover {
   transform: translateY(-2px) !important;
-  box-shadow: 0 6px 0 #94a3b8, 0 5px 10px rgba(0, 0, 0, 0.15) !important;
+  box-shadow: 0 5px 0 #94a3b8, 0 5px 10px rgba(0, 0, 0, 0.15) !important;
   background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%) !important;
 }
 
 .nav-tabs .nav-link:active {
   transform: translateY(2px) !important;
-  box-shadow: 0 2px 0 #94a3b8 !important;
+  box-shadow: 0 1px 0 #94a3b8 !important;
 }
 
 .nav-tabs .nav-link.active {
   color: #ffffff !important;
   background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%) !important;
   border: 1px solid #1e40af !important;
-  box-shadow: 0 4px 0 #1e3a8a, 0 4px 10px rgba(37, 99, 235, 0.3) !important;
+  box-shadow: 0 3px 0 #1e3a8a, 0 3px 8px rgba(37, 99, 235, 0.3) !important;
 }
 
 .nav-tabs .nav-link.active:active {
   transform: translateY(2px) !important;
-  box-shadow: 0 2px 0 #1e3a8a !important;
+  box-shadow: 0 1px 0 #1e3a8a !important;
 }
 
 /* BOTONES BUSCAR ALUMNO Y PERSONA EXTERNA (3D) */
@@ -186,10 +186,10 @@ button,
   background: linear-gradient(180deg, #ffffff 0%, #e2e8f0 100%) !important;
   border: 1px solid #cbd5e1 !important;
   border-radius: 20px !important;
-  padding: 6px 18px !important;
-  font-size: 0.85rem !important;
+  padding: 5px 15px !important;
+  font-size: 0.8rem !important;
   font-weight: 700 !important;
-  box-shadow: 0 4px 0 #94a3b8, 0 3px 6px rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 3px 0 #94a3b8, 0 2px 4px rgba(0, 0, 0, 0.1) !important;
   transition: all 0.15s ease-in-out !important;
 }
 
@@ -197,7 +197,7 @@ button,
 #btnModeExterno:hover,
 .btn-mode:not(.active):hover {
   transform: translateY(-2px) !important;
-  box-shadow: 0 6px 0 #94a3b8, 0 5px 10px rgba(0, 0, 0, 0.15) !important;
+  box-shadow: 0 5px 0 #94a3b8, 0 4px 8px rgba(0, 0, 0, 0.15) !important;
   background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%) !important;
 }
 
@@ -207,28 +207,21 @@ button,
   color: #ffffff !important;
   background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%) !important;
   border: 1px solid #1e40af !important;
-  box-shadow: 0 4px 0 #1e3a8a, 0 3px 6px rgba(37, 99, 235, 0.3) !important;
+  box-shadow: 0 3px 0 #1e3a8a, 0 3px 6px rgba(37, 99, 235, 0.3) !important;
 }
 
-#btnModeAlumno.active:hover,
-#btnModeExterno.active:hover,
-.btn-mode.active:hover {
-  transform: translateY(-2px) !important;
-  box-shadow: 0 6px 0 #1e3a8a, 0 5px 10px rgba(37, 99, 235, 0.4) !important;
-}
-
-/* BOTÓN AGREGAR PACIENTE AL RECIBO (3D AZUL CENTRADO) */
+/* BOTÓN AGREGAR PACIENTE AL RECIBO (3D AZUL COMPACTO) */
 #btnAgregarPaciente {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: 8px !important;
+  gap: 6px !important;
   width: auto !important;
   max-width: fit-content !important;
-  margin: 12px auto !important;
-  font-size: 0.85rem !important;
+  margin: 8px auto !important;
+  font-size: 0.82rem !important;
   font-weight: 700 !important;
-  padding: 8px 22px !important;
+  padding: 6px 18px !important;
   border-radius: 8px !important;
   background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%) !important;
   color: #ffffff !important;
@@ -247,18 +240,18 @@ button,
   box-shadow: 0 2px 0 #1e3a8a !important;
 }
 
-/* BOTÓN GUARDAR REGISTRO (3D VERDE CENTRADO) */
+/* BOTÓN GUARDAR REGISTRO (3D VERDE COMPACTO) */
 #btnGuardarRegistro {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: 8px !important;
+  gap: 6px !important;
   width: auto !important;
   max-width: fit-content !important;
-  margin: 16px auto 8px auto !important;
-  font-size: 0.88rem !important;
+  margin: 12px auto 6px auto !important;
+  font-size: 0.82rem !important;
   font-weight: 800 !important;
-  padding: 9px 28px !important;
+  padding: 7px 20px !important;
   border-radius: 8px !important;
   background: linear-gradient(180deg, #00c853 0%, #009624 100%) !important;
   color: #ffffff !important;
@@ -280,23 +273,23 @@ button,
   box-shadow: 0 2px 0 #005c14 !important;
 }
 
-/* BOTÓN CANCELAR VENTA ACTUAL (3D ROJO CENTRADO) */
+/* BOTÓN CANCELAR VENTA ACTUAL (3D ROJO COMPACTO) */
 #btnCancelarVenta {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: 8px !important;
+  gap: 6px !important;
   width: auto !important;
   max-width: fit-content !important;
-  margin: 6px auto !important;
-  font-size: 0.82rem !important;
+  margin: 4px auto !important;
+  font-size: 0.78rem !important;
   font-weight: 700 !important;
-  padding: 7px 22px !important;
+  padding: 5px 16px !important;
   border-radius: 8px !important;
   background: linear-gradient(180deg, #dc2626 0%, #b91c1c 100%) !important;
   color: #ffffff !important;
   border: 1px solid #991b1b !important;
-  box-shadow: 0 4px 0 #7f1d1d, 0 4px 8px rgba(220, 38, 38, 0.3) !important;
+  box-shadow: 0 3px 0 #7f1d1d, 0 3px 6px rgba(220, 38, 38, 0.3) !important;
   transition: all 0.15s ease-in-out !important;
   text-transform: uppercase !important;
   letter-spacing: 0.5px !important;
@@ -304,25 +297,27 @@ button,
 
 #btnCancelarVenta:hover {
   transform: translateY(-2px) !important;
-  box-shadow: 0 6px 0 #7f1d1d, 0 6px 12px rgba(220, 38, 38, 0.4) !important;
+  box-shadow: 0 5px 0 #7f1d1d, 0 5px 10px rgba(220, 38, 38, 0.4) !important;
   background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%) !important;
 }
 
 #btnCancelarVenta:active {
   transform: translateY(2px) !important;
-  box-shadow: 0 2px 0 #7f1d1d !important;
+  box-shadow: 0 1px 0 #7f1d1d !important;
 }
 
-/* BOTONES GUARDAR OBSERVACIONES 3D (CYAN Y AMARILLO) */
+/* BOTONES GUARDAR OBSERVACIONES 3D (CYAN Y AMARILLO COMPACTOS Y CENTRADOS) */
 #btnGuardarObs2026 {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: 8px !important;
-  width: 100% !important;
-  font-size: 0.85rem !important;
+  gap: 6px !important;
+  width: auto !important;
+  max-width: fit-content !important;
+  margin: 4px auto !important;
+  font-size: 0.82rem !important;
   font-weight: 800 !important;
-  padding: 9px 18px !important;
+  padding: 6px 18px !important;
   border-radius: 8px !important;
   background: linear-gradient(180deg, #0dcaf0 0%, #0aa2c0 100%) !important;
   color: #0f172a !important;
@@ -347,11 +342,13 @@ button,
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: 8px !important;
-  width: 100% !important;
-  font-size: 0.85rem !important;
+  gap: 6px !important;
+  width: auto !important;
+  max-width: fit-content !important;
+  margin: 4px auto !important;
+  font-size: 0.82rem !important;
   font-weight: 800 !important;
-  padding: 9px 18px !important;
+  padding: 6px 18px !important;
   border-radius: 8px !important;
   background: linear-gradient(180deg, #ffc107 0%, #d39e00 100%) !important;
   color: #0f172a !important;
