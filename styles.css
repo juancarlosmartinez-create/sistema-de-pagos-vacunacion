@@ -571,6 +571,24 @@ button,
     display: block !important;
   }
 
+  #print-area .rcb-hoja .rcb-titulo {
+    flex: 1 1 auto;
+    align-self: center;
+    padding: 0 3mm;
+    text-align: center;
+    font-size: 12pt;
+    font-weight: 800;
+    letter-spacing: 0.6pt;
+    text-transform: uppercase;
+  }
+
+  #print-area .rcb-hoja .rcb-jer {
+    display: inline-block !important;
+    height: 1.2em;
+    width: 1.2em;
+    vertical-align: -0.22em;
+  }
+
   #print-area .rcb-hoja .rcb-der {
     display: flex !important;
     flex-direction: column;
