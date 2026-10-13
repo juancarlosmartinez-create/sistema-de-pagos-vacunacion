@@ -448,12 +448,12 @@ button,
 }
 
 /* =========================================================
-   ESTILOS DE IMPRESIÓN: 2 RECIBOS EN 1 SOLA HOJA CARTA VERTICAL
+   ESTILOS DE IMPRESIÓN: CONTROL RIGUROSO DE MEDIA HOJA CARTA
    ========================================================= */
 @media print {
   @page {
     size: letter portrait;
-    margin: 5mm;
+    margin: 4mm;
   }
 
   body > * {
@@ -480,6 +480,7 @@ button,
     display: revert !important;
   }
 
+  /* Contenedor general que divide la hoja en 2 mitades exactas */
   .ticket-duplicado-container {
     display: flex !important;
     flex-direction: column !important;
@@ -487,39 +488,70 @@ button,
     align-items: center !important;
     width: 100% !important;
     height: 100% !important;
-    max-height: 265mm !important; /* Ajuste para evitar desbordes en hoja carta */
+    max-height: 268mm !important; /* Altura máxima estricta para evitar salto a pág 2 */
     box-sizing: border-box !important;
     overflow: hidden !important;
   }
 
+  /* Cada recibo ocupa exactamente la mitad vertical (aprox 132mm) */
   .ticket-single-pane {
-    width: 95% !important;
-    max-width: 450px !important;
-    padding: 4px 8px !important;
+    width: 96% !important;
+    max-width: 480px !important;
+    height: 130mm !important;
+    max-height: 130mm !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
     box-sizing: border-box !important;
-    font-size: 9.5px !important;
+    padding: 2mm 4mm !important;
   }
 
   .ticket-paper {
-    border: 1px dashed #94a3b8 !important;
-    border-radius: 6px !important;
-    padding: 6px 10px !important;
+    border: 1px dashed #64748b !important;
+    border-radius: 4px !important;
+    padding: 4px 8px !important;
     margin: 0 !important;
     background: #ffffff !important;
     box-shadow: none !important;
+    width: 100% !important;
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    box-sizing: border-box !important;
   }
 
-  .ticket-header-title { font-size: 11px !important; margin-bottom: 0px !important; }
-  .ticket-header-sub { font-size: 8.5px !important; margin-bottom: 2px !important; }
-  .badge { font-size: 8.5px !important; padding: 2px 6px !important; }
-  .ticket-info-block { font-size: 9px !important; padding: 2px 0 !important; margin: 2px 0 !important; }
-  .ticket-item { font-size: 9px !important; padding-bottom: 2px !important; margin-bottom: 2px !important; }
-  .ticket-total-title { font-size: 10px !important; }
-  .ticket-total-amount { font-size: 12px !important; }
+  /* Contenedor de la lista de productos con altura fija y scroll interno virtual */
+  .ticket-lista-container {
+    max-height: 45mm !important;
+    overflow: hidden !important;
+    flex-grow: 1 !important;
+  }
+
+  /* Tipografía normal para tickets estándar */
+  .ticket-header-title { font-size: 10.5px !important; margin-bottom: 0px !important; }
+  .ticket-header-sub { font-size: 8px !important; margin-bottom: 1px !important; }
+  .badge { font-size: 8px !important; padding: 1px 4px !important; }
+  .ticket-info-block { font-size: 8.5px !important; padding: 1px 0 !important; margin: 1px 0 !important; }
+  .ticket-item { font-size: 8.5px !important; padding-bottom: 1px !important; margin-bottom: 1px !important; }
+  .ticket-total-title { font-size: 9.5px !important; }
+  .ticket-total-amount { font-size: 11px !important; }
+
+  /* =========================================================
+     AUTO-SCALE / AUTO-SHRINK TIPOGRÁFICO PARA MULTI-PRODUCTOS (>3)
+     ========================================================= */
+  .ticket-single-pane.ticket-compacto-multiproducto .ticket-header-title { font-size: 9px !important; }
+  .ticket-single-pane.ticket-compacto-multiproducto .ticket-header-sub { font-size: 7px !important; }
+  .ticket-single-pane.ticket-compacto-multiproducto .ticket-info-block { font-size: 7px !important; padding: 0.5px 0 !important; margin: 0.5px 0 !important; }
+  .ticket-single-pane.ticket-compacto-multiproducto .ticket-item { font-size: 7px !important; padding-bottom: 0.5px !important; margin-bottom: 0.5px !important; }
+  .ticket-single-pane.ticket-compacto-multiproducto .ticket-lista-container { max-height: 52mm !important; overflow: hidden !important; }
+  .ticket-single-pane.ticket-compacto-multiproducto .ticket-total-title { font-size: 8.5px !important; }
+  .ticket-single-pane.ticket-compacto-multiproducto .ticket-total-amount { font-size: 10px !important; }
+  .ticket-single-pane.ticket-compacto-multiproducto .ticket-paper { padding: 3px 6px !important; }
 
   .ticket-divider {
-    width: 80% !important;
-    border-top: 1.5px dashed #475569 !important;
-    margin: 4px auto !important;
+    width: 75% !important;
+    border-top: 1.5px dashed #334155 !important;
+    margin: 1mm auto !important;
   }
 }
