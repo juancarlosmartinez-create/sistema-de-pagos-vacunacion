@@ -471,116 +471,207 @@ function actualizarFechaTicket() {
 function actualizarFormaPagoTicket() {}
 
 // ==========================================
-// CONSTRUCTOR DE RECIBO INSTITUCIONAL (PLAN B)
+// CONSTRUCTOR DE RECIBO INSTITUCIONAL VECTORIAL (NEGRO PURO)
+// Dos copias simétricas (Establecimiento / Cliente) en UNA hoja carta vertical.
+// Auto-shrink: la tipografía de la lista se calcula según el número de partidas
+// y la longitud de cada renglón, de modo que el recibo nunca crece ni se desborda.
 // ==========================================
 function construirEstructuraReciboInstitucional(folio, fechaTexto, formaPago, itemsArr, totalGral) {
-  let filasHtml = '';
-  itemsArr.forEach(item => {
-    filasHtml += `
-      <div class="ticket-row-item">
-        <span class="ticket-col-desc"><strong>${item.cantidad || 1}</strong> - ${item.concepto} <span class="ticket-subtext">(${item.nombre})</span></span>
-        <span class="ticket-col-import">$${(item.total !== undefined ? item.total : (item.cantidad || 1) * (item.importe || 0)).toFixed(2)}</span>
-      </div>
-    `;
-  });
+  const esc = (v) => String(v === undefined || v === null ? '' : v)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const dinero = (n) => '$' + Number(n || 0).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const importeItem = (item) => (item.total !== undefined ? item.total : (item.cantidad || 1) * (item.importe || 0));
 
-  const isEfectivo = formaPago === 'Efectivo';
-  const isCheque = formaPago === 'Cheque';
-  const isTarjeta = formaPago === 'Tarjeta';
-
+  // ---------- Datos del alumno (misma lógica que antes) ----------
   const primerNombre = itemsArr.length > 0 ? itemsArr[0].nombre : '---';
   const primerGrupo = itemsArr.length > 0 ? (itemsArr.length === 1 ? (itemsArr[0].grupo || '---') : 'MÚLTIPLE') : '---';
   const primerMatricula = itemsArr.length > 0 ? (itemsArr.length === 1 ? (itemsArr[0].matricula || '---') : 'MÚLTIPLE') : '---';
   const nombreRecibo = itemsArr.length === 1 ? primerNombre : `${itemsArr.length} Pacientes en Recibo`;
 
-  const logoUrl = "https://colegiociudad.edu.mx";
+  // ---------- Forma de pago ----------
+  const fp = String(formaPago || '').trim().toLowerCase();
+  const isEfectivo = fp.startsWith('efectivo');
+  const isCheque = fp.startsWith('cheque');
+  const isTarjeta = fp.includes('tarjeta');
+  const marca = (activo) => `<span class="rcb-chk">${activo ? 'X' : '&nbsp;'}</span>`;
 
-  const selloOficialReal = `
-    <div class="sello-oficial-ccm">
-      <img src="${logoUrl}" class="sello-logo-img" alt="CCM">
-      <div class="sello-text-block">
-        <strong>ESCUELA SECUNDARIA DE LA</strong>
-        <strong>CIUDAD DE MEXICO, S. C.</strong>
-        <span>ESC-521104-BH9</span>
-        <span>Campos Eliseos 139  11560 CDMX</span>
-        <span>Tel. 55-5203-7894</span>
-      </div>
-    </div>
-  `;
+  // ---------- Fecha formal: "Ciudad de México a 13 de Octubre de 2026" ----------
+  const mesesCap = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+  const crudo = String(fechaTexto || '').trim();
+  const mf = crudo.match(/^.*?\ba\s+(\d{1,2})\s+de\s+([A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+)\s+de\s+(\d{4})\s*$/);
+  let fechaHtml;
+  if (mf) {
+    const mes = mf[2].charAt(0).toUpperCase() + mf[2].slice(1).toLowerCase();
+    fechaHtml = `Ciudad de México a <span class="rcb-u">${esc(mf[1])}</span> de <span class="rcb-u rcb-u-mes">${esc(mes)}</span> de <span class="rcb-u">${esc(mf[3])}</span>`;
+  } else if (crudo) {
+    fechaHtml = esc(crudo);
+  } else {
+    const hoy = new Date();
+    fechaHtml = `Ciudad de México a <span class="rcb-u">${hoy.getDate()}</span> de <span class="rcb-u rcb-u-mes">${mesesCap[hoy.getMonth()]}</span> de <span class="rcb-u">${hoy.getFullYear()}</span>`;
+  }
 
-  const estructuraUnica = `
-    <div class="ticket-paper-inst">
-      <div class="inst-header-grid">
-        <div class="inst-logo-box">
-          <img src="${logoUrl}" class="recibo-logo" alt="Logo CCM">
-        </div>
-        <div class="inst-title-box text-right">
-          <span class="inst-plantel-tag">Plantel Polanco</span>
-          <div class="inst-folio-container">
-            <span class="inst-recibo-label">Recibo</span>
-            <span class="inst-folio-num">${folio}</span>
+  // ---------- Imagotipo vectorial del colegio (líneas finas, negro puro) ----------
+  // Rayado calculado a mano (sin clipPath) para que imprima idéntico en cualquier navegador.
+  const rayar = (pts, paso, vertical) => {
+    const P = vertical ? pts.map(([x, y]) => [y, x]) : pts;
+    const ys = P.map(p => p[1]);
+    const y0 = Math.min(...ys), y1 = Math.max(...ys);
+    let out = '';
+    for (let y = y0 + paso; y < y1; y += paso) {
+      const xs = [];
+      for (let i = 0; i < P.length; i++) {
+        const [xa, ya] = P[i], [xb, yb] = P[(i + 1) % P.length];
+        if ((ya <= y && yb > y) || (yb <= y && ya > y)) xs.push(xa + (y - ya) * (xb - xa) / (yb - ya));
+      }
+      if (xs.length >= 2) {
+        const a = Math.min(...xs).toFixed(2), b = Math.max(...xs).toFixed(2), c = y.toFixed(2);
+        out += vertical
+          ? `<line x1="${c}" y1="${a}" x2="${c}" y2="${b}"/>`
+          : `<line x1="${a}" y1="${c}" x2="${b}" y2="${c}"/>`;
+      }
+    }
+    return out;
+  };
+  const poli = (pts) => pts.map(p => p.join(',')).join(' ');
+  const bloqueIzq = [[18, 15.5], [38, 14], [41, 31], [22, 35]];
+  const cunaDer = [[55, 14.5], [76, 16.5], [60, 30], [47, 28]];
+  const caraIzq = [[22, 48], [47, 40], [47, 80], [22, 61]];
+  const caraDer = [[47, 40], [75, 39], [75, 64], [47, 80]];
+  const svgImagotipo = (clase) => `
+    <svg class="${clase}" viewBox="0 0 100 84" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000000" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">
+      <g stroke-width="1.2">
+        <circle cx="46" cy="11" r="8.5"/>
+        <circle cx="46" cy="11" r="5"/>
+        <polygon points="${poli(bloqueIzq)}"/>
+        <polygon points="${poli(cunaDer)}"/>
+        <path d="M2,47 C18,36 38,34 56,31 C74,28 88,24 98,21 C88,30 76,35 60,38 C40,42 20,48 2,47 Z"/>
+        <polygon points="${poli(caraIzq)}"/>
+        <polygon points="${poli(caraDer)}"/>
+      </g>
+      <g stroke-width="0.55">
+        ${rayar(bloqueIzq, 1.8, true)}
+        ${rayar(cunaDer, 1.6, false)}
+        ${rayar(caraIzq, 1.8, false)}
+        ${rayar(caraDer, 2.0, true)}
+      </g>
+    </svg>`;
+
+  // ---------- AUTO-SHRINK de la lista de vacunas ----------
+  const ALTO_MM = 64;     // alto útil de la lista dentro de cada recibo (con margen de seguridad)
+  const ANCHO_MM = 107;   // ancho de la columna de lista (56% del ancho útil)
+  const PT = 0.3528;      // milímetros por punto tipográfico
+  const n = itemsArr.length;
+  const textos = itemsArr.map(it => `${it.cantidad || 1} - ${it.concepto || ''} (${it.nombre || ''})`);
+  const largos = textos.map(t => t.length);
+  const rowMinPara = (cols) => (cols > 1 ? 0 : (n <= 5 ? 9 : (n <= 7 ? 7 : (n <= 9 ? 5.5 : 0))));
+  const blancosPara = (cols) => (cols > 1 ? 0 : Math.max(0, 5 - n));
+
+  const evaluar = (cols) => {
+    const anchoImp = cols === 1 ? 22 : 15;
+    const anchoDesc = (ANCHO_MM - 3 * (cols - 1)) / cols - anchoImp - 3 - 1.5;
+    const rowMin = rowMinPara(cols);
+    const filasTot = n + blancosPara(cols);
+    const porCol = Math.max(1, Math.ceil(filasTot / cols));
+    for (let fs = 9; fs >= 4; fs -= 0.25) {
+      const lh = fs * PT * 1.18;
+      const charsLinea = Math.max(1, Math.floor(anchoDesc / (fs * PT * 0.53)));
+      const alturas = largos.map(L => Math.max(rowMin, Math.ceil(L / charsLinea) * lh + 1.5));
+      for (let b = 0; b < blancosPara(cols); b++) alturas.push(Math.max(rowMin, lh + 1.5));
+      let peor = 0;
+      for (let c = 0; c < cols; c++) {
+        peor = Math.max(peor, alturas.slice(c * porCol, (c + 1) * porCol).reduce((a, h) => a + h, 0));
+      }
+      if (peor <= ALTO_MM) return { cols, fs, anchoImp, rowMin, porCol, cabe: true };
+    }
+    return { cols, fs: 4, anchoImp, rowMin, porCol, cabe: false };
+  };
+
+  // Prefiere 1 columna con letra legible (>= 5.5 pt); si no, la opción que quepa con mayor tamaño;
+  // si nada cabe (carritos extremos), usa 3 columnas y la lista recorta en silencio (nunca crece el recibo).
+  const candidatos = [1, 2, 3].map(evaluar);
+  const ajuste = candidatos.find(c => c.cabe && c.fs >= 5.5)
+    || candidatos.filter(c => c.cabe).sort((a, b) => b.fs - a.fs)[0]
+    || candidatos[2];
+
+  let filasHtml = '';
+  itemsArr.forEach((item, i) => {
+    filasHtml += `
+        <div class="rcb-item">
+          <span class="rcb-desc"><b>${esc(item.cantidad || 1)}</b> - ${esc(item.concepto)} <i>(${esc(item.nombre)})</i></span>
+          <span class="rcb-imp">${dinero(importeItem(item))}</span>
+        </div>`;
+  });
+  for (let b = 0; b < blancosPara(ajuste.cols); b++) {
+    filasHtml += `
+        <div class="rcb-item"><span class="rcb-desc">&nbsp;</span><span class="rcb-imp">&nbsp;</span></div>`;
+  }
+  const vars = `--rf:${ajuste.fs};--cols:${ajuste.cols};--filas:${ajuste.porCol};--rowmin:${ajuste.rowMin}mm;--impw:${ajuste.anchoImp}mm`;
+
+  // ---------- Sello oficial (centro derecha) ----------
+  const selloOficial = `
+        <div class="rcb-sello">
+          ${svgImagotipo('rcb-sello-icono')}
+          <div class="rcb-sello-ccm">CCM</div>
+          <div class="rcb-sello-txt">
+            <div class="rcb-serif">ESCUELA SECUNDARIA DE LA</div>
+            <div class="rcb-serif">CIUDAD DE MEXICO, S. C.</div>
+            <div>ESC-521104-BH9</div>
+            <div>Campos Eliseos 139 11560 CDMX</div>
+            <div>Tel. 55-5203-7894</div>
           </div>
+        </div>`;
+
+  // ---------- Una copia completa (se usa dos veces, idéntica) ----------
+  const copia = (etiqueta) => `
+    <section class="rcb-copia" style="${vars}">
+      <div class="rcb-cab">
+        <div class="rcb-marca">
+          ${svgImagotipo('rcb-logo')}
+          <div class="rcb-colegio"><span>Colegio</span><span>Ciudad de México</span></div>
+        </div>
+        <div class="rcb-der">
+          <div class="rcb-plantel">Plantel Polanco</div>
+          <div class="rcb-recibo"><span>Recibo:</span><span class="rcb-recibo-linea">${esc(folio)}</span></div>
         </div>
       </div>
 
-      <div class="inst-data-block">
-        <div class="inst-field-row">
-          <span class="inst-field-label">Nombre del Alumno (a):</span>
-          <span class="inst-field-line px-1 fw-bold flex-grow-1">${nombreRecibo}</span>
+      <div class="rcb-alumno">
+        <div class="rcb-fila">
+          <span class="rcb-etq">Nombre del Alumno (a)</span>
+          <span class="rcb-linea rcb-linea-nombre">${esc(nombreRecibo)}</span>
         </div>
-        <div class="inst-grid-row-3">
-          <div class="d-flex align-items-end">
-            <span class="inst-field-label">Grado:</span>
-            <span class="inst-field-line px-1 text-center fw-bold flex-grow-1">${primerGrupo}</span>
-          </div>
-          <div class="d-flex align-items-end">
-            <span class="inst-field-label">Ciclo:</span>
-            <span class="inst-field-line px-1 text-center fw-bold flex-grow-1">2026-2027</span>
-          </div>
-          <div class="d-flex align-items-end">
-            <span class="inst-field-label">Cuenta:</span>
-            <span class="inst-field-line px-1 text-center fw-bold flex-grow-1">${primerMatricula}</span>
-          </div>
+        <div class="rcb-fila rcb-fila3">
+          <div class="rcb-par"><span class="rcb-etq">Grado</span><span class="rcb-linea">${esc(primerGrupo)}</span></div>
+          <div class="rcb-par"><span class="rcb-etq">Ciclo</span><span class="rcb-linea">2026-2027</span></div>
+          <div class="rcb-par"><span class="rcb-etq">Cuenta</span><span class="rcb-linea">${esc(primerMatricula)}</span></div>
         </div>
       </div>
 
-      <div class="inst-body-container">
-        ${selloOficialReal}
-        <div class="ticket-lista-container">
-          ${filasHtml}
+      <div class="rcb-cuerpo">
+        <div class="rcb-lista">${filasHtml}
         </div>
+        ${selloOficial}
       </div>
 
-      <div class="inst-footer-box">
-        <div class="inst-pago-checks">
-          <span class="me-2">Forma de Pago:</span>
-          <span>(${isEfectivo ? 'X' : '&nbsp;'}) Efectivo</span>
-          <span class="ms-2">(${isCheque ? 'X' : '&nbsp;'}) Cheque</span>
-          <span class="ms-2">(${isTarjeta ? 'X' : '&nbsp;'}) Tarjeta</span>
+      <div class="rcb-pie">
+        <div class="rcb-pagos">
+          <span>( ${marca(isEfectivo)} ) Efectivo</span>
+          <span>( ${marca(isCheque)} ) Cheque</span>
+          <span>( ${marca(isTarjeta)} ) Tarjeta</span>
         </div>
-        <div class="inst-total-display">
-          <span class="inst-total-text">Total $:</span>
-          <span class="inst-total-amount">$${totalGral.toFixed(2)}</span>
-        </div>
+        <div class="rcb-total"><span>Total $</span><span class="rcb-total-monto">${dinero(totalGral).replace('$', '')}</span></div>
       </div>
 
-      <div class="inst-fecha-formal">
-        ${fechaTexto}
+      <div class="rcb-base">
+        <div class="rcb-fecha">${fechaHtml}</div>
+        <div class="rcb-tag">${etiqueta}</div>
       </div>
-    </div>
-  `;
+    </section>`;
 
   return `
-    <div class="ticket-duplicado-container">
-      <div class="ticket-single-pane">
-        <div class="text-center text-uppercase fw-bold text-muted" style="font-size: 0.55rem; margin-bottom: 0px;">--- COPIA ESTABLECIMIENTO ---</div>
-        ${estructuraUnica}
-      </div>
-      <div class="ticket-divider"></div>
-      <div class="ticket-single-pane">
-        <div class="text-center text-uppercase fw-bold text-muted" style="font-size: 0.55rem; margin-bottom: 0px;">--- COPIA CLIENTE ---</div>
-        ${estructuraUnica}
-      </div>
+    <div class="rcb-hoja">
+      ${copia('Copia Establecimiento')}
+      ${copia('Copia Cliente')}
     </div>
   `;
 }
