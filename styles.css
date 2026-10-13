@@ -436,19 +436,20 @@ button,
   padding: 16px;
 }
 
-.ticket-header-title { font-size: 1.1rem; margin-bottom: 2px; }
-.ticket-header-sub { font-size: 0.8rem; margin-bottom: 6px; }
-.ticket-info-block { font-size: 0.82rem; }
-.ticket-item { font-size: 0.85rem; padding-bottom: 6px; margin-bottom: 6px; }
-.ticket-total-title { font-size: 1.1rem; }
-.ticket-total-amount { font-size: 1.4rem; }
+.ticket-row-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  border-bottom: 1px solid #f1f5f9;
+  padding: 4px 0;
+}
 
 #print-area, .print-only {
   display: none !important;
 }
 
 /* =========================================================
-   ESTILOS DE IMPRESIÓN: CONTROL RIGUROSO DE MEDIA HOJA CARTA
+   ESTILOS DE IMPRESIÓN INSTITUCIONAL: 2 RECIBOS EN 1 HOJA CARTA
    ========================================================= */
 @media print {
   @page {
@@ -480,7 +481,7 @@ button,
     display: revert !important;
   }
 
-  /* Contenedor general que divide la hoja en 2 mitades exactas */
+  /* Contenedor principal vertical que divide la hoja en 2 mitades exactas */
   .ticket-duplicado-container {
     display: flex !important;
     flex-direction: column !important;
@@ -488,70 +489,270 @@ button,
     align-items: center !important;
     width: 100% !important;
     height: 100% !important;
-    max-height: 268mm !important; /* Altura máxima estricta para evitar salto a pág 2 */
+    max-height: 268mm !important;
     box-sizing: border-box !important;
     overflow: hidden !important;
   }
 
-  /* Cada recibo ocupa exactamente la mitad vertical (aprox 132mm) */
   .ticket-single-pane {
-    width: 96% !important;
-    max-width: 480px !important;
+    width: 98% !important;
+    max-width: 540px !important;
     height: 130mm !important;
     max-height: 130mm !important;
     display: flex !important;
     flex-direction: column !important;
     justify-content: space-between !important;
     box-sizing: border-box !important;
-    padding: 2mm 4mm !important;
+    padding: 1mm 2mm !important;
   }
 
-  .ticket-paper {
-    border: 1px dashed #64748b !important;
+  /* Estructura del recibo formal de caja */
+  .ticket-paper-inst {
+    border: 1.5px solid #0b1736 !important;
     border-radius: 4px !important;
-    padding: 4px 8px !important;
+    padding: 8px 12px !important;
     margin: 0 !important;
     background: #ffffff !important;
-    box-shadow: none !important;
     width: 100% !important;
     height: 100% !important;
     display: flex !important;
     flex-direction: column !important;
     justify-content: space-between !important;
     box-sizing: border-box !important;
+    position: relative !important;
   }
 
-  /* Contenedor de la lista de productos con altura fija y scroll interno virtual */
-  .ticket-lista-container {
-    max-height: 45mm !important;
-    overflow: hidden !important;
+  /* 1. Encabezado Institucional con Logo, Plantel y Folio */
+  .inst-header-grid {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    border-bottom: 1.5px solid #0b1736 !important;
+    padding-bottom: 4px !important;
+  }
+
+  .inst-logo-box {
+    width: 70px !important;
+  }
+
+  .inst-logo-img {
+    height: 32px !important;
+    width: auto !important;
+    object-fit: contain !important;
+  }
+
+  .inst-title-box {
     flex-grow: 1 !important;
   }
 
-  /* Tipografía normal para tickets estándar */
-  .ticket-header-title { font-size: 10.5px !important; margin-bottom: 0px !important; }
-  .ticket-header-sub { font-size: 8px !important; margin-bottom: 1px !important; }
-  .badge { font-size: 8px !important; padding: 1px 4px !important; }
-  .ticket-info-block { font-size: 8.5px !important; padding: 1px 0 !important; margin: 1px 0 !important; }
-  .ticket-item { font-size: 8.5px !important; padding-bottom: 1px !important; margin-bottom: 1px !important; }
-  .ticket-total-title { font-size: 9.5px !important; }
-  .ticket-total-amount { font-size: 11px !important; }
+  .inst-colegio-name {
+    font-size: 11px !important;
+    font-weight: 800 !important;
+    color: #0b1736 !important;
+    margin: 0 !important;
+    line-height: 1.1 !important;
+    letter-spacing: 0.5px !important;
+  }
 
-  /* =========================================================
-     AUTO-SCALE / AUTO-SHRINK TIPOGRÁFICO PARA MULTI-PRODUCTOS (>3)
-     ========================================================= */
-  .ticket-single-pane.ticket-compacto-multiproducto .ticket-header-title { font-size: 9px !important; }
-  .ticket-single-pane.ticket-compacto-multiproducto .ticket-header-sub { font-size: 7px !important; }
-  .ticket-single-pane.ticket-compacto-multiproducto .ticket-info-block { font-size: 7px !important; padding: 0.5px 0 !important; margin: 0.5px 0 !important; }
-  .ticket-single-pane.ticket-compacto-multiproducto .ticket-item { font-size: 7px !important; padding-bottom: 0.5px !important; margin-bottom: 0.5px !important; }
-  .ticket-single-pane.ticket-compacto-multiproducto .ticket-lista-container { max-height: 52mm !important; overflow: hidden !important; }
-  .ticket-single-pane.ticket-compacto-multiproducto .ticket-total-title { font-size: 8.5px !important; }
-  .ticket-single-pane.ticket-compacto-multiproducto .ticket-total-amount { font-size: 10px !important; }
-  .ticket-single-pane.ticket-compacto-multiproducto .ticket-paper { padding: 3px 6px !important; }
+  .inst-plantel-tag {
+    font-size: 8.5px !important;
+    font-weight: 700 !important;
+    color: #475569 !important;
+    text-transform: uppercase !important;
+  }
+
+  .inst-folio-box {
+    text-align: right !important;
+    min-width: 70px !important;
+  }
+
+  .inst-recibo-label {
+    font-size: 7.5px !important;
+    text-transform: uppercase !important;
+    color: #64748b !important;
+    display: block !important;
+  }
+
+  .inst-folio-num {
+    font-size: 11px !important;
+    font-weight: 800 !important;
+    color: #dc2626 !important;
+  }
+
+  /* 2. Bloque de Datos del Alumno con Líneas Inferiores */
+  .inst-data-block {
+    margin: 4px 0 !important;
+    font-size: 9px !important;
+  }
+
+  .inst-field-row {
+    display: flex !important;
+    align-items: flex-end !important;
+    margin-bottom: 4px !important;
+  }
+
+  .inst-field-label {
+    font-weight: 700 !important;
+    color: #1e293b !important;
+    white-space: nowrap !important;
+    font-size: 8.5px !important;
+  }
+
+  .inst-field-line {
+    border-bottom: 1px solid #1e293b !important;
+    font-size: 8.5px !important;
+    line-height: 1.2 !important;
+    min-height: 14px !important;
+  }
+
+  .inst-grid-row-3 {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr 1.2fr !important;
+    gap: 8px !important;
+  }
+
+  /* 3. Cuerpo y Sello Digital Automático (Central-Derecha) */
+  .inst-body-container {
+    position: relative !important;
+    flex-grow: 1 !important;
+    margin: 4px 0 !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 3px !important;
+    padding: 4px 6px !important;
+    background-color: #fafafa !important;
+    min-height: 36mm !important;
+    max-height: 44mm !important;
+    overflow: hidden !important;
+  }
+
+  .inst-sello-digital {
+    position: absolute !important;
+    right: 15px !important;
+    top: 50% !important;
+    transform: translateY(-50%) rotate(-10deg) !important;
+    z-index: 5 !important;
+    opacity: 0.85 !important;
+    pointer-events: none !important;
+  }
+
+  .sello-inner {
+    border: 2px double #1d4ed8 !important;
+    border-radius: 6px !important;
+    padding: 6px 12px !important;
+    text-align: center !important;
+    background-color: rgba(239, 246, 255, 0.9) !important;
+    box-shadow: 0 0 0 2px rgba(239, 246, 255, 0.5) !important;
+  }
+
+  .sello-title {
+    display: block !important;
+    font-size: 7px !important;
+    font-weight: 800 !important;
+    color: #1d4ed8 !important;
+    letter-spacing: 0.5px !important;
+  }
+
+  .sello-subtitle {
+    display: block !important;
+    font-size: 6.5px !important;
+    font-weight: 700 !important;
+    color: #475569 !important;
+  }
+
+  .sello-status {
+    display: block !important;
+    font-size: 13px !important;
+    font-weight: 900 !important;
+    color: #1d4ed8 !important;
+    letter-spacing: 1px !important;
+    margin: 1px 0 !important;
+  }
+
+  .sello-date {
+    display: block !important;
+    font-size: 6.5px !important;
+    font-weight: 700 !important;
+    color: #334155 !important;
+  }
+
+  .ticket-lista-container {
+    max-height: 40mm !important;
+    overflow: hidden !important;
+    width: 65% !important; /* Deja libre el área derecha para el sello */
+  }
+
+  .ticket-row-item {
+    display: flex !important;
+    justify-content: space-between !important;
+    font-size: 8.5px !important;
+    border-bottom: 1px dashed #e2e8f0 !important;
+    padding: 2px 0 !important;
+  }
+
+  .ticket-col-desc {
+    color: #0f172a !important;
+  }
+
+  .ticket-subtext {
+    font-size: 7.5px !important;
+    color: #64748b !important;
+  }
+
+  .ticket-col-import {
+    font-weight: 700 !important;
+    color: #0f172a !important;
+    white-space: nowrap !important;
+  }
+
+  /* 4. Forma de Pago y Totales */
+  .inst-footer-box {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    border-top: 1px solid #0b1736 !important;
+    padding-top: 4px !important;
+    margin-top: 2px !important;
+  }
+
+  .inst-pago-checks {
+    font-size: 8px !important;
+    font-weight: 600 !important;
+    color: #334155 !important;
+  }
+
+  .inst-total-display {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+  }
+
+  .inst-total-text {
+    font-size: 10px !important;
+    font-weight: 800 !important;
+    color: #0b1736 !important;
+  }
+
+  .inst-total-amount {
+    font-size: 13px !important;
+    font-weight: 900 !important;
+    color: #107c41 !important;
+    background: #f0fdf4 !important;
+    border: 1px solid #bbf7d0 !important;
+    padding: 1px 8px !important;
+    border-radius: 3px !important;
+  }
+
+  /* 5. Pie de Fecha Formal */
+  .inst-fecha-formal {
+    font-size: 7.5px !important;
+    font-style: italic !important;
+    color: #475569 !important;
+    margin-top: 2px !important;
+  }
 
   .ticket-divider {
-    width: 75% !important;
-    border-top: 1.5px dashed #334155 !important;
+    width: 80% !important;
+    border-top: 1.5px dashed #475569 !important;
     margin: 1mm auto !important;
   }
 }
