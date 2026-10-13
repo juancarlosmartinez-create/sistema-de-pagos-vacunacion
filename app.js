@@ -413,7 +413,6 @@ function renderCarrito() {
   let htmlTabla = '';
   let htmlTicket = '';
 
-  // Actualizar datos globales del pre-ticket visual en pantalla si hay elementos
   const primerItem = carrito[0];
   const elNombre = document.getElementById('t-nombre');
   const elMatricula = document.getElementById('t-matricula');
@@ -470,21 +469,11 @@ function actualizarFechaTicket() {
 }
 
 function actualizarFormaPagoTicket() {
-  const selectPago = document.getElementById('forma_pago');
-  const chkEfectivo = document.getElementById('chk-efectivo');
-  const chkCheque = document.getElementById('chk-cheque');
-  const chkTarjeta = document.getElementById('chk-tarjeta');
-
-  if (!selectPago) return;
-  const valor = selectPago.value;
-
-  if (chkEfectivo) chkEfectivo.innerText = (valor === 'Efectivo') ? 'X' : ' ';
-  if (chkCheque) chkCheque.innerText = (valor === 'Cheque') ? 'X' : ' ';
-  if (chkTarjeta) chkTarjeta.innerText = (valor === 'Tarjeta') ? 'X' : ' ';
+  // Manejado dinámicamente en la renderización de impresión
 }
 
 // ==========================================
-// CONSTRUCTOR DE HTML INSTITUCIONAL (DOBLE COPIA)
+// CONSTRUCTOR DE RECIBO OFICIAL INSTITUCIONAL (DOBLE COPIA)
 // ==========================================
 function construirEstructuraReciboInstitucional(folio, fechaTexto, formaPago, itemsArr, totalGral) {
   let filasHtml = '';
@@ -510,51 +499,51 @@ function construirEstructuraReciboInstitucional(folio, fechaTexto, formaPago, it
 
   const estructuraUnica = `
     <div class="ticket-paper-inst">
-      <!-- 1. ENCABEZADO INSTITUCIONAL -->
+      <!-- 1. ENCABEZADO OFICIAL CON LOGOTIPO IZQ Y PLANTEL DER -->
       <div class="inst-header-grid">
         <div class="inst-logo-box">
-          <img src="${logoUrl}" alt="Logo CCM" class="inst-logo-img" />
+          <img class="recibo-logo" src="${logoUrl}" alt="Logo CCM">
         </div>
-        <div class="inst-title-box text-center">
-          <h4 class="inst-colegio-name">COLEGIO CIUDAD DE MÉXICO</h4>
+        <div class="inst-title-box text-right">
           <span class="inst-plantel-tag">Plantel Polanco</span>
-        </div>
-        <div class="inst-folio-box text-end">
-          <span class="inst-recibo-label">Recibo</span>
-          <div class="inst-folio-num">${folio}</div>
+          <div class="inst-folio-container">
+            <span class="inst-recibo-label">Recibo</span>
+            <span class="inst-folio-num">${folio}</span>
+          </div>
         </div>
       </div>
 
-      <!-- 2. BLOQUE DE DATOS DEL ALUMNO CON LÍNEAS INFERIORES -->
+      <!-- 2. BLOQUE DE DATOS DEL ALUMNO CON LÍNEAS FÍSICAS INFERIORES -->
       <div class="inst-data-block">
         <div class="inst-field-row">
           <span class="inst-field-label">Nombre del Alumno (a):</span>
-          <span class="inst-field-line flex-grow-1 px-1 fw-bold">${nombreRecibo}</span>
+          <span class="inst-field-line px-1 fw-bold flex-grow-1">${nombreRecibo}</span>
         </div>
         <div class="inst-grid-row-3">
           <div class="d-flex align-items-end">
             <span class="inst-field-label">Grado:</span>
-            <span class="inst-field-line flex-grow-1 px-1 text-center fw-bold">${primerGrupo}</span>
+            <span class="inst-field-line px-1 text-center fw-bold flex-grow-1">${primerGrupo}</span>
           </div>
           <div class="d-flex align-items-end">
             <span class="inst-field-label">Ciclo:</span>
-            <span class="inst-field-line flex-grow-1 px-1 text-center fw-bold">2026-2027</span>
+            <span class="inst-field-line px-1 text-center fw-bold flex-grow-1">2026-2027</span>
           </div>
           <div class="d-flex align-items-end">
             <span class="inst-field-label">Cuenta:</span>
-            <span class="inst-field-line flex-grow-1 px-1 text-center fw-bold">${primerMatricula}</span>
+            <span class="inst-field-line px-1 text-center fw-bold flex-grow-1">${primerMatricula}</span>
           </div>
         </div>
       </div>
 
-      <!-- 3. CUERPO DEL RECIBO Y SELLO AUTOMÁTICO DIGITALIZADO -->
+      <!-- 3. CUERPO DE ARTÍCULOS CON SELLO OFICIAL REAL DE FONDO -->
       <div class="inst-body-container">
-        <div class="inst-sello-digital">
-          <div class="sello-inner">
-            <span class="sello-title">COLEGIO CIUDAD DE MÉXICO</span>
-            <span class="sello-subtitle">CAJA POLANCO</span>
-            <span class="sello-status">PAGADO</span>
-            <span class="sello-date">${new Date().toLocaleDateString('es-MX')}</span>
+        <div class="sello-oficial-ccm">
+          <div class="sello-logo-circle">CCM</div>
+          <div class="sello-text-block">
+            <strong>ESCUELA SECUNDARIA DE LA CIUDAD DE MEXICO, S. C.</strong>
+            <span>ESC-521104-BH9</span>
+            <span>Campos Eliseos 139  11560 CDMX</span>
+            <span>Tel. 55-5203-7894</span>
           </div>
         </div>
         <div class="ticket-lista-container">
@@ -566,9 +555,9 @@ function construirEstructuraReciboInstitucional(folio, fechaTexto, formaPago, it
       <div class="inst-footer-box">
         <div class="inst-pago-checks">
           <span class="me-2">Forma de Pago:</span>
-          <span>(<strong>${isEfectivo ? 'X' : '&nbsp;'}</strong>) Efectivo</span>
-          <span class="ms-3">(<strong>${isCheque ? 'X' : '&nbsp;'}</strong>) Cheque</span>
-          <span class="ms-3">(<strong>${isTarjeta ? 'X' : '&nbsp;'}</strong>) Tarjeta</span>
+          <span>(${isEfectivo ? 'X' : '&nbsp;'}) Efectivo</span>
+          <span class="ms-2">(${isCheque ? 'X' : '&nbsp;'}) Cheque</span>
+          <span class="ms-2">(${isTarjeta ? 'X' : '&nbsp;'}) Tarjeta</span>
         </div>
         <div class="inst-total-display">
           <span class="inst-total-text">Total $:</span>
@@ -586,12 +575,12 @@ function construirEstructuraReciboInstitucional(folio, fechaTexto, formaPago, it
   return `
     <div class="ticket-duplicado-container">
       <div class="ticket-single-pane">
-        <div class="text-center text-uppercase fw-bold text-muted" style="font-size: 0.6rem; margin-bottom: 1px;">--- COPIA ESTABLECIMIENTO ---</div>
+        <div class="text-center text-uppercase fw-bold text-muted" style="font-size: 0.55rem; margin-bottom: 0px;">--- COPIA ESTABLECIMIENTO ---</div>
         ${estructuraUnica}
       </div>
       <div class="ticket-divider"></div>
       <div class="ticket-single-pane">
-        <div class="text-center text-uppercase fw-bold text-muted" style="font-size: 0.6rem; margin-bottom: 1px;">--- COPIA CLIENTE ---</div>
+        <div class="text-center text-uppercase fw-bold text-muted" style="font-size: 0.55rem; margin-bottom: 0px;">--- COPIA CLIENTE ---</div>
         ${estructuraUnica}
       </div>
     </div>
