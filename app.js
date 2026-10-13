@@ -171,7 +171,7 @@ async function obtenerSiguienteFolioVenta() {
     const elDisplay = document.getElementById('display-folio');
     const elTicket = document.getElementById('t-folio');
     if (elDisplay) elDisplay.innerText = defaultFolio;
-    if (elTicket) elTicket.innerText = 'FOLIO: ' + defaultFolio;
+    if (elTicket) elTicket.innerText = defaultFolio;
     return defaultFolio;
   }
 
@@ -198,7 +198,7 @@ async function obtenerSiguienteFolioVenta() {
     const elDisplay = document.getElementById('display-folio');
     const elTicket = document.getElementById('t-folio');
     if (elDisplay) elDisplay.innerText = nuevoFolio;
-    if (elTicket) elTicket.innerText = 'FOLIO: ' + nuevoFolio;
+    if (elTicket) elTicket.innerText = nuevoFolio;
     return nuevoFolio;
   } catch (e) {
     console.error("Error obteniendo siguiente folio V:", e);
@@ -404,7 +404,7 @@ function renderCarrito() {
   if (carrito.length === 0) {
     tbody.innerHTML = `<tr><td colspan="7" class="text-muted py-3">No hay pacientes agregados al recibo aún.</td></tr>`;
     if (countBadge) countBadge.innerText = '0 Pacientes';
-    if (ticketItems) ticketItems.innerHTML = `<p class="text-muted text-center my-2">Agregue pacientes para ver el desglose aquí.</p>`;
+    if (ticketItems) ticketItems.innerHTML = `<div class="text-muted text-center py-2">Sin conceptos agregados.</div>`;
     if (ticketTotal) ticketTotal.innerText = '0.00';
     return;
   }
@@ -412,6 +412,16 @@ function renderCarrito() {
   let totalGeneral = 0;
   let htmlTabla = '';
   let htmlTicket = '';
+
+  // Actualizar datos globales del pre-ticket visual en pantalla si hay elementos
+  const primerItem = carrito[0];
+  const elNombre = document.getElementById('t-nombre');
+  const elMatricula = document.getElementById('t-matricula');
+  const elGrupo = document.getElementById('t-grupo');
+
+  if (elNombre) elNombre.innerText = carrito.length === 1 ? primerItem.nombre : `${carrito.length} Pacientes en Recibo`;
+  if (elMatricula) elMatricula.innerText = carrito.length === 1 ? primerItem.matricula : 'MÚLTIPLE';
+  if (elGrupo) elGrupo.innerText = carrito.length === 1 ? primerItem.grupo : 'MÚLTIPLE';
 
   carrito.forEach((item, index) => {
     totalGeneral += item.subtotal;
@@ -436,15 +446,9 @@ function renderCarrito() {
     `;
 
     htmlTicket += `
-      <div class="ticket-item border-bottom py-1">
-        <div class="d-flex justify-content-between">
-          <strong class="ticket-nombre">${item.nombre}</strong>
-          <span class="fw-bold">$${item.subtotal.toFixed(2)}</span>
-        </div>
-        <div class="d-flex justify-content-between text-muted ticket-concepto">
-          <span>${item.concepto} (${item.cantidad}x $${item.importe.toFixed(2)})</span>
-          <span>${item.familia}</span>
-        </div>
+      <div class="ticket-row-item">
+        <span class="ticket-col-desc"><strong>${item.cantidad}x</strong> ${item.concepto} <span class="text-secondary">(${item.nombre})</span></span>
+        <span class="ticket-col-import">$${item.subtotal.toFixed(2)}</span>
       </div>
     `;
   });
@@ -459,42 +463,144 @@ function actualizarFechaTicket() {
   const elFecha = document.getElementById('t-fecha');
   if (elFecha) {
     const ahora = new Date();
-    elFecha.innerText = ahora.toLocaleDateString('es-MX') + ' ' + ahora.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+    const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+    const fechaFormateada = `Ciudad de México a ${ahora.getDate()} de ${meses[ahora.getMonth()]} de ${ahora.getFullYear()}`;
+    elFecha.innerText = fechaFormateada;
   }
 }
 
 function actualizarFormaPagoTicket() {
   const selectPago = document.getElementById('forma_pago');
-  const ticketPago = document.getElementById('t-pago');
-  if (selectPago && ticketPago) {
-    ticketPago.innerText = selectPago.value;
-  }
+  const chkEfectivo = document.getElementById('chk-efectivo');
+  const chkCheque = document.getElementById('chk-cheque');
+  const chkTarjeta = document.getElementById('chk-tarjeta');
+
+  if (!selectPago) return;
+  const valor = selectPago.value;
+
+  if (chkEfectivo) chkEfectivo.innerText = (valor === 'Efectivo') ? 'X' : ' ';
+  if (chkCheque) chkCheque.innerText = (valor === 'Cheque') ? 'X' : ' ';
+  if (chkTarjeta) chkTarjeta.innerText = (valor === 'Tarjeta') ? 'X' : ' ';
 }
 
 // ==========================================
-// GUARDAR E IMPRIMIR RECIBOS (DOBLE COPIA CON AUTO-SCALE)
+// CONSTRUCTOR DE HTML INSTITUCIONAL (DOBLE COPIA)
 // ==========================================
-function generarHtmlDobleTicket(ticketNode) {
-  const contenidoOriginal = ticketNode ? ticketNode.innerHTML : "";
-  // Detectar la cantidad de elementos en el ticket para aplicar escala compacta si hay saturación
-  const numItems = (ticketNode && ticketNode.querySelectorAll('.ticket-item').length) || 1;
-  const claseCompacta = numItems > 3 ? 'ticket-compacto-multiproducto' : '';
+function construirEstructuraReciboInstitucional(folio, fechaTexto, formaPago, itemsArr, totalGral) {
+  let filasHtml = '';
+  itemsArr.forEach(item => {
+    filasHtml += `
+      <div class="ticket-row-item">
+        <span class="ticket-col-desc"><strong>${item.cantidad || 1}</strong> - ${item.concepto} <span class="ticket-subtext">(${item.nombre})</span></span>
+        <span class="ticket-col-import">$${(item.total !== undefined ? item.total : (item.cantidad || 1) * (item.importe || 0)).toFixed(2)}</span>
+      </div>
+    `;
+  });
+
+  const isEfectivo = formaPago === 'Efectivo';
+  const isCheque = formaPago === 'Cheque';
+  const isTarjeta = formaPago === 'Tarjeta';
+
+  const primerNombre = itemsArr.length > 0 ? itemsArr[0].nombre : '---';
+  const primerGrupo = itemsArr.length > 0 ? (itemsArr[0].grupo || '---') : '---';
+  const primerMatricula = itemsArr.length > 0 ? (itemsArr[0].matricula || '---') : '---';
+  const nombreRecibo = itemsArr.length === 1 ? primerNombre : `${itemsArr.length} Pacientes en Recibo`;
+
+  const logoUrl = "https://www.colegiociudad.edu.mx/wp-content/uploads/2023/08/cropped-logo-ccm-2023.png";
+
+  const estructuraUnica = `
+    <div class="ticket-paper-inst">
+      <!-- 1. ENCABEZADO INSTITUCIONAL -->
+      <div class="inst-header-grid">
+        <div class="inst-logo-box">
+          <img src="${logoUrl}" alt="Logo CCM" class="inst-logo-img" />
+        </div>
+        <div class="inst-title-box text-center">
+          <h4 class="inst-colegio-name">COLEGIO CIUDAD DE MÉXICO</h4>
+          <span class="inst-plantel-tag">Plantel Polanco</span>
+        </div>
+        <div class="inst-folio-box text-end">
+          <span class="inst-recibo-label">Recibo</span>
+          <div class="inst-folio-num">${folio}</div>
+        </div>
+      </div>
+
+      <!-- 2. BLOQUE DE DATOS DEL ALUMNO CON LÍNEAS INFERIORES -->
+      <div class="inst-data-block">
+        <div class="inst-field-row">
+          <span class="inst-field-label">Nombre del Alumno (a):</span>
+          <span class="inst-field-line flex-grow-1 px-1 fw-bold">${nombreRecibo}</span>
+        </div>
+        <div class="inst-grid-row-3">
+          <div class="d-flex align-items-end">
+            <span class="inst-field-label">Grado:</span>
+            <span class="inst-field-line flex-grow-1 px-1 text-center fw-bold">${primerGrupo}</span>
+          </div>
+          <div class="d-flex align-items-end">
+            <span class="inst-field-label">Ciclo:</span>
+            <span class="inst-field-line flex-grow-1 px-1 text-center fw-bold">2026-2027</span>
+          </div>
+          <div class="d-flex align-items-end">
+            <span class="inst-field-label">Cuenta:</span>
+            <span class="inst-field-line flex-grow-1 px-1 text-center fw-bold">${primerMatricula}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. CUERPO DEL RECIBO Y SELLO AUTOMÁTICO DIGITALIZADO -->
+      <div class="inst-body-container">
+        <div class="inst-sello-digital">
+          <div class="sello-inner">
+            <span class="sello-title">COLEGIO CIUDAD DE MÉXICO</span>
+            <span class="sello-subtitle">CAJA POLANCO</span>
+            <span class="sello-status">PAGADO</span>
+            <span class="sello-date">${new Date().toLocaleDateString('es-MX')}</span>
+          </div>
+        </div>
+        <div class="ticket-lista-container">
+          ${filasHtml}
+        </div>
+      </div>
+
+      <!-- 4. FORMA DE PAGO Y TOTALES -->
+      <div class="inst-footer-box">
+        <div class="inst-pago-checks">
+          <span class="me-2">Forma de Pago:</span>
+          <span>(<strong>${isEfectivo ? 'X' : '&nbsp;'}</strong>) Efectivo</span>
+          <span class="ms-3">(<strong>${isCheque ? 'X' : '&nbsp;'}</strong>) Cheque</span>
+          <span class="ms-3">(<strong>${isTarjeta ? 'X' : '&nbsp;'}</strong>) Tarjeta</span>
+        </div>
+        <div class="inst-total-display">
+          <span class="inst-total-text">Total $:</span>
+          <span class="inst-total-amount">$${totalGral.toFixed(2)}</span>
+        </div>
+      </div>
+
+      <!-- 5. PIE DE FECHA FORMAL -->
+      <div class="inst-fecha-formal">
+        ${fechaTexto}
+      </div>
+    </div>
+  `;
 
   return `
     <div class="ticket-duplicado-container">
-      <div class="ticket-single-pane ${claseCompacta}">
-        <div class="text-center text-uppercase fw-bold text-muted" style="font-size: 0.65rem; margin-bottom: 1px;">--- COPIA ESTABLECIMIENTO ---</div>
-        ${contenidoOriginal}
+      <div class="ticket-single-pane">
+        <div class="text-center text-uppercase fw-bold text-muted" style="font-size: 0.6rem; margin-bottom: 1px;">--- COPIA ESTABLECIMIENTO ---</div>
+        ${estructuraUnica}
       </div>
       <div class="ticket-divider"></div>
-      <div class="ticket-single-pane ${claseCompacta}">
-        <div class="text-center text-uppercase fw-bold text-muted" style="font-size: 0.65rem; margin-bottom: 1px;">--- COPIA CLIENTE ---</div>
-        ${contenidoOriginal}
+      <div class="ticket-single-pane">
+        <div class="text-center text-uppercase fw-bold text-muted" style="font-size: 0.6rem; margin-bottom: 1px;">--- COPIA CLIENTE ---</div>
+        ${estructuraUnica}
       </div>
     </div>
   `;
 }
 
+// ==========================================
+// GUARDAR E IMPRIMIR RECIBOS
+// ==========================================
 async function confirmarGuardarRecibo() {
   if (carrito.length === 0) {
     Swal.fire('Atención', 'El recibo está vacío. Agregue al menos un paciente.', 'warning');
@@ -543,7 +649,10 @@ async function confirmarGuardarRecibo() {
     estado_aplicacion: 'Pendiente'
   }));
 
-  const ticketNode = document.getElementById('ticketPrint');
+  const totalGral = carrito.reduce((acc, curr) => acc + curr.subtotal, 0);
+  const ahora = new Date();
+  const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+  const fechaTxt = `Ciudad de México a ${ahora.getDate()} de ${meses[ahora.getMonth()]} de ${ahora.getFullYear()}`;
 
   if (!supabaseClient) {
     const pregImpresionDemo = await Swal.fire({
@@ -557,10 +666,10 @@ async function confirmarGuardarRecibo() {
       cancelButtonText: 'No, finalizar'
     });
 
-    if (pregImpresionDemo.isConfirmed && ticketNode) {
+    if (pregImpresionDemo.isConfirmed) {
       const printArea = document.getElementById('print-area');
       if (printArea) {
-        printArea.innerHTML = generarHtmlDobleTicket(ticketNode);
+        printArea.innerHTML = construirEstructuraReciboInstitucional(folioVenta, fechaTxt, formaPago, carrito, totalGral);
       }
       window.print();
     }
@@ -584,10 +693,10 @@ async function confirmarGuardarRecibo() {
       cancelButtonText: 'No, finalizar'
     });
 
-    if (pregImpresion.isConfirmed && ticketNode) {
+    if (pregImpresion.isConfirmed) {
       const printArea = document.getElementById('print-area');
       if (printArea) {
-        printArea.innerHTML = generarHtmlDobleTicket(ticketNode);
+        printArea.innerHTML = construirEstructuraReciboInstitucional(folioVenta, fechaTxt, formaPago, carrito, totalGral);
       }
       window.print();
     }
@@ -1177,7 +1286,7 @@ async function cancelarRegistro(id, nombrePaciente) {
 }
 
 // ==========================================
-// REIMPRESIÓN (DOBLE COPIA), GENERAL Y EXPORTACIÓN
+// REIMPRESIÓN (DOBLE COPIA INSTITUCIONAL)
 // ==========================================
 function reimprimirFolio(folio) {
   const items = historialMemoria.filter(x => x.folio === folio && x.estado !== 'Cancelado' && x.estado !== 'CANCELADO');
@@ -1188,51 +1297,21 @@ function reimprimirFolio(folio) {
 
   const primerItem = items[0];
   let total = 0;
-  let htmlItems = '';
-
   items.forEach(item => {
-    const sub = item.total ? parseFloat(item.total) : ((item.cantidad || 1) * (item.importe || 0));
-    total += sub;
-    htmlItems += `
-      <div class="ticket-item border-bottom py-1">
-        <div class="d-flex justify-content-between">
-          <strong class="ticket-nombre">${item.nombre}</strong>
-          <span class="fw-bold">$${sub.toFixed(2)}</span>
-        </div>
-        <div class="d-flex justify-content-between text-muted ticket-concepto">
-          <span>${item.concepto}</span>
-          <span>${item.familia}</span>
-        </div>
-      </div>
-    `;
+    total += (item.total !== undefined ? item.total : ((item.cantidad || 1) * (item.importe || 0)));
   });
 
   const fechaRaw = primerItem.fecha || primerItem.created_at;
   const fObj = new Date(fechaRaw);
-  const fechaStr = isNaN(fObj.getTime()) ? '' : fObj.toLocaleDateString('es-MX') + ' ' + fObj.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
-
-  const ticketHtmlUnico = `
-    <div class="ticket-paper">
-      <div class="text-center mb-1">
-        <h5 class="fw-bold text-dark ticket-header-title">COLEGIO CIUDAD DE MÉXICO</h5>
-        <p class="text-muted ticket-header-sub">Comprobante de Vacunación</p>
-        <span class="badge bg-dark text-white fw-bold px-3 py-1">FOLIO: ${folio}</span>
-      </div>
-      <div class="border-top border-bottom py-1 my-1 small text-secondary ticket-info-block">
-        <div class="d-flex justify-content-between"><span>Fecha/Hora:</span><strong class="text-dark">${fechaStr}</strong></div>
-        <div class="d-flex justify-content-between"><span>Forma de Pago:</span><strong class="text-dark">${primerItem.forma_pago || 'Efectivo'}</strong></div>
-        <div class="d-flex justify-content-between"><span>Vendedor:</span><strong class="text-dark">${primerItem.vendedor || obtenerNombreCorto(primerItem.usuario_email)}</strong></div>
-      </div>
-      <div class="ticket-lista-container">${htmlItems}</div>
-      <div class="pt-1 d-flex justify-content-between align-items-center ticket-total-block">
-        <span class="fw-bold text-dark ticket-total-title">TOTAL</span>
-        <span class="fw-bold text-success ticket-total-amount">$${total.toFixed(2)}</span>
-      </div>
-    </div>
-  `;
+  const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+  const fechaStr = isNaN(fObj.getTime()) 
+    ? '' 
+    : `Ciudad de México a ${fObj.getDate()} de ${meses[fObj.getMonth()]} de ${fObj.getFullYear()}`;
 
   const printArea = document.getElementById('print-area');
-  printArea.innerHTML = generarHtmlDobleTicket({ innerHTML: ticketHtmlUnico, querySelectorAll: () => items });
+  if (printArea) {
+    printArea.innerHTML = construirEstructuraReciboInstitucional(folio, fechaStr, primerItem.forma_pago || 'Efectivo', items, total);
+  }
 
   window.print();
 }
