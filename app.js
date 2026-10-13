@@ -554,11 +554,15 @@ function construirEstructuraReciboInstitucional(folio, fechaTexto, formaPago, it
     || candidatos.filter(c => c.cabe).sort((a, b) => b.fs - a.fs)[0]
     || candidatos[2];
 
+  // Jeringa (SVG negro puro) que sustituye la palabra "influenza" en el concepto
+  const JERINGA = '<svg class="rcb-jer" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 2l4 4"/><path d="M17 7l3-3"/><path d="M19 9l-8.7 8.7a2.5 2.5 0 0 1-3.5 0l-.5-.5a2.5 2.5 0 0 1 0-3.5L15 5"/><path d="M9 11l4 4"/><path d="M5 19l-3 3"/><path d="M14 4l6 6"/></svg>';
+  const conceptoHtml = (c) => esc(c).replace(/influenza/gi, JERINGA);
+
   let filasHtml = '';
   itemsArr.forEach((item, i) => {
     filasHtml += `
         <div class="rcb-item">
-          <span class="rcb-desc"><b>${esc(item.cantidad || 1)}</b> - ${esc(item.concepto)} <i>(${esc(item.nombre)})</i></span>
+          <span class="rcb-desc"><b>${esc(item.cantidad || 1)}</b> - ${conceptoHtml(item.concepto)} <i>(${esc(item.nombre)})</i></span>
           <span class="rcb-imp">${dinero(importeItem(item))}</span>
         </div>`;
   });
@@ -590,6 +594,7 @@ function construirEstructuraReciboInstitucional(folio, fechaTexto, formaPago, it
           ${svgImagotipo('rcb-logo')}
           <div class="rcb-colegio"><span>Colegio</span><span>Ciudad de México</span></div>
         </div>
+        <div class="rcb-titulo">Vacunas Influenza</div>
         <div class="rcb-der">
           <div class="rcb-plantel">Plantel Polanco</div>
           <div class="rcb-recibo"><span>Recibo:</span><span class="rcb-recibo-linea">${esc(folio)}</span></div>
