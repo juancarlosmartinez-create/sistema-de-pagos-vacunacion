@@ -472,19 +472,23 @@ function actualizarFormaPagoTicket() {
 }
 
 // ==========================================
-// GUARDAR E IMPRIMIR RECIBOS (DOBLE COPIA)
+// GUARDAR E IMPRIMIR RECIBOS (DOBLE COPIA CON AUTO-SCALE)
 // ==========================================
-function generarHtmlDobleTicket(ticketNode, leyendaExtra = "") {
+function generarHtmlDobleTicket(ticketNode) {
   const contenidoOriginal = ticketNode ? ticketNode.innerHTML : "";
+  // Detectar la cantidad de elementos en el ticket para aplicar escala compacta si hay saturación
+  const numItems = (ticketNode && ticketNode.querySelectorAll('.ticket-item').length) || 1;
+  const claseCompacta = numItems > 3 ? 'ticket-compacto-multiproducto' : '';
+
   return `
     <div class="ticket-duplicado-container">
-      <div class="ticket-single-pane">
-        <div class="text-center text-uppercase fw-bold text-muted" style="font-size: 0.7rem; margin-bottom: 2px;">--- COPIA ESTABLECIMIENTO ---</div>
+      <div class="ticket-single-pane ${claseCompacta}">
+        <div class="text-center text-uppercase fw-bold text-muted" style="font-size: 0.65rem; margin-bottom: 1px;">--- COPIA ESTABLECIMIENTO ---</div>
         ${contenidoOriginal}
       </div>
       <div class="ticket-divider"></div>
-      <div class="ticket-single-pane">
-        <div class="text-center text-uppercase fw-bold text-muted" style="font-size: 0.7rem; margin-bottom: 2px;">--- COPIA CLIENTE ---</div>
+      <div class="ticket-single-pane ${claseCompacta}">
+        <div class="text-center text-uppercase fw-bold text-muted" style="font-size: 0.65rem; margin-bottom: 1px;">--- COPIA CLIENTE ---</div>
         ${contenidoOriginal}
       </div>
     </div>
@@ -1219,7 +1223,7 @@ function reimprimirFolio(folio) {
         <div class="d-flex justify-content-between"><span>Forma de Pago:</span><strong class="text-dark">${primerItem.forma_pago || 'Efectivo'}</strong></div>
         <div class="d-flex justify-content-between"><span>Vendedor:</span><strong class="text-dark">${primerItem.vendedor || obtenerNombreCorto(primerItem.usuario_email)}</strong></div>
       </div>
-      <div class="py-1 border-bottom">${htmlItems}</div>
+      <div class="ticket-lista-container">${htmlItems}</div>
       <div class="pt-1 d-flex justify-content-between align-items-center ticket-total-block">
         <span class="fw-bold text-dark ticket-total-title">TOTAL</span>
         <span class="fw-bold text-success ticket-total-amount">$${total.toFixed(2)}</span>
@@ -1228,7 +1232,7 @@ function reimprimirFolio(folio) {
   `;
 
   const printArea = document.getElementById('print-area');
-  printArea.innerHTML = generarHtmlDobleTicket({ innerHTML: ticketHtmlUnico });
+  printArea.innerHTML = generarHtmlDobleTicket({ innerHTML: ticketHtmlUnico, querySelectorAll: () => items });
 
   window.print();
 }
