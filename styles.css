@@ -449,7 +449,7 @@ button,
 }
 
 /* =========================================================
-   ESTILOS DE IMPRESIÓN INSTITUCIONAL: 2 RECIBOS EN 1 HOJA CARTA
+   ESTILOS DE IMPRESIÓN INSTITUCIONAL OFICIAL (2 RECIBOS EN HOJA CARTA)
    ========================================================= */
 @media print {
   @page {
@@ -481,7 +481,7 @@ button,
     display: revert !important;
   }
 
-  /* Contenedor principal vertical que divide la hoja en 2 mitades exactas */
+  /* Contenedor principal que distribuye exactamente 50% de altura por recibo */
   .ticket-duplicado-container {
     display: flex !important;
     flex-direction: column !important;
@@ -495,8 +495,8 @@ button,
   }
 
   .ticket-single-pane {
-    width: 98% !important;
-    max-width: 540px !important;
+    width: 99% !important;
+    max-width: 580px !important;
     height: 130mm !important;
     max-height: 130mm !important;
     display: flex !important;
@@ -506,11 +506,11 @@ button,
     padding: 1mm 2mm !important;
   }
 
-  /* Estructura del recibo formal de caja */
+  /* Marco del Recibo Oficial */
   .ticket-paper-inst {
-    border: 1.5px solid #0b1736 !important;
+    border: 1.5px solid #1e293b !important;
     border-radius: 4px !important;
-    padding: 8px 12px !important;
+    padding: 6px 10px !important;
     margin: 0 !important;
     background: #ffffff !important;
     width: 100% !important;
@@ -522,171 +522,158 @@ button,
     position: relative !important;
   }
 
-  /* 1. Encabezado Institucional con Logo, Plantel y Folio */
+  /* 1. Encabezado Oficial */
   .inst-header-grid {
     display: flex !important;
     justify-content: space-between !important;
     align-items: center !important;
-    border-bottom: 1.5px solid #0b1736 !important;
-    padding-bottom: 4px !important;
+    border-bottom: 1.5px solid #1e293b !important;
+    padding-bottom: 3px !important;
   }
 
   .inst-logo-box {
-    width: 70px !important;
+    width: 140px !important;
   }
 
-  .inst-logo-img {
-    height: 32px !important;
+  .recibo-logo {
+    height: 1.2cm !important;
     width: auto !important;
     object-fit: contain !important;
+    display: block !important;
   }
 
   .inst-title-box {
-    flex-grow: 1 !important;
-  }
-
-  .inst-colegio-name {
-    font-size: 11px !important;
-    font-weight: 800 !important;
-    color: #0b1736 !important;
-    margin: 0 !important;
-    line-height: 1.1 !important;
-    letter-spacing: 0.5px !important;
+    text-align: right !important;
   }
 
   .inst-plantel-tag {
-    font-size: 8.5px !important;
-    font-weight: 700 !important;
-    color: #475569 !important;
+    font-size: 10px !important;
+    font-weight: 800 !important;
+    color: #0b1736 !important;
     text-transform: uppercase !important;
+    display: block !important;
+    letter-spacing: 0.5px !important;
   }
 
-  .inst-folio-box {
-    text-align: right !important;
-    min-width: 70px !important;
+  .inst-folio-container {
+    margin-top: 1px !important;
   }
 
   .inst-recibo-label {
     font-size: 7.5px !important;
     text-transform: uppercase !important;
     color: #64748b !important;
-    display: block !important;
+    margin-right: 4px !important;
   }
 
   .inst-folio-num {
     font-size: 11px !important;
     font-weight: 800 !important;
     color: #dc2626 !important;
+    display: inline-block !important;
   }
 
-  /* 2. Bloque de Datos del Alumno con Líneas Inferiores */
+  /* 2. Datos del Alumno con Líneas Inferiores Físicas */
   .inst-data-block {
-    margin: 4px 0 !important;
-    font-size: 9px !important;
+    margin: 3px 0 !important;
+    font-size: 8.5px !important;
   }
 
   .inst-field-row {
     display: flex !important;
     align-items: flex-end !important;
-    margin-bottom: 4px !important;
+    margin-bottom: 3px !important;
   }
 
   .inst-field-label {
     font-weight: 700 !important;
     color: #1e293b !important;
     white-space: nowrap !important;
-    font-size: 8.5px !important;
+    font-size: 8px !important;
   }
 
   .inst-field-line {
-    border-bottom: 1px solid #1e293b !important;
+    border-bottom: 1px solid #000000 !important;
     font-size: 8.5px !important;
     line-height: 1.2 !important;
-    min-height: 14px !important;
+    min-height: 13px !important;
   }
 
   .inst-grid-row-3 {
     display: grid !important;
-    grid-template-columns: 1fr 1fr 1.2fr !important;
-    gap: 8px !important;
+    grid-template-columns: 1fr 1fr 1.3fr !important;
+    gap: 6px !important;
   }
 
-  /* 3. Cuerpo y Sello Digital Automático (Central-Derecha) */
+  /* 3. Cuerpo con Sello Oficial Real en Marca de Agua (Derecha) */
   .inst-body-container {
     position: relative !important;
     flex-grow: 1 !important;
-    margin: 4px 0 !important;
+    margin: 3px 0 !important;
     border: 1px solid #cbd5e1 !important;
     border-radius: 3px !important;
     padding: 4px 6px !important;
     background-color: #fafafa !important;
-    min-height: 36mm !important;
-    max-height: 44mm !important;
+    min-height: 35mm !important;
+    max-height: 42mm !important;
     overflow: hidden !important;
   }
 
-  .inst-sello-digital {
+  .sello-oficial-ccm {
     position: absolute !important;
-    right: 15px !important;
+    right: 8px !important;
     top: 50% !important;
-    transform: translateY(-50%) rotate(-10deg) !important;
-    z-index: 5 !important;
-    opacity: 0.85 !important;
-    pointer-events: none !important;
-  }
-
-  .sello-inner {
-    border: 2px double #1d4ed8 !important;
-    border-radius: 6px !important;
-    padding: 6px 12px !important;
+    transform: translateY(-50%) !important;
+    width: 52% !important;
     text-align: center !important;
-    background-color: rgba(239, 246, 255, 0.9) !important;
-    box-shadow: 0 0 0 2px rgba(239, 246, 255, 0.5) !important;
+    opacity: 0.15 !important;
+    pointer-events: none !important;
+    z-index: 1 !important;
+    font-family: Arial, sans-serif !important;
   }
 
-  .sello-title {
-    display: block !important;
-    font-size: 7px !important;
-    font-weight: 800 !important;
-    color: #1d4ed8 !important;
-    letter-spacing: 0.5px !important;
-  }
-
-  .sello-subtitle {
-    display: block !important;
-    font-size: 6.5px !important;
-    font-weight: 700 !important;
-    color: #475569 !important;
-  }
-
-  .sello-status {
-    display: block !important;
-    font-size: 13px !important;
+  .sello-logo-circle {
+    display: inline-block !important;
+    width: 26px !important;
+    height: 26px !important;
+    border: 1.5px solid #000000 !important;
+    border-radius: 50% !important;
+    font-size: 9px !important;
     font-weight: 900 !important;
-    color: #1d4ed8 !important;
-    letter-spacing: 1px !important;
-    margin: 1px 0 !important;
+    line-height: 24px !important;
+    color: #000000 !important;
+    margin-bottom: 1px !important;
   }
 
-  .sello-date {
+  .sello-text-block strong {
     display: block !important;
-    font-size: 6.5px !important;
+    font-size: 5.5px !important;
+    font-weight: 800 !important;
+    color: #000000 !important;
+    line-height: 1.05 !important;
+  }
+
+  .sello-text-block span {
+    display: block !important;
+    font-size: 5px !important;
     font-weight: 700 !important;
-    color: #334155 !important;
+    color: #000000 !important;
+    line-height: 1.05 !important;
   }
 
   .ticket-lista-container {
-    max-height: 40mm !important;
+    position: relative !important;
+    z-index: 2 !important;
+    max-height: 38mm !important;
     overflow: hidden !important;
-    width: 65% !important; /* Deja libre el área derecha para el sello */
   }
 
   .ticket-row-item {
     display: flex !important;
     justify-content: space-between !important;
-    font-size: 8.5px !important;
+    font-size: 8px !important;
     border-bottom: 1px dashed #e2e8f0 !important;
-    padding: 2px 0 !important;
+    padding: 1.5px 0 !important;
   }
 
   .ticket-col-desc {
@@ -694,7 +681,7 @@ button,
   }
 
   .ticket-subtext {
-    font-size: 7.5px !important;
+    font-size: 7px !important;
     color: #64748b !important;
   }
 
@@ -704,50 +691,50 @@ button,
     white-space: nowrap !important;
   }
 
-  /* 4. Forma de Pago y Totales */
+  /* 4. Forma de pago y Totales */
   .inst-footer-box {
     display: flex !important;
     justify-content: space-between !important;
     align-items: center !important;
-    border-top: 1px solid #0b1736 !important;
-    padding-top: 4px !important;
+    border-top: 1px solid #1e293b !important;
+    padding-top: 3px !important;
     margin-top: 2px !important;
   }
 
   .inst-pago-checks {
-    font-size: 8px !important;
-    font-weight: 600 !important;
-    color: #334155 !important;
+    font-size: 7.5px !important;
+    font-weight: 700 !important;
+    color: #1e293b !important;
   }
 
   .inst-total-display {
     display: flex !important;
     align-items: center !important;
-    gap: 6px !important;
+    gap: 4px !important;
   }
 
   .inst-total-text {
-    font-size: 10px !important;
+    font-size: 9.5px !important;
     font-weight: 800 !important;
-    color: #0b1736 !important;
+    color: #1e293b !important;
   }
 
   .inst-total-amount {
-    font-size: 13px !important;
+    font-size: 12px !important;
     font-weight: 900 !important;
     color: #107c41 !important;
     background: #f0fdf4 !important;
     border: 1px solid #bbf7d0 !important;
-    padding: 1px 8px !important;
+    padding: 1px 6px !important;
     border-radius: 3px !important;
   }
 
-  /* 5. Pie de Fecha Formal */
+  /* 5. Pie de Fecha */
   .inst-fecha-formal {
-    font-size: 7.5px !important;
+    font-size: 7px !important;
     font-style: italic !important;
     color: #475569 !important;
-    margin-top: 2px !important;
+    margin-top: 1px !important;
   }
 
   .ticket-divider {
