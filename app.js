@@ -471,7 +471,7 @@ function actualizarFechaTicket() {
 function actualizarFormaPagoTicket() {}
 
 // ==========================================
-// CONSTRUCTOR DE RECIBO INSTITUCIONAL VECTORIAL (NEGRO PURO)
+// CONSTRUCTOR DE RECIBO INSTITUCIONAL (PLAN B)
 // ==========================================
 function construirEstructuraReciboInstitucional(folio, fechaTexto, formaPago, itemsArr, totalGral) {
   let filasHtml = '';
@@ -493,24 +493,12 @@ function construirEstructuraReciboInstitucional(folio, fechaTexto, formaPago, it
   const primerMatricula = itemsArr.length > 0 ? (itemsArr.length === 1 ? (itemsArr[0].matricula || '---') : 'MÚLTIPLE') : '---';
   const nombreRecibo = itemsArr.length === 1 ? primerNombre : `${itemsArr.length} Pacientes en Recibo`;
 
-  // SVG Vectorial del Imagotipo del Colegio (Negro Puro) en línea
-  const svgLogotipo = `
-    <svg class="recibo-logo-svg" viewBox="0 0 120 40" xmlns="http://www.w3.org/2000/svg">
-      <g fill="#000000">
-        <!-- Ícono Minimalista de Libro / Insignia CCM -->
-        <path d="M15,5 L25,5 C28,5 30,7 30,10 L30,30 C30,33 28,35 25,35 L15,35 C12,35 10,33 10,30 L10,10 C10,7 12,5 15,5 Z M12,8 L12,32 C13,31.5 14,31 15,31 L24,31 C25,31 26,31.5 27,32 L27,8 C26,7.5 25,7 24,7 L15,7 C14,7 13,7.5 12,8 Z"/>
-        <path d="M17,12 L22,12 L22,14 L17,14 Z M17,17 L22,17 L22,19 L17,19 Z M17,22 L20,22 L20,24 L17,24 Z"/>
-        <!-- Tipografía institucional complementaria vectorizada -->
-        <text x="35" y="16" font-family="'Plus Jakarta Sans', Arial, sans-serif" font-size="9" font-weight="900" letter-spacing="0.5">COLEGIO</text>
-        <text x="35" y="25" font-family="'Plus Jakarta Sans', Arial, sans-serif" font-size="7" font-weight="700" letter-spacing="0.3">CIUDAD DE MÉXICO</text>
-      </g>
-    </svg>
-  `;
+  const logoUrl = "https://colegiociudad.edu.mx";
 
-  // Sello Oficial Real en Negro Fino con Marca de Agua Rigurosa
+  // Sello Oficial Real en Negro Fino con Marca de Agua Rigurosa (Plan B)
   const selloOficialReal = `
     <div class="sello-oficial-ccm">
-      <div class="sello-logo-circle">CCM</div>
+      <img src="${logoUrl}" class="sello-logo-img" alt="CCM">
       <div class="sello-text-block">
         <strong>ESCUELA SECUNDARIA DE LA</strong>
         <strong>CIUDAD DE MEXICO, S. C.</strong>
@@ -523,10 +511,10 @@ function construirEstructuraReciboInstitucional(folio, fechaTexto, formaPago, it
 
   const estructuraUnica = `
     <div class="ticket-paper-inst">
-      <!-- 1. ENCABEZADO OFICIAL NEGRO PURO -->
+      <!-- 1. ENCABEZADO OFICIAL PLAN B -->
       <div class="inst-header-grid">
         <div class="inst-logo-box">
-          ${svgLogotipo}
+          <img src="${logoUrl}" class="recibo-logo" alt="Logo CCM">
         </div>
         <div class="inst-title-box text-right">
           <span class="inst-plantel-tag">Plantel Polanco</span>
@@ -559,7 +547,7 @@ function construirEstructuraReciboInstitucional(folio, fechaTexto, formaPago, it
         </div>
       </div>
 
-      <!-- 3. CUERPO DE ARTÍCULOS CON SELLO OFICIAL REAL DE FONDO -->
+      <!-- 3. CUERPO DE ARTÍCULOS CON SELLO OFICIAL REAL DE FONDO (PLAN B) -->
       <div class="inst-body-container">
         ${selloOficialReal}
         <div class="ticket-lista-container">
@@ -1550,5 +1538,754 @@ function imprimirObservaciones() {
     printArea.innerHTML = '';
     printArea.appendChild(content);
     window.print();
+  }
+}--- START OF FILE styles.txt ---
+
+:root {
+  --bg-main: #f8fafc;
+  --header-bg: linear-gradient(135deg, #0b1736 0%, #081026 100%);
+  --accent-green: #00c853;
+  --accent-blue: #2563eb;
+  --border-color: #e2e8f0;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background-color: var(--bg-main);
+  color: #1e293b;
+}
+
+/* OVERLAY Y CARD DE LOGIN */
+#loginOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: var(--header-bg);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 420px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+  padding: 2.5rem;
+  border: 1px solid var(--border-color);
+}
+
+.login-logo {
+  height: 60px;
+  width: auto;
+  object-fit: contain;
+}
+
+/* ENCABEZADO Y BANNER PRINCIPAL */
+.header-banner {
+  background: var(--header-bg) !important;
+  border-radius: 12px;
+  border-bottom: 4px solid var(--accent-green);
+  padding: 16px 24px;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(18, 33, 71, 0.15);
+}
+
+.header-logo {
+  height: 48px;
+  width: auto;
+  object-fit: contain;
+  background: #ffffff;
+  padding: 4px 8px;
+  border-radius: 8px;
+}
+
+.header-title {
+  font-weight: 800;
+  font-size: 1.3rem;
+  margin: 0;
+  line-height: 1.2;
+  color: #ffffff !important;
+}
+
+.header-subtitle {
+  font-size: 0.85rem;
+  color: #93c5fd !important;
+  margin: 0;
+}
+
+.folio-badge {
+  background-color: #1e293b;
+  color: #ffffff;
+  border: 1px solid #334155;
+  font-weight: 800;
+  font-size: 1.1rem;
+  padding: 4px 14px;
+  border-radius: 6px;
+  display: inline-block;
+}
+
+/* TARJETAS Y CONTENEDORES */
+.custom-card {
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
+}
+
+.card-title-custom {
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* BÚSQUEDA PREDICTIVA Y CURSOR MANITA */
+.results-list {
+  max-height: 240px;
+  overflow-y: auto;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 1050;
+  border-radius: 8px;
+}
+
+.results-list > *,
+.results-list .list-group-item,
+.results-list tr,
+.results-list div,
+button,
+.nav-link,
+.btn {
+  cursor: pointer !important;
+}
+
+/* =========================================================
+   ESTILOS DE BOTONES 3D DE TODO EL MÓDULO (TAMAÑO COMPACTO)
+   ========================================================= */
+
+/* NAVEGACIÓN ENTRE PESTAÑAS (3D) */
+.nav-tabs,
+.nav-tabs .nav-item,
+.nav-tabs .nav-link {
+  position: relative !important;
+  z-index: 1100 !important;
+  pointer-events: auto !important;
+}
+
+.nav-tabs {
+  border-bottom: none !important;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.nav-tabs .nav-link {
+  color: #475569 !important;
+  font-weight: 700 !important;
+  border: 1px solid #cbd5e1 !important;
+  background: linear-gradient(180deg, #ffffff 0%, #e2e8f0 100%) !important;
+  border-radius: 10px !important;
+  padding: 7px 18px !important;
+  font-size: 0.85rem !important;
+  box-shadow: 0 3px 0 #94a3b8, 0 3px 6px rgba(0, 0, 0, 0.1) !important;
+  transition: all 0.15s ease-in-out !important;
+}
+
+.nav-tabs .nav-link:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 5px 0 #94a3b8, 0 5px 10px rgba(0, 0, 0, 0.15) !important;
+  background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%) !important;
+}
+
+.nav-tabs .nav-link:active {
+  transform: translateY(2px) !important;
+  box-shadow: 0 1px 0 #94a3b8 !important;
+}
+
+.nav-tabs .nav-link.active {
+  color: #ffffff !important;
+  background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%) !important;
+  border: 1px solid #1e40af !important;
+  box-shadow: 0 3px 0 #1e3a8a, 0 3px 8px rgba(37, 99, 235, 0.3) !important;
+}
+
+.nav-tabs .nav-link.active:active {
+  transform: translateY(2px) !important;
+  box-shadow: 0 1px 0 #1e3a8a !important;
+}
+
+/* BOTONES BUSCAR ALUMNO Y PERSONA EXTERNA (3D) */
+#btnModeAlumno,
+#btnModeExterno,
+.btn-mode {
+  color: #475569 !important;
+  background: linear-gradient(180deg, #ffffff 0%, #e2e8f0 100%) !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 20px !important;
+  padding: 5px 15px !important;
+  font-size: 0.8rem !important;
+  font-weight: 700 !important;
+  box-shadow: 0 3px 0 #94a3b8, 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+  transition: all 0.15s ease-in-out !important;
+}
+
+#btnModeAlumno:hover,
+#btnModeExterno:hover,
+.btn-mode:not(.active):hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 5px 0 #94a3b8, 0 4px 8px rgba(0, 0, 0, 0.15) !important;
+  background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%) !important;
+}
+
+#btnModeAlumno.active,
+#btnModeExterno.active,
+.btn-mode.active {
+  color: #ffffff !important;
+  background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%) !important;
+  border: 1px solid #1e40af !important;
+  box-shadow: 0 3px 0 #1e3a8a, 0 3px 6px rgba(37, 99, 235, 0.3) !important;
+}
+
+/* BOTÓN AGREGAR PACIENTE AL RECIBO (3D AZUL COMPACTO) */
+#btnAgregarPaciente {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  width: auto !important;
+  max-width: fit-content !important;
+  margin: 8px auto !important;
+  font-size: 0.82rem !important;
+  font-weight: 700 !important;
+  padding: 6px 18px !important;
+  border-radius: 8px !important;
+  background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid #1e40af !important;
+  box-shadow: 0 4px 0 #1e3a8a, 0 4px 8px rgba(37, 99, 235, 0.3) !important;
+  transition: all 0.15s ease-in-out !important;
+}
+
+#btnAgregarPaciente:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 0 #1e3a8a, 0 6px 12px rgba(37, 99, 235, 0.4) !important;
+}
+
+#btnAgregarPaciente:active {
+  transform: translateY(2px) !important;
+  box-shadow: 0 2px 0 #1e3a8a !important;
+}
+
+/* BOTÓN GUARDAR REGISTRO (3D VERDE COMPACTO) */
+#btnGuardarRegistro {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  width: auto !important;
+  max-width: fit-content !important;
+  margin: 12px auto 6px auto !important;
+  font-size: 0.82rem !important;
+  font-weight: 800 !important;
+  padding: 7px 20px !important;
+  border-radius: 8px !important;
+  background: linear-gradient(180deg, #00c853 0%, #009624 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid #007a1c !important;
+  box-shadow: 0 4px 0 #005c14, 0 4px 8px rgba(0, 200, 83, 0.35) !important;
+  transition: all 0.15s ease-in-out !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+}
+
+#btnGuardarRegistro:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 0 #005c14, 0 6px 12px rgba(0, 200, 83, 0.45) !important;
+  background: linear-gradient(180deg, #00e676 0%, #00a844 100%) !important;
+}
+
+#btnGuardarRegistro:active {
+  transform: translateY(2px) !important;
+  box-shadow: 0 2px 0 #005c14 !important;
+}
+
+/* BOTÓN CANCELAR VENTA ACTUAL (3D ROJO COMPACTO) */
+#btnCancelarVenta {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  width: auto !important;
+  max-width: fit-content !important;
+  margin: 4px auto !important;
+  font-size: 0.78rem !important;
+  font-weight: 700 !important;
+  padding: 5px 16px !important;
+  border-radius: 8px !important;
+  background: linear-gradient(180deg, #dc2626 0%, #b91c1c 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid #991b1b !important;
+  box-shadow: 0 3px 0 #7f1d1d, 0 3px 6px rgba(220, 38, 38, 0.3) !important;
+  transition: all 0.15s ease-in-out !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+}
+
+#btnCancelarVenta:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 5px 0 #7f1d1d, 0 5px 10px rgba(220, 38, 38, 0.4) !important;
+  background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%) !important;
+}
+
+#btnCancelarVenta:active {
+  transform: translateY(2px) !important;
+  box-shadow: 0 1px 0 #7f1d1d !important;
+}
+
+/* BOTONES GUARDAR OBSERVACIONES 3D (CYAN Y AMARILLO COMPACTOS Y CENTRADOS) */
+#btnGuardarObs2026 {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  width: auto !important;
+  max-width: fit-content !important;
+  margin: 4px auto !important;
+  font-size: 0.82rem !important;
+  font-weight: 800 !important;
+  padding: 6px 18px !important;
+  border-radius: 8px !important;
+  background: linear-gradient(180deg, #0dcaf0 0%, #0aa2c0 100%) !important;
+  color: #0f172a !important;
+  border: 1px solid #087990 !important;
+  box-shadow: 0 4px 0 #055160, 0 4px 8px rgba(13, 202, 240, 0.35) !important;
+  transition: all 0.15s ease-in-out !important;
+  letter-spacing: 0.3px !important;
+}
+
+#btnGuardarObs2026:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 0 #055160, 0 6px 12px rgba(13, 202, 240, 0.45) !important;
+  background: linear-gradient(180deg, #31d2f2 0%, #0dcaf0 100%) !important;
+}
+
+#btnGuardarObs2026:active {
+  transform: translateY(2px) !important;
+  box-shadow: 0 2px 0 #055160 !important;
+}
+
+#btnGuardarObs2027 {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  width: auto !important;
+  max-width: fit-content !important;
+  margin: 4px auto !important;
+  font-size: 0.82rem !important;
+  font-weight: 800 !important;
+  padding: 6px 18px !important;
+  border-radius: 8px !important;
+  background: linear-gradient(180deg, #ffc107 0%, #d39e00 100%) !important;
+  color: #0f172a !important;
+  border: 1px solid #b28500 !important;
+  box-shadow: 0 4px 0 #856404, 0 4px 8px rgba(255, 193, 7, 0.35) !important;
+  transition: all 0.15s ease-in-out !important;
+  letter-spacing: 0.3px !important;
+}
+
+#btnGuardarObs2027:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 0 #856404, 0 6px 12px rgba(255, 193, 7, 0.45) !important;
+  background: linear-gradient(180deg, #ffca2c 0%, #ffc107 100%) !important;
+}
+
+#btnGuardarObs2027:active {
+  transform: translateY(2px) !important;
+  box-shadow: 0 2px 0 #856404 !important;
+}
+
+/* TARJETAS KPI */
+.kpi-card {
+  border-left: 4px solid var(--accent-blue);
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 16px;
+  border-top: 1px solid var(--border-color);
+  border-right: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* REGISTROS CANCELADOS Y REEMBOLSADOS EN HISTORIAL */
+.fila-cancelada {
+  background-color: #fef2f2 !important;
+  opacity: 0.75;
+}
+
+.fila-cancelada td {
+  color: #991b1b;
+  text-decoration: line-through;
+}
+
+.fila-reembolso-egreso {
+  background-color: #fff7ed !important;
+  font-weight: 500;
+}
+
+.fila-reembolsada-total {
+  background-color: #f8fafc !important;
+  opacity: 0.8;
+}
+
+.fila-reembolsada-parcial {
+  background-color: #fffbeb !important;
+}
+
+/* CONGELAR ENCABEZADO Y SCROLLBAR DE TABLAS */
+#tablaHistorial thead th {
+  position: sticky;
+  top: 0;
+  background-color: #f8f9fa;
+  z-index: 2;
+  box-shadow: inset 0 -2px 0 #dee2e6;
+}
+
+.table-responsive::-webkit-scrollbar {
+  width: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 4px;
+}
+
+/* TICKET Y VISTA PREVIA */
+.ticket-paper {
+  background: #ffffff;
+  border: 2px dashed #cbd5e1;
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.ticket-row-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  border-bottom: 1px solid #f1f5f9;
+  padding: 4px 0;
+}
+
+#print-area, .print-only {
+  display: none !important;
+}
+
+/* =========================================================
+   ESTILOS DE IMPRESIÓN PLAN B (NEGRO PURO + IMÁGENES EXTERNAS)
+   ========================================================= */
+@media print {
+  @page {
+    size: letter portrait;
+    margin: 4mm;
+  }
+
+  body > * {
+    display: none !important;
+  }
+
+  body > #print-area, 
+  #print-area {
+    display: block !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    box-sizing: border-box !important;
+  }
+
+  body > #print-area *, 
+  #print-area * {
+    visibility: visible !important;
+    display: revert !important;
+  }
+
+  /* Contenedor estricto de 50% de alto por recibo en hoja carta */
+  .ticket-duplicado-container {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-height: 268mm !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+  }
+
+  .ticket-single-pane {
+    width: 99% !important;
+    max-width: 580px !important;
+    height: 130mm !important;
+    max-height: 130mm !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    box-sizing: border-box !important;
+    padding: 1mm 2mm !important;
+  }
+
+  /* Marco del Recibo Oficial en Negro Puro */
+  .ticket-paper-inst {
+    border: 1.5px solid #000000 !important;
+    border-radius: 4px !important;
+    padding: 6px 10px !important;
+    margin: 0 !important;
+    background: #ffffff !important;
+    width: 100% !important;
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    box-sizing: border-box !important;
+    position: relative !important;
+  }
+
+  /* 1. Encabezado con Logotipo Forzado a Negro Puro mediante filtro */
+  .inst-header-grid {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    border-bottom: 1.5px solid #000000 !important;
+    padding-bottom: 3px !important;
+  }
+
+  .inst-logo-box {
+    width: 140px !important;
+  }
+
+  .recibo-logo {
+    height: 1.2cm !important;
+    width: auto !important;
+    object-fit: contain !important;
+    display: block !important;
+    filter: brightness(0) !important; /* Fuerza impresión en negro puro */
+  }
+
+  .inst-title-box {
+    text-align: right !important;
+  }
+
+  .inst-plantel-tag {
+    font-size: 10px !important;
+    font-weight: 900 !important;
+    color: #000000 !important;
+    text-transform: uppercase !important;
+    display: block !important;
+    letter-spacing: 0.5px !important;
+  }
+
+  .inst-folio-container {
+    margin-top: 1px !important;
+  }
+
+  .inst-recibo-label {
+    font-size: 7.5px !important;
+    text-transform: uppercase !important;
+    color: #000000 !important;
+    margin-right: 4px !important;
+    font-weight: 700 !important;
+  }
+
+  .inst-folio-num {
+    font-size: 11px !important;
+    font-weight: 900 !important;
+    color: #000000 !important;
+    display: inline-block !important;
+  }
+
+  /* 2. Datos del Alumno con Líneas Negras Continuas */
+  .inst-data-block {
+    margin: 3px 0 !important;
+    font-size: 8.5px !important;
+  }
+
+  .inst-field-row {
+    display: flex !important;
+    align-items: flex-end !important;
+    margin-bottom: 3px !important;
+  }
+
+  .inst-field-label {
+    font-weight: 700 !important;
+    color: #000000 !important;
+    white-space: nowrap !important;
+    font-size: 8px !important;
+  }
+
+  .inst-field-line {
+    border-bottom: 1px solid #000000 !important;
+    font-size: 8.5px !important;
+    line-height: 1.2 !important;
+    min-height: 13px !important;
+    color: #000000 !important;
+  }
+
+  .inst-grid-row-3 {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr 1.3fr !important;
+    gap: 6px !important;
+  }
+
+  /* 3. Cuerpo con Sello Oficial Real en Negro Fino (Plan B) */
+  .inst-body-container {
+    position: relative !important;
+    flex-grow: 1 !important;
+    margin: 3px 0 !important;
+    border: 1px solid #000000 !important;
+    border-radius: 3px !important;
+    padding: 4px 6px !important;
+    background-color: #ffffff !important;
+    min-height: 35mm !important;
+    max-height: 42mm !important;
+    overflow: hidden !important;
+  }
+
+  .sello-oficial-ccm {
+    position: absolute !important;
+    right: 1.5cm !important;
+    top: 4.5cm !important;
+    width: 6.5cm !important;
+    text-align: center !important;
+    color: #000000 !important;
+    opacity: 0.15 !important;
+    pointer-events: none !important;
+    z-index: 1 !important;
+    transform: translateY(-50%) !important;
+  }
+
+  .sello-logo-img {
+    height: 1cm !important;
+    width: auto !important;
+    object-fit: contain !important;
+    display: inline-block !important;
+    filter: brightness(0) !important;
+    margin-bottom: 1px !important;
+  }
+
+  .sello-text-block {
+    font-size: 7pt !important;
+    line-height: 1.2 !important;
+    font-family: Arial, sans-serif !important;
+  }
+
+  .sello-text-block strong {
+    display: block !important;
+    font-weight: 800 !important;
+    color: #000000 !important;
+  }
+
+  .sello-text-block span {
+    display: block !important;
+    font-weight: 600 !important;
+    color: #000000 !important;
+  }
+
+  .ticket-lista-container {
+    position: relative !important;
+    z-index: 2 !important;
+    max-height: 38mm !important;
+    overflow: hidden !important;
+  }
+
+  .ticket-row-item {
+    display: flex !important;
+    justify-content: space-between !important;
+    font-size: 8px !important;
+    border-bottom: 1px dashed #000000 !important;
+    padding: 1.5px 0 !important;
+  }
+
+  .ticket-col-desc {
+    color: #000000 !important;
+    font-weight: 600 !important;
+  }
+
+  .ticket-subtext {
+    font-size: 7px !important;
+    color: #000000 !important;
+  }
+
+  .ticket-col-import {
+    font-weight: 700 !important;
+    color: #000000 !important;
+    white-space: nowrap !important;
+  }
+
+  /* 4. Forma de pago y Totales en Negro Puro */
+  .inst-footer-box {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    border-top: 1.5px solid #000000 !important;
+    padding-top: 3px !important;
+    margin-top: 2px !important;
+  }
+
+  .inst-pago-checks {
+    font-size: 7.5px !important;
+    font-weight: 700 !important;
+    color: #000000 !important;
+  }
+
+  .inst-total-display {
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+  }
+
+  .inst-total-text {
+    font-size: 9.5px !important;
+    font-weight: 900 !important;
+    color: #000000 !important;
+  }
+
+  .inst-total-amount {
+    font-size: 12px !important;
+    font-weight: 900 !important;
+    color: #000000 !important;
+    background: #ffffff !important;
+    border: 1px solid #000000 !important;
+    padding: 1px 6px !important;
+    border-radius: 2px !important;
+  }
+
+  /* 5. Pie de Fecha Formal */
+  .inst-fecha-formal {
+    font-size: 7px !important;
+    font-style: italic !important;
+    color: #000000 !important;
+    margin-top: 1px !important;
+    font-weight: 600 !important;
+  }
+
+  .ticket-divider {
+    width: 80% !important;
+    border-top: 1.5px dashed #000000 !important;
+    margin: 1mm auto !important;
   }
 }
