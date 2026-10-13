@@ -449,7 +449,7 @@ button,
 }
 
 /* =========================================================
-   ESTILOS DE IMPRESIÓN INSTITUCIONAL VECTORIAL (NEGRO PURO)
+   ESTILOS DE IMPRESIÓN PLAN B (NEGRO PURO + IMÁGENES EXTERNAS)
    ========================================================= */
 @media print {
   @page {
@@ -522,7 +522,7 @@ button,
     position: relative !important;
   }
 
-  /* 1. Encabezado con SVG Vectorial a la Izquierda */
+  /* 1. Encabezado con Logotipo Forzado a Negro Puro mediante filtro */
   .inst-header-grid {
     display: flex !important;
     justify-content: space-between !important;
@@ -535,10 +535,12 @@ button,
     width: 140px !important;
   }
 
-  .recibo-logo-svg {
-    height: 1cm !important;
+  .recibo-logo {
+    height: 1.2cm !important;
     width: auto !important;
+    object-fit: contain !important;
     display: block !important;
+    filter: brightness(0) !important; /* Fuerza impresión en negro puro */
   }
 
   .inst-title-box {
@@ -606,7 +608,7 @@ button,
     gap: 6px !important;
   }
 
-  /* 3. Cuerpo con Sello Oficial Real en Negro Fino (Marca de Agua Derecha) */
+  /* 3. Cuerpo con Sello Oficial Real en Negro Fino (Plan B) */
   .inst-body-container {
     position: relative !important;
     flex-grow: 1 !important;
@@ -623,26 +625,22 @@ button,
   .sello-oficial-ccm {
     position: absolute !important;
     right: 1.5cm !important;
-    top: 4.5cm !important; /* Coordenadas exactas solicitadas */
-    width: 6.5cm !important; /* Ancho rígido solicitado */
+    top: 4.5cm !important;
+    width: 6.5cm !important;
     text-align: center !important;
     color: #000000 !important;
-    opacity: 0.15 !important; /* Marca de agua sutil */
+    opacity: 0.15 !important;
     pointer-events: none !important;
     z-index: 1 !important;
     transform: translateY(-50%) !important;
   }
 
-  .sello-logo-circle {
+  .sello-logo-img {
+    height: 1cm !important;
+    width: auto !important;
+    object-fit: contain !important;
     display: inline-block !important;
-    width: 24px !important;
-    height: 24px !important;
-    border: 1px solid #000000 !important;
-    border-radius: 50% !important;
-    font-size: 8pt !important;
-    font-weight: 900 !important;
-    line-height: 22px !important;
-    color: #000000 !important;
+    filter: brightness(0) !important;
     margin-bottom: 1px !important;
   }
 
