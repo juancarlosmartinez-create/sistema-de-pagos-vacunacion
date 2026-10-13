@@ -468,12 +468,10 @@ function actualizarFechaTicket() {
   }
 }
 
-function actualizarFormaPagoTicket() {
-  // Manejado dinámicamente en la renderización de impresión
-}
+function actualizarFormaPagoTicket() {}
 
 // ==========================================
-// CONSTRUCTOR DE RECIBO OFICIAL INSTITUCIONAL (DOBLE COPIA)
+// CONSTRUCTOR DE RECIBO INSTITUCIONAL VECTORIAL (NEGRO PURO)
 // ==========================================
 function construirEstructuraReciboInstitucional(folio, fechaTexto, formaPago, itemsArr, totalGral) {
   let filasHtml = '';
@@ -491,18 +489,44 @@ function construirEstructuraReciboInstitucional(folio, fechaTexto, formaPago, it
   const isTarjeta = formaPago === 'Tarjeta';
 
   const primerNombre = itemsArr.length > 0 ? itemsArr[0].nombre : '---';
-  const primerGrupo = itemsArr.length > 0 ? (itemsArr[0].grupo || '---') : '---';
-  const primerMatricula = itemsArr.length > 0 ? (itemsArr[0].matricula || '---') : '---';
+  const primerGrupo = itemsArr.length > 0 ? (itemsArr.length === 1 ? (itemsArr[0].grupo || '---') : 'MÚLTIPLE') : '---';
+  const primerMatricula = itemsArr.length > 0 ? (itemsArr.length === 1 ? (itemsArr[0].matricula || '---') : 'MÚLTIPLE') : '---';
   const nombreRecibo = itemsArr.length === 1 ? primerNombre : `${itemsArr.length} Pacientes en Recibo`;
 
-  const logoUrl = "https://www.colegiociudad.edu.mx/wp-content/uploads/2023/08/cropped-logo-ccm-2023.png";
+  // SVG Vectorial del Imagotipo del Colegio (Negro Puro) en línea
+  const svgLogotipo = `
+    <svg class="recibo-logo-svg" viewBox="0 0 120 40" xmlns="http://www.w3.org/2000/svg">
+      <g fill="#000000">
+        <!-- Ícono Minimalista de Libro / Insignia CCM -->
+        <path d="M15,5 L25,5 C28,5 30,7 30,10 L30,30 C30,33 28,35 25,35 L15,35 C12,35 10,33 10,30 L10,10 C10,7 12,5 15,5 Z M12,8 L12,32 C13,31.5 14,31 15,31 L24,31 C25,31 26,31.5 27,32 L27,8 C26,7.5 25,7 24,7 L15,7 C14,7 13,7.5 12,8 Z"/>
+        <path d="M17,12 L22,12 L22,14 L17,14 Z M17,17 L22,17 L22,19 L17,19 Z M17,22 L20,22 L20,24 L17,24 Z"/>
+        <!-- Tipografía institucional complementaria vectorizada -->
+        <text x="35" y="16" font-family="'Plus Jakarta Sans', Arial, sans-serif" font-size="9" font-weight="900" letter-spacing="0.5">COLEGIO</text>
+        <text x="35" y="25" font-family="'Plus Jakarta Sans', Arial, sans-serif" font-size="7" font-weight="700" letter-spacing="0.3">CIUDAD DE MÉXICO</text>
+      </g>
+    </svg>
+  `;
+
+  // Sello Oficial Real en Negro Fino con Marca de Agua Rigurosa
+  const selloOficialReal = `
+    <div class="sello-oficial-ccm">
+      <div class="sello-logo-circle">CCM</div>
+      <div class="sello-text-block">
+        <strong>ESCUELA SECUNDARIA DE LA</strong>
+        <strong>CIUDAD DE MEXICO, S. C.</strong>
+        <span>ESC-521104-BH9</span>
+        <span>Campos Eliseos 139  11560 CDMX</span>
+        <span>Tel. 55-5203-7894</span>
+      </div>
+    </div>
+  `;
 
   const estructuraUnica = `
     <div class="ticket-paper-inst">
-      <!-- 1. ENCABEZADO OFICIAL CON LOGOTIPO IZQ Y PLANTEL DER -->
+      <!-- 1. ENCABEZADO OFICIAL NEGRO PURO -->
       <div class="inst-header-grid">
         <div class="inst-logo-box">
-          <img class="recibo-logo" src="${logoUrl}" alt="Logo CCM">
+          ${svgLogotipo}
         </div>
         <div class="inst-title-box text-right">
           <span class="inst-plantel-tag">Plantel Polanco</span>
@@ -513,7 +537,7 @@ function construirEstructuraReciboInstitucional(folio, fechaTexto, formaPago, it
         </div>
       </div>
 
-      <!-- 2. BLOQUE DE DATOS DEL ALUMNO CON LÍNEAS FÍSICAS INFERIORES -->
+      <!-- 2. DATOS DEL ALUMNO CON LÍNEAS NEGRAS CONTINUAS -->
       <div class="inst-data-block">
         <div class="inst-field-row">
           <span class="inst-field-label">Nombre del Alumno (a):</span>
@@ -537,15 +561,7 @@ function construirEstructuraReciboInstitucional(folio, fechaTexto, formaPago, it
 
       <!-- 3. CUERPO DE ARTÍCULOS CON SELLO OFICIAL REAL DE FONDO -->
       <div class="inst-body-container">
-        <div class="sello-oficial-ccm">
-          <div class="sello-logo-circle">CCM</div>
-          <div class="sello-text-block">
-            <strong>ESCUELA SECUNDARIA DE LA CIUDAD DE MEXICO, S. C.</strong>
-            <span>ESC-521104-BH9</span>
-            <span>Campos Eliseos 139  11560 CDMX</span>
-            <span>Tel. 55-5203-7894</span>
-          </div>
-        </div>
+        ${selloOficialReal}
         <div class="ticket-lista-container">
           ${filasHtml}
         </div>
