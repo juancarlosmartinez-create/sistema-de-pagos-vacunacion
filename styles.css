@@ -449,7 +449,7 @@ button,
 }
 
 /* =========================================================
-   ESTILOS DE IMPRESIÓN INSTITUCIONAL OFICIAL (2 RECIBOS EN HOJA CARTA)
+   ESTILOS DE IMPRESIÓN INSTITUCIONAL VECTORIAL (NEGRO PURO)
    ========================================================= */
 @media print {
   @page {
@@ -481,7 +481,7 @@ button,
     display: revert !important;
   }
 
-  /* Contenedor principal que distribuye exactamente 50% de altura por recibo */
+  /* Contenedor estricto de 50% de alto por recibo en hoja carta */
   .ticket-duplicado-container {
     display: flex !important;
     flex-direction: column !important;
@@ -506,9 +506,9 @@ button,
     padding: 1mm 2mm !important;
   }
 
-  /* Marco del Recibo Oficial */
+  /* Marco del Recibo Oficial en Negro Puro */
   .ticket-paper-inst {
-    border: 1.5px solid #1e293b !important;
+    border: 1.5px solid #000000 !important;
     border-radius: 4px !important;
     padding: 6px 10px !important;
     margin: 0 !important;
@@ -522,12 +522,12 @@ button,
     position: relative !important;
   }
 
-  /* 1. Encabezado Oficial */
+  /* 1. Encabezado con SVG Vectorial a la Izquierda */
   .inst-header-grid {
     display: flex !important;
     justify-content: space-between !important;
     align-items: center !important;
-    border-bottom: 1.5px solid #1e293b !important;
+    border-bottom: 1.5px solid #000000 !important;
     padding-bottom: 3px !important;
   }
 
@@ -535,10 +535,9 @@ button,
     width: 140px !important;
   }
 
-  .recibo-logo {
-    height: 1.2cm !important;
+  .recibo-logo-svg {
+    height: 1cm !important;
     width: auto !important;
-    object-fit: contain !important;
     display: block !important;
   }
 
@@ -548,8 +547,8 @@ button,
 
   .inst-plantel-tag {
     font-size: 10px !important;
-    font-weight: 800 !important;
-    color: #0b1736 !important;
+    font-weight: 900 !important;
+    color: #000000 !important;
     text-transform: uppercase !important;
     display: block !important;
     letter-spacing: 0.5px !important;
@@ -562,18 +561,19 @@ button,
   .inst-recibo-label {
     font-size: 7.5px !important;
     text-transform: uppercase !important;
-    color: #64748b !important;
+    color: #000000 !important;
     margin-right: 4px !important;
+    font-weight: 700 !important;
   }
 
   .inst-folio-num {
     font-size: 11px !important;
-    font-weight: 800 !important;
-    color: #dc2626 !important;
+    font-weight: 900 !important;
+    color: #000000 !important;
     display: inline-block !important;
   }
 
-  /* 2. Datos del Alumno con Líneas Inferiores Físicas */
+  /* 2. Datos del Alumno con Líneas Negras Continuas */
   .inst-data-block {
     margin: 3px 0 !important;
     font-size: 8.5px !important;
@@ -587,7 +587,7 @@ button,
 
   .inst-field-label {
     font-weight: 700 !important;
-    color: #1e293b !important;
+    color: #000000 !important;
     white-space: nowrap !important;
     font-size: 8px !important;
   }
@@ -597,6 +597,7 @@ button,
     font-size: 8.5px !important;
     line-height: 1.2 !important;
     min-height: 13px !important;
+    color: #000000 !important;
   }
 
   .inst-grid-row-3 {
@@ -605,15 +606,15 @@ button,
     gap: 6px !important;
   }
 
-  /* 3. Cuerpo con Sello Oficial Real en Marca de Agua (Derecha) */
+  /* 3. Cuerpo con Sello Oficial Real en Negro Fino (Marca de Agua Derecha) */
   .inst-body-container {
     position: relative !important;
     flex-grow: 1 !important;
     margin: 3px 0 !important;
-    border: 1px solid #cbd5e1 !important;
+    border: 1px solid #000000 !important;
     border-radius: 3px !important;
     padding: 4px 6px !important;
-    background-color: #fafafa !important;
+    background-color: #ffffff !important;
     min-height: 35mm !important;
     max-height: 42mm !important;
     overflow: hidden !important;
@@ -621,44 +622,46 @@ button,
 
   .sello-oficial-ccm {
     position: absolute !important;
-    right: 8px !important;
-    top: 50% !important;
-    transform: translateY(-50%) !important;
-    width: 52% !important;
+    right: 1.5cm !important;
+    top: 4.5cm !important; /* Coordenadas exactas solicitadas */
+    width: 6.5cm !important; /* Ancho rígido solicitado */
     text-align: center !important;
-    opacity: 0.15 !important;
+    color: #000000 !important;
+    opacity: 0.15 !important; /* Marca de agua sutil */
     pointer-events: none !important;
     z-index: 1 !important;
-    font-family: Arial, sans-serif !important;
+    transform: translateY(-50%) !important;
   }
 
   .sello-logo-circle {
     display: inline-block !important;
-    width: 26px !important;
-    height: 26px !important;
-    border: 1.5px solid #000000 !important;
+    width: 24px !important;
+    height: 24px !important;
+    border: 1px solid #000000 !important;
     border-radius: 50% !important;
-    font-size: 9px !important;
+    font-size: 8pt !important;
     font-weight: 900 !important;
-    line-height: 24px !important;
+    line-height: 22px !important;
     color: #000000 !important;
     margin-bottom: 1px !important;
   }
 
+  .sello-text-block {
+    font-size: 7pt !important;
+    line-height: 1.2 !important;
+    font-family: Arial, sans-serif !important;
+  }
+
   .sello-text-block strong {
     display: block !important;
-    font-size: 5.5px !important;
     font-weight: 800 !important;
     color: #000000 !important;
-    line-height: 1.05 !important;
   }
 
   .sello-text-block span {
     display: block !important;
-    font-size: 5px !important;
-    font-weight: 700 !important;
+    font-weight: 600 !important;
     color: #000000 !important;
-    line-height: 1.05 !important;
   }
 
   .ticket-lista-container {
@@ -672,31 +675,32 @@ button,
     display: flex !important;
     justify-content: space-between !important;
     font-size: 8px !important;
-    border-bottom: 1px dashed #e2e8f0 !important;
+    border-bottom: 1px dashed #000000 !important;
     padding: 1.5px 0 !important;
   }
 
   .ticket-col-desc {
-    color: #0f172a !important;
+    color: #000000 !important;
+    font-weight: 600 !important;
   }
 
   .ticket-subtext {
     font-size: 7px !important;
-    color: #64748b !important;
+    color: #000000 !important;
   }
 
   .ticket-col-import {
     font-weight: 700 !important;
-    color: #0f172a !important;
+    color: #000000 !important;
     white-space: nowrap !important;
   }
 
-  /* 4. Forma de pago y Totales */
+  /* 4. Forma de pago y Totales en Negro Puro */
   .inst-footer-box {
     display: flex !important;
     justify-content: space-between !important;
     align-items: center !important;
-    border-top: 1px solid #1e293b !important;
+    border-top: 1.5px solid #000000 !important;
     padding-top: 3px !important;
     margin-top: 2px !important;
   }
@@ -704,7 +708,7 @@ button,
   .inst-pago-checks {
     font-size: 7.5px !important;
     font-weight: 700 !important;
-    color: #1e293b !important;
+    color: #000000 !important;
   }
 
   .inst-total-display {
@@ -715,31 +719,32 @@ button,
 
   .inst-total-text {
     font-size: 9.5px !important;
-    font-weight: 800 !important;
-    color: #1e293b !important;
+    font-weight: 900 !important;
+    color: #000000 !important;
   }
 
   .inst-total-amount {
     font-size: 12px !important;
     font-weight: 900 !important;
-    color: #107c41 !important;
-    background: #f0fdf4 !important;
-    border: 1px solid #bbf7d0 !important;
+    color: #000000 !important;
+    background: #ffffff !important;
+    border: 1px solid #000000 !important;
     padding: 1px 6px !important;
-    border-radius: 3px !important;
+    border-radius: 2px !important;
   }
 
-  /* 5. Pie de Fecha */
+  /* 5. Pie de Fecha Formal */
   .inst-fecha-formal {
     font-size: 7px !important;
     font-style: italic !important;
-    color: #475569 !important;
+    color: #000000 !important;
     margin-top: 1px !important;
+    font-weight: 600 !important;
   }
 
   .ticket-divider {
     width: 80% !important;
-    border-top: 1.5px dashed #475569 !important;
+    border-top: 1.5px dashed #000000 !important;
     margin: 1mm auto !important;
   }
 }
