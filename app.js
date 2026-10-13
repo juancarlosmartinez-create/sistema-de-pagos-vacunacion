@@ -472,8 +472,25 @@ function actualizarFormaPagoTicket() {
 }
 
 // ==========================================
-// GUARDAR E IMPRIMIR RECIBOS
+// GUARDAR E IMPRIMIR RECIBOS (DOBLE COPIA)
 // ==========================================
+function generarHtmlDobleTicket(ticketNode, leyendaExtra = "") {
+  const contenidoOriginal = ticketNode ? ticketNode.innerHTML : "";
+  return `
+    <div class="ticket-duplicado-container">
+      <div class="ticket-single-pane">
+        <div class="text-center text-uppercase fw-bold text-muted" style="font-size: 0.7rem; margin-bottom: 2px;">--- COPIA ESTABLECIMIENTO ---</div>
+        ${contenidoOriginal}
+      </div>
+      <div class="ticket-divider"></div>
+      <div class="ticket-single-pane">
+        <div class="text-center text-uppercase fw-bold text-muted" style="font-size: 0.7rem; margin-bottom: 2px;">--- COPIA CLIENTE ---</div>
+        ${contenidoOriginal}
+      </div>
+    </div>
+  `;
+}
+
 async function confirmarGuardarRecibo() {
   if (carrito.length === 0) {
     Swal.fire('Atención', 'El recibo está vacío. Agregue al menos un paciente.', 'warning');
@@ -522,7 +539,7 @@ async function confirmarGuardarRecibo() {
     estado_aplicacion: 'Pendiente'
   }));
 
-  const ticketClon = document.getElementById('ticketPrint')?.cloneNode(true);
+  const ticketNode = document.getElementById('ticketPrint');
 
   if (!supabaseClient) {
     const pregImpresionDemo = await Swal.fire({
@@ -536,11 +553,10 @@ async function confirmarGuardarRecibo() {
       cancelButtonText: 'No, finalizar'
     });
 
-    if (pregImpresionDemo.isConfirmed && ticketClon) {
+    if (pregImpresionDemo.isConfirmed && ticketNode) {
       const printArea = document.getElementById('print-area');
       if (printArea) {
-        printArea.innerHTML = '';
-        printArea.appendChild(ticketClon);
+        printArea.innerHTML = generarHtmlDobleTicket(ticketNode);
       }
       window.print();
     }
@@ -564,11 +580,10 @@ async function confirmarGuardarRecibo() {
       cancelButtonText: 'No, finalizar'
     });
 
-    if (pregImpresion.isConfirmed && ticketClon) {
+    if (pregImpresion.isConfirmed && ticketNode) {
       const printArea = document.getElementById('print-area');
       if (printArea) {
-        printArea.innerHTML = '';
-        printArea.appendChild(ticketClon);
+        printArea.innerHTML = generarHtmlDobleTicket(ticketNode);
       }
       window.print();
     }
@@ -1158,7 +1173,7 @@ async function cancelarRegistro(id, nombrePaciente) {
 }
 
 // ==========================================
-// REIMPRESIÓN, IMPRESIÓN GENERAL Y EXPORTACIÓN
+// REIMPRESIÓN (DOBLE COPIA), GENERAL Y EXPORTACIÓN
 // ==========================================
 function reimprimirFolio(folio) {
   const items = historialMemoria.filter(x => x.folio === folio && x.estado !== 'Cancelado' && x.estado !== 'CANCELADO');
@@ -1192,26 +1207,28 @@ function reimprimirFolio(folio) {
   const fObj = new Date(fechaRaw);
   const fechaStr = isNaN(fObj.getTime()) ? '' : fObj.toLocaleDateString('es-MX') + ' ' + fObj.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
 
-  const printArea = document.getElementById('print-area');
-  printArea.innerHTML = `
-    <div class="ticket-paper mb-3" style="max-width:350px; margin:auto;">
-      <div class="text-center mb-2">
+  const ticketHtmlUnico = `
+    <div class="ticket-paper">
+      <div class="text-center mb-1">
         <h5 class="fw-bold text-dark ticket-header-title">COLEGIO CIUDAD DE MÉXICO</h5>
         <p class="text-muted ticket-header-sub">Comprobante de Vacunación</p>
         <span class="badge bg-dark text-white fw-bold px-3 py-1">FOLIO: ${folio}</span>
       </div>
-      <div class="border-top border-bottom py-1 my-2 small text-secondary ticket-info-block">
+      <div class="border-top border-bottom py-1 my-1 small text-secondary ticket-info-block">
         <div class="d-flex justify-content-between"><span>Fecha/Hora:</span><strong class="text-dark">${fechaStr}</strong></div>
         <div class="d-flex justify-content-between"><span>Forma de Pago:</span><strong class="text-dark">${primerItem.forma_pago || 'Efectivo'}</strong></div>
         <div class="d-flex justify-content-between"><span>Vendedor:</span><strong class="text-dark">${primerItem.vendedor || obtenerNombreCorto(primerItem.usuario_email)}</strong></div>
       </div>
       <div class="py-1 border-bottom">${htmlItems}</div>
-      <div class="pt-2 d-flex justify-content-between align-items-center ticket-total-block">
+      <div class="pt-1 d-flex justify-content-between align-items-center ticket-total-block">
         <span class="fw-bold text-dark ticket-total-title">TOTAL</span>
         <span class="fw-bold text-success ticket-total-amount">$${total.toFixed(2)}</span>
       </div>
     </div>
   `;
+
+  const printArea = document.getElementById('print-area');
+  printArea.innerHTML = generarHtmlDobleTicket({ innerHTML: ticketHtmlUnico });
 
   window.print();
 }
