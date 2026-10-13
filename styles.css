@@ -447,14 +447,79 @@ button,
   display: none !important;
 }
 
+/* =========================================================
+   ESTILOS DE IMPRESIÓN: 2 RECIBOS EN 1 SOLA HOJA CARTA VERTICAL
+   ========================================================= */
 @media print {
-  body > * { display: none !important; }
-  body > #print-area, #print-area {
+  @page {
+    size: letter portrait;
+    margin: 5mm;
+  }
+
+  body > * {
+    display: none !important;
+  }
+
+  body > #print-area, 
+  #print-area {
     display: block !important;
     position: absolute !important;
-    left: 0 !important; top: 0 !important;
-    width: 100% !important; margin: 0 !important; padding: 0 !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
     background: #ffffff !important;
+    box-sizing: border-box !important;
   }
-  body > #print-area *, #print-area * { display: revert !important; visibility: visible !important; }
+
+  body > #print-area *, 
+  #print-area * {
+    visibility: visible !important;
+    display: revert !important;
+  }
+
+  .ticket-duplicado-container {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-height: 265mm !important; /* Ajuste para evitar desbordes en hoja carta */
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+  }
+
+  .ticket-single-pane {
+    width: 95% !important;
+    max-width: 450px !important;
+    padding: 4px 8px !important;
+    box-sizing: border-box !important;
+    font-size: 9.5px !important;
+  }
+
+  .ticket-paper {
+    border: 1px dashed #94a3b8 !important;
+    border-radius: 6px !important;
+    padding: 6px 10px !important;
+    margin: 0 !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+  }
+
+  .ticket-header-title { font-size: 11px !important; margin-bottom: 0px !important; }
+  .ticket-header-sub { font-size: 8.5px !important; margin-bottom: 2px !important; }
+  .badge { font-size: 8.5px !important; padding: 2px 6px !important; }
+  .ticket-info-block { font-size: 9px !important; padding: 2px 0 !important; margin: 2px 0 !important; }
+  .ticket-item { font-size: 9px !important; padding-bottom: 2px !important; margin-bottom: 2px !important; }
+  .ticket-total-title { font-size: 10px !important; }
+  .ticket-total-amount { font-size: 12px !important; }
+
+  .ticket-divider {
+    width: 80% !important;
+    border-top: 1.5px dashed #475569 !important;
+    margin: 4px auto !important;
+  }
 }
