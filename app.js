@@ -1,12 +1,17 @@
 // ==========================================
-// CONFIGURACIÓN DE SUPABASE (Desde config.js)
+// CONFIGURACIÓN DE SUPABASE (Sin persistencia)
 // ==========================================
 const SUPABASE_URL = window.CONFIG?.SUPABASE_URL || ""; 
 const SUPABASE_ANON_KEY = window.CONFIG?.SUPABASE_ANON_KEY || "";
 
 const supabaseClient = (window.supabase && SUPABASE_URL && SUPABASE_ANON_KEY) ? window.supabase.createClient(
   SUPABASE_URL,
-  SUPABASE_ANON_KEY
+  SUPABASE_ANON_KEY,
+  {
+    auth: {
+      persistSession: false // Forzar solicitud de credenciales al recargar o reabrir la página
+    }
+  }
 ) : null;
 
 // ==========================================
@@ -59,6 +64,84 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 // ==========================================
+// CONTROL DE INACTIVIDAD (20 MINUTOS)
+// ==========================================
+let temporizadorInactividad = null;
+const TIEMPO_INACTIVIDAD_MS = 20 * 60 * 1000; // 1,200,000 ms
+
+function reiniciarTemporizadorInactividad() {
+  if (!usuarioActual) return;
+
+  if (temporizadorInactividad) {
+    clearTimeout(temporizadorInactividad);
+  }
+
+  temporizadorInactividad = setTimeout(async () => {
+    detenerControlInactividad();
+    await Swal.fire({
+      title: 'Sesión Expirada',
+      text: 'Se han detectado 20 minutos de inactividad. Por seguridad, la sesión se ha cerrado.',
+      icon: 'warning',
+      confirmButtonText: 'Entendido',
+      confirmButtonColor: '#2563eb'
+    });
+    cerrarSesion();
+  }, TIEMPO_INACTIVIDAD_MS);
+}
+
+function iniciarControlInactividad() {
+  const eventos = ['mousemove', 'click', 'keydown'];
+  eventos.forEach(evento => {
+    window.addEventListener(evento, reiniciarTemporizadorInactividad, { passive: true });
+  });
+  reiniciarTemporizadorInactividad();
+}
+
+function detenerControlInactividad() {
+  const eventos = ['mousemove', 'click', 'keydown'];
+  eventos.forEach(evento => {
+    window.removeEventListener(evento, reiniciarTemporizadorInactividad);
+  });
+  if (temporizadorInactividad) {
+    clearTimeout(temporizadorInactividad);
+    temporizadorInactividad = null;
+  }
+}
+
+// ==========================================
+// ACTUALIZACIÓN DE FUNCIONES DE SESIÓN
+// ==========================================
+async function cerrarSesion() {
+  detenerControlInactividad();
+  if (supabaseClient) {
+    await supabaseClient.auth.signOut();
+  }
+  mostrarLogin();
+}
+
+function mostrarAplicacion(user) {
+  usuarioActual = user;
+  const loginOverlay = document.getElementById('loginOverlay');
+  const appContent = document.getElementById('appContent');
+  const userDisplay = document.getElementById('userEmailDisplay');
+
+  if (loginOverlay) loginOverlay.style.display = 'none';
+  if (appContent) appContent.style.display = 'block';
+
+  if (userDisplay && user) {
+    const alias = obtenerNombreCorto(user.email);
+    userDisplay.innerText = `${alias} (${user.email})`;
+  }
+
+  iniciarControlInactividad(); // Iniciar escuchadores de actividad al entrar a la app
+  obtenerSiguienteFolioVenta();
+  actualizarFechaTicket();
+  renderCarrito();
+  cargarHistorial();
+  cargarObservaciones();
+}
+
+// ==========================================
 // FUNCIONES DE ACCESO Y SESIÓN
 // ==========================================
 async function iniciarSesion() {
@@ -96,33 +179,6 @@ async function iniciarSesion() {
   }
 }
 
-async function cerrarSesion() {
-  if (supabaseClient) {
-    await supabaseClient.auth.signOut();
-  }
-  mostrarLogin();
-}
-
-function mostrarAplicacion(user) {
-  usuarioActual = user;
-  const loginOverlay = document.getElementById('loginOverlay');
-  const appContent = document.getElementById('appContent');
-  const userDisplay = document.getElementById('userEmailDisplay');
-
-  if (loginOverlay) loginOverlay.style.display = 'none';
-  if (appContent) appContent.style.display = 'block';
-
-  if (userDisplay && user) {
-    const alias = obtenerNombreCorto(user.email);
-    userDisplay.innerText = `${alias} (${user.email})`;
-  }
-
-  obtenerSiguienteFolioVenta();
-  actualizarFechaTicket();
-  renderCarrito();
-  cargarHistorial();
-  cargarObservaciones();
-}
 
 function mostrarLogin() {
   const loginOverlay = document.getElementById('loginOverlay');
