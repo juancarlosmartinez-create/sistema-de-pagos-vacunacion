@@ -858,154 +858,135 @@ button,
     letter-spacing: 0.4pt;
     text-transform: uppercase;
   }
-    /* =========================================================
-     REPORTE CONSOLIDADO DE INGRESOS (ADMIN) - .rpt-admin-*
-     ========================================================= */
-  #print-area .rpt-admin-hoja {
-    display: block !important;
-    width: 100%;
-    padding: 6mm 6mm 4mm 6mm;
-    box-sizing: border-box;
-    background: #ffffff;
-    color: #000000;
-    font-family: 'Plus Jakarta Sans', 'Segoe UI', Arial, sans-serif;
-  }
+   /* ===== REPORTE ADMINISTRATIVO (.rpt-admin-*) ===== */
+.rpt-admin-wrap {
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0 auto;
+  padding: 10mm;
+  font-family: 'Plus Jakarta Sans', 'Inter', 'Segoe UI', Arial, sans-serif;
+  font-size: 9pt;
+  line-height: 1.35;
+  color: #111827;
+  background: #fff;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
 
-  #print-area .rpt-admin-hoja,
-  #print-area .rpt-admin-hoja * {
-    color: #000000 !important;
-    box-sizing: border-box;
-    text-shadow: none;
-    box-shadow: none;
-  }
+/* Encabezado ejecutivo */
+.rpt-admin-header {
+  margin-bottom: 6mm;
+  padding-bottom: 4mm;
+  border-bottom: 2px solid #111827;
+}
 
-  /* Encabezado */
-  #print-area .rpt-admin-cab {
-    display: flex !important;
-    justify-content: space-between;
-    align-items: center;
-    gap: 4mm;
-    padding-bottom: 3mm;
-    margin-bottom: 4mm;
-    border-bottom: 1px solid #000000;
-  }
+.rpt-admin-title {
+  margin: 0 0 2mm;
+  font-size: 15pt;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #111827;
+}
 
-  #print-area .rpt-admin-marca {
-    display: flex !important;
-    align-items: center;
-    gap: 3mm;
-  }
+.rpt-admin-sub {
+  margin: 0.8mm 0 0;
+  font-size: 8.5pt;
+  font-weight: 500;
+  color: #4b5563;
+}
 
-  #print-area .rpt-admin-logo {
-    display: block !important;
-    height: 14mm;
-    width: auto;
-  }
+/* Tabla financiera */
+.rpt-admin-table {
+  width: 100%;
+  border: none;
+  border-collapse: collapse;
+  table-layout: auto;
+}
 
-  #print-area .rpt-admin-colegio {
-    display: flex !important;
-    flex-direction: column;
-    font-size: 12pt;
-    font-weight: 800;
-    line-height: 1.05;
-  }
+.rpt-admin-table th,
+.rpt-admin-table td {
+  padding: 8px 6px;
+  border: none;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+  vertical-align: middle;
+  font-size: 8.5pt;
+}
 
-  #print-area .rpt-admin-colegio span {
-    display: block !important;
-  }
+.rpt-admin-table thead th {
+  padding-top: 9px;
+  padding-bottom: 9px;
+  font-size: 7.5pt;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #374151;
+  background: #f3f4f6;
+  border-bottom: 1.5px solid #111827;
+}
 
-  #print-area .rpt-admin-titulo {
-    flex: 1 1 auto;
-    text-align: center;
-    font-size: 12pt;
-    font-weight: 800;
-    letter-spacing: 0.6pt;
-    text-transform: uppercase;
-  }
+.rpt-admin-table thead {
+  display: table-header-group; /* repite encabezado en cada hoja */
+}
 
-  #print-area .rpt-admin-meta {
-    display: flex !important;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 1.5mm;
-    text-align: right;
-  }
+.rpt-admin-table tr {
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
 
-  #print-area .rpt-admin-plantel {
-    font-size: 13pt;
-    font-weight: 800;
-    line-height: 1;
-  }
+/* Zebra */
+.rpt-admin-table tbody tr:nth-child(even) {
+  background: #f9fafb;
+}
 
-  #print-area .rpt-admin-rango {
-    font-size: 9pt;
-    font-weight: 600;
-  }
+/* Columnas numéricas */
+.rpt-admin-table .rpt-admin-num,
+.rpt-admin-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
 
-  /* Tabla */
-  #print-area .rpt-admin-tabla {
-    width: 100%;
-    table-layout: fixed;
-    border-collapse: collapse;
-    border: 1px solid #000000;
-    font-size: 7pt;
-    line-height: 1.2;
-  }
+/* Egresos / devoluciones */
+.rpt-admin-table tr.rpt-admin-egreso,
+.rpt-admin-table tr.rpt-admin-egreso td {
+  color: #9b4a4a;
+  font-style: italic;
+}
 
-  #print-area .rpt-admin-tabla th,
-  #print-area .rpt-admin-tabla td {
-    border: 1px solid #000000;
-    padding: 1.2mm 1.3mm;
-    text-align: center;
-    vertical-align: middle;
-    overflow-wrap: anywhere;
-    background: #ffffff !important;
-  }
+.rpt-admin-table tr.rpt-admin-egreso {
+  background: #fdf6f6 !important;
+}
 
-  #print-area .rpt-admin-tabla th {
-    font-size: 7pt;
-    font-weight: 800;
-    text-transform: uppercase;
-    border-bottom: 1.5px solid #000000;
-  }
+/* Totales */
+.rpt-admin-table tfoot {
+  display: table-footer-group;
+}
 
-  #print-area .rpt-admin-tabla .rpt-admin-izq { text-align: left; }
-  #print-area .rpt-admin-tabla .rpt-admin-der { text-align: right; }
+.rpt-admin-table tfoot td,
+.rpt-admin-table tfoot th {
+  padding: 6px 6px;
+  border: none;
+  background: transparent;
+  font-size: 9pt;
+  font-weight: 700;
+  color: #111827;
+  text-align: right;
+}
 
-  /* Salto de página limpio: el encabezado se repite y las filas no se parten */
-  #print-area .rpt-admin-tabla thead {
-    display: table-header-group !important;
-  }
+.rpt-admin-table tfoot tr:first-child td,
+.rpt-admin-table tfoot tr:first-child th {
+  padding-top: 10px;
+  border-top: 1.5px solid #111827;
+}
 
-  #print-area .rpt-admin-tabla tfoot {
-    display: table-row-group !important; /* los totales salen solo al final */
-  }
-
-  #print-area .rpt-admin-tabla tr {
-    break-inside: avoid;
-    page-break-inside: avoid;
-  }
-
-  #print-area .rpt-admin-fila-sub td {
-    font-size: 8pt;
-    font-weight: 700;
-  }
-
-  #print-area .rpt-admin-fila-total td {
-    font-size: 10pt;
-    font-weight: 800;
-    border-top: 2px solid #000000;
-    border-bottom: 2px solid #000000;
-  }
-
-  /* Pie */
-  #print-area .rpt-admin-pie {
-    display: flex !important;
-    justify-content: space-between;
-    margin-top: 3mm;
-    font-size: 7.5pt;
-    font-weight: 500;
-    break-inside: avoid;
-    page-break-inside: avoid;
-  }
+.rpt-admin-table tfoot tr:last-child td,
+.rpt-admin-table tfoot tr:last-child th {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  font-size: 10.5pt;
+  font-weight: 800;
+  border-top: 3px double #111827; /* cierre contable */
+  border-bottom: 2px solid #111827;
 }
