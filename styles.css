@@ -858,135 +858,120 @@ button,
     letter-spacing: 0.4pt;
     text-transform: uppercase;
   }
-   /* ===== REPORTE ADMINISTRATIVO (.rpt-admin-*) ===== */
-.rpt-admin-wrap {
-  box-sizing: border-box;
-  width: 100%;
-  margin: 0 auto;
-  padding: 10mm;
-  font-family: 'Plus Jakarta Sans', 'Inter', 'Segoe UI', Arial, sans-serif;
-  font-size: 9pt;
-  line-height: 1.35;
-  color: #111827;
-  background: #fff;
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
-}
+ /* ===== REPORTE ADMINISTRATIVO COMPACTO (.rpt-admin-*) ===== */
+  .rpt-admin-wrap {
+    box-sizing: border-box;
+    width: 100%;
+    margin: 0 auto;
+    padding: 6mm 8mm;
+    font-family: 'Plus Jakarta Sans', 'Segoe UI', Arial, sans-serif;
+    font-size: 7pt !important;
+    line-height: 1.2;
+    color: #000000 !important;
+    background: #ffffff !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
 
-/* Encabezado ejecutivo */
-.rpt-admin-header {
-  margin-bottom: 6mm;
-  padding-bottom: 4mm;
-  border-bottom: 2px solid #111827;
-}
+  .rpt-admin-header {
+    margin-bottom: 4mm;
+    padding-bottom: 2mm;
+    border-bottom: 2px solid #000000;
+  }
 
-.rpt-admin-title {
-  margin: 0 0 2mm;
-  font-size: 15pt;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: #111827;
-}
+  .rpt-admin-title {
+    margin: 0 0 1mm;
+    font-size: 11pt !important;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #000000 !important;
+  }
 
-.rpt-admin-sub {
-  margin: 0.8mm 0 0;
-  font-size: 8.5pt;
-  font-weight: 500;
-  color: #4b5563;
-}
+  .rpt-admin-sub {
+    margin: 0.5mm 0 0;
+    font-size: 7pt !important;
+    font-weight: 600;
+    color: #000000 !important;
+  }
 
-/* Tabla financiera */
-.rpt-admin-table {
-  width: 100%;
-  border: none;
-  border-collapse: collapse;
-  table-layout: auto;
-}
+  .rpt-admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: auto;
+  }
 
-.rpt-admin-table th,
-.rpt-admin-table td {
-  padding: 8px 6px;
-  border: none;
-  border-bottom: 1px solid #e5e7eb;
-  text-align: left;
-  vertical-align: middle;
-  font-size: 8.5pt;
-}
+  .rpt-admin-table th,
+  .rpt-admin-table td {
+    padding: 4px 5px !important;
+    border: none;
+    border-bottom: 1px solid #d1d5db;
+    text-align: left;
+    vertical-align: middle;
+    font-size: 7pt !important;
+    color: #000000 !important;
+  }
 
-.rpt-admin-table thead th {
-  padding-top: 9px;
-  padding-bottom: 9px;
-  font-size: 7.5pt;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: #374151;
-  background: #f3f4f6;
-  border-bottom: 1.5px solid #111827;
-}
+  .rpt-admin-table thead th {
+    font-size: 6.5pt !important;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #000000 !important;
+    background: #f3f4f6 !important;
+    border-bottom: 1.5px solid #000000;
+  }
 
-.rpt-admin-table thead {
-  display: table-header-group; /* repite encabezado en cada hoja */
-}
+  .rpt-admin-table thead {
+    display: table-header-group;
+  }
 
-.rpt-admin-table tr {
-  page-break-inside: avoid;
-  break-inside: avoid;
-}
+  .rpt-admin-table tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
 
-/* Zebra */
-.rpt-admin-table tbody tr:nth-child(even) {
-  background: #f9fafb;
-}
+  .rpt-admin-table tbody tr:nth-child(even) {
+    background: #f9fafb !important;
+  }
 
-/* Columnas numéricas */
-.rpt-admin-table .rpt-admin-num,
-.rpt-admin-num {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
+  .rpt-admin-table .rpt-admin-num,
+  .rpt-admin-num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
 
-/* Egresos / devoluciones */
-.rpt-admin-table tr.rpt-admin-egreso,
-.rpt-admin-table tr.rpt-admin-egreso td {
-  color: #9b4a4a;
-  font-style: italic;
-}
+  .rpt-admin-table tr.rpt-admin-egreso,
+  .rpt-admin-table tr.rpt-admin-egreso td {
+    color: #000000 !important;
+    font-style: italic;
+    background: #fdf2f2 !important;
+  }
 
-.rpt-admin-table tr.rpt-admin-egreso {
-  background: #fdf6f6 !important;
-}
+  .rpt-admin-table tfoot {
+    display: table-footer-group;
+  }
 
-/* Totales */
-.rpt-admin-table tfoot {
-  display: table-footer-group;
-}
+  .rpt-admin-table tfoot td,
+  .rpt-admin-table tfoot th {
+    padding: 3px 5px !important;
+    border: none;
+    font-size: 7.5pt !important;
+    font-weight: 700;
+    color: #000000 !important;
+  }
 
-.rpt-admin-table tfoot td,
-.rpt-admin-table tfoot th {
-  padding: 6px 6px;
-  border: none;
-  background: transparent;
-  font-size: 9pt;
-  font-weight: 700;
-  color: #111827;
-  text-align: right;
-}
+  .rpt-admin-table tfoot tr:first-child td {
+    padding-top: 6px !important;
+    border-top: 1.5px solid #000000;
+  }
 
-.rpt-admin-table tfoot tr:first-child td,
-.rpt-admin-table tfoot tr:first-child th {
-  padding-top: 10px;
-  border-top: 1.5px solid #111827;
-}
-
-.rpt-admin-table tfoot tr:last-child td,
-.rpt-admin-table tfoot tr:last-child th {
-  padding-top: 8px;
-  padding-bottom: 8px;
-  font-size: 10.5pt;
-  font-weight: 800;
-  border-top: 3px double #111827; /* cierre contable */
-  border-bottom: 2px solid #111827;
-}
+  .rpt-admin-table tfoot tr:last-child td {
+    padding-top: 5px !important;
+    padding-bottom: 5px !important;
+    font-size: 8.5pt !important;
+    font-weight: 800;
+    border-top: 3px double #000000 !important;
+    border-bottom: 2px solid #000000;
+  }
