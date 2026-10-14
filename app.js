@@ -1471,10 +1471,192 @@ function exportarExcel() {
   link.click();
   document.body.removeChild(link);
 }
+// ==========================================
+// REPORTE CONSOLIDADO DE INGRESOS (IMPRESIÓN ADMIN)
+// ==========================================
+
+// Misma lógica de filtrado que filtrarTabla(), pero devolviendo el arreglo
+function obtenerRegistrosFiltradosAdmin() {
+  const query = (document.getElementById('filterInput')?.value || '').toLowerCase().trim();
+  const fp = document.getElementById('filterPago')?.value || '';
+  const fechaInicio = document.getElementById('filterFechaInicio')?.value || '';
+  const fechaFin = document.getElementById('filterFechaFin')?.value || '';
+
+  return historialMemoria.filter(item => {
+    const matchTexto = !query ||
+      (item.folio && item.folio.toLowerCase().includes(query)) ||
+      (item.folio_referencia && item.folio_referencia.toLowerCase().includes(query)) ||
+      (item.nombre && item.nombre.toLowerCase().includes(query)) ||
+      (item.familia && item.familia.toLowerCase().includes(query)) ||
+      (item.concepto && item.concepto.toLowerCase().includes(query)) ||
+      (item.matricula && item.matricula.toLowerCase().includes(query)) ||
+      (item.vendedor && item.vendedor.toLowerCase().includes(query)) ||
+      (item.usuario_email && item.usuario_email.toLowerCase().includes(query));
+
+    const matchPago = !fp || item.forma_pago === fp;
+
+    let matchFecha = true;
+    const fechaRaw = item.fecha || item.created_at;
+    if (fechaRaw) {
+      const fechaStr = new Date(fechaRaw).toISOString().split('T')[0];
+      if (fechaInicio && fechaStr < fechaInicio) matchFecha = false;
+      if (fechaFin && fechaStr > fechaFin) matchFecha = false;
+    }
+
+    return matchTexto && matchPago && matchFecha;
+  });
+}
+
+// El path del imagotipo es local a construirEstructuraReciboInstitucional();
+// se extrae de ahí para reutilizar exactamente el mismo vector negro.
+function obtenerSvgPathImagotipo() {
+  try {
+    const html = construirEstructuraReciboInstitucional('', '', 'Efectivo', [], 0);
+    const m = html.match(/<path[^>]*\sd="([^"]+)"/);
+    return m ? m[1] : '';
+  } catch (e) {
+    console.error('No se pudo obtener el imagotipo:', e);
+    return '';
+  }
+}
 
 function imprimirReporte() {
-  window.print();
+  const printArea = document.getElementById('print-area');
+  if (!printArea) return;
+
+  const esc = (v) => String(v === undefined || v === null ? '' : v)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const dinero = (n) => (n < 0 ? '-' : '') + '$' +
+    Math.abs(n).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmtFechaInput = (s) => {
+    const p = String(s).split('-');
+    return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : s;
+  };
+
+  // 1. Fechas y registros filtrados (sin cancelados), de más antiguo a más reciente
+  const fechaInicio = document.getElementById('filterFechaInicio')?.value || '';
+  const fechaFin = document.getElementById('filterFechaFin')?.value || '';
+
+  const registros = obtenerRegistrosFiltradosAdmin()
+    .filter(item => item.estado !== 'Cancelado' && item.estado !== 'CANCELADO')
+    .sort((a, b) => new Date(a.fecha || a.created_at) - new Date(b.fecha || b.created_at));
+
+  if (registros.length === 0) {
+    Swal.fire('Atención', 'No hay registros en el filtro actual para imprimir.', 'warning');
+    return;
+  }
+
+  let rangoTxt = 'Todo el historial';
+  if (fechaInicio && fechaFin) rangoTxt = `Del ${fmtFechaInput(fechaInicio)} al ${fmtFechaInput(fechaFin)}`;
+  else if (fechaInicio) rangoTxt = `Desde el ${fmtFechaInput(fechaInicio)}`;
+  else if (fechaFin) rangoTxt = `Hasta el ${fmtFechaInput(fechaFin)}`;
+
+  // 2. Filas y totales (misma lógica de KPIs: neto = ingresos - devoluciones)
+  let bruto = 0;
+  let devoluciones = 0;
+  let filasHtml = '';
+
+  registros.forEach(item => {
+    const esEgreso = item.tipo_movimiento === 'EGRESO' || (item.folio && item.folio.startsWith('R-'));
+    const cantidad = parseInt(item.cantidad, 10) || 1;
+    const importe = parseFloat(item.importe) || 0;
+    let subtotal = item.total !== undefined && item.total !== null ? parseFloat(item.total) : cantidad * importe;
+
+    if (esEgreso) {
+      subtotal = -Math.abs(subtotal);
+      devoluciones += Math.abs(subtotal);
+    } else {
+      bruto += subtotal;
+    }
+
+    const fObj = new Date(item.fecha || item.created_at);
+    const fechaTxt = isNaN(fObj.getTime())
+      ? '—'
+      : fObj.toLocaleDateString('es-MX') + ' ' + fObj.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+    const vendedor = item.vendedor || obtenerNombreCorto(item.usuario_email || item.created_by || '');
+
+    filasHtml += `
+      <tr>
+        <td>${esc(fechaTxt)}</td>
+        <td>${esc(item.folio || '—')}</td>
+        <td>${esc(item.matricula || '---')}</td>
+        <td class="rpt-admin-izq">${esc(item.nombre || '')}</td>
+        <td class="rpt-admin-izq">${esc(item.familia || '---')}</td>
+        <td>${esc(item.seccion || '')} / ${esc(item.grupo || '')}</td>
+        <td>${cantidad}</td>
+        <td class="rpt-admin-der">${dinero(esEgreso ? subtotal : importe)}</td>
+        <td class="rpt-admin-der"><b>${dinero(subtotal)}</b></td>
+        <td>${esc(vendedor)}</td>
+      </tr>`;
+  });
+
+  const granTotalNeto = bruto - devoluciones;
+
+  // 3. Encabezado institucional
+  const svgPath = obtenerSvgPathImagotipo();
+  const logoSvg = svgPath
+    ? `<svg class="rpt-admin-logo" viewBox="0 0 565.0 460.5" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill="#000000" fill-rule="evenodd" d="${svgPath}"/></svg>`
+    : '';
+
+  const ahora = new Date();
+  const emitidoPor = obtenerNombreCorto(usuarioActual?.email);
+  const emitidoTxt = ahora.toLocaleDateString('es-MX') + ' ' + ahora.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+
+  printArea.innerHTML = `
+    <div class="rpt-admin-hoja">
+      <div class="rpt-admin-cab">
+        <div class="rpt-admin-marca">
+          ${logoSvg}
+          <div class="rpt-admin-colegio"><span>Colegio</span><span>Ciudad de México</span></div>
+        </div>
+        <div class="rpt-admin-titulo">REPORTE CONSOLIDADO DE INGRESOS</div>
+        <div class="rpt-admin-meta">
+          <div class="rpt-admin-plantel">Plantel Polanco</div>
+          <div class="rpt-admin-rango">${esc(rangoTxt)}</div>
+        </div>
+      </div>
+
+      <table class="rpt-admin-tabla">
+        <colgroup>
+          <col style="width:11%"><col style="width:7%"><col style="width:8%"><col style="width:20%"><col style="width:12%">
+          <col style="width:12%"><col style="width:5%"><col style="width:8%"><col style="width:9%"><col style="width:8%">
+        </colgroup>
+        <thead>
+          <tr>
+            <th>Fecha</th><th>Folio</th><th>Matrícula</th><th>Paciente</th><th>Familia</th>
+            <th>Sección/Gpo</th><th>Cant.</th><th>Importe</th><th>Total</th><th>Vendedor</th>
+          </tr>
+        </thead>
+        <tbody>${filasHtml}</tbody>
+        <tfoot>
+          <tr class="rpt-admin-fila-sub">
+            <td colspan="8" class="rpt-admin-der">Ingresos brutos</td>
+            <td class="rpt-admin-der">${dinero(bruto)}</td><td></td>
+          </tr>
+          <tr class="rpt-admin-fila-sub">
+            <td colspan="8" class="rpt-admin-der">Devoluciones / reembolsos</td>
+            <td class="rpt-admin-der">${dinero(-devoluciones)}</td><td></td>
+          </tr>
+          <tr class="rpt-admin-fila-total">
+            <td colspan="8" class="rpt-admin-der">GRAN TOTAL NETO A ENTREGAR</td>
+            <td class="rpt-admin-der">${dinero(granTotalNeto)}</td><td></td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <div class="rpt-admin-pie">
+        <span>Registros: ${registros.length}</span>
+        <span>Emitido por: ${esc(emitidoPor)} — ${esc(emitidoTxt)}</span>
+      </div>
+    </div>
+  `;
+
+  // 4. Impresión desacoplada para no bloquear la interfaz
+  setTimeout(() => {
+    window.print();
+  }, 350);
 }
+
 
 // ==========================================
 // MÓDULO OBSERVACIONES Y APRENDIZAJE
