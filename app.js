@@ -237,7 +237,7 @@ async function obtenerSiguienteFolioReembolso() {
 }
 
 // ==========================================
-// BÚSQUEDA Y SELECCIÓN DE PACIENTES (3D CONTROLS)
+// BÚSQUEDA Y SELECCIÓN DE PACIENTES
 // ==========================================
 function setModo(modo) {
   modoPaciente = modo;
@@ -406,6 +406,14 @@ function renderCarrito() {
     if (countBadge) countBadge.innerText = '0 Pacientes';
     if (ticketItems) ticketItems.innerHTML = `<div class="text-muted text-center py-2">Sin conceptos agregados.</div>`;
     if (ticketTotal) ticketTotal.innerText = '0.00';
+
+    const elNombre = document.getElementById('t-nombre');
+    const elMatricula = document.getElementById('t-matricula');
+    const elGrupo = document.getElementById('t-grupo');
+    if (elNombre) elNombre.innerText = '---';
+    if (elMatricula) elMatricula.innerText = '---';
+    if (elGrupo) elGrupo.innerText = '---';
+
     return;
   }
 
@@ -468,13 +476,17 @@ function actualizarFechaTicket() {
   }
 }
 
-function actualizarFormaPagoTicket() {}
+// CORRECCIÓN DE INCONSISTENCIA: Implementación de la función vacía
+function actualizarFormaPagoTicket() {
+  const selectPago = document.getElementById('forma_pago');
+  const tPago = document.getElementById('t-pago');
+  if (selectPago && tPago) {
+    tPago.innerText = selectPago.value;
+  }
+}
 
 // ==========================================
 // CONSTRUCTOR DE RECIBO INSTITUCIONAL VECTORIAL (NEGRO PURO)
-// Dos copias simétricas (Establecimiento / Cliente) en UNA hoja carta vertical.
-// Auto-shrink: la tipografía de la lista se calcula según el número de partidas
-// y la longitud de cada renglón, de modo que el recibo nunca crece ni se desborda.
 // ==========================================
 function construirEstructuraReciboInstitucional(folio, fechaTexto, formaPago, itemsArr, totalGral) {
   const esc = (v) => String(v === undefined || v === null ? '' : v)
@@ -482,20 +494,17 @@ function construirEstructuraReciboInstitucional(folio, fechaTexto, formaPago, it
   const dinero = (n) => '$' + Number(n || 0).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const importeItem = (item) => (item.total !== undefined ? item.total : (item.cantidad || 1) * (item.importe || 0));
 
-  // ---------- Datos del alumno (misma lógica que antes) ----------
   const primerNombre = itemsArr.length > 0 ? itemsArr[0].nombre : '---';
   const primerGrupo = itemsArr.length > 0 ? (itemsArr.length === 1 ? (itemsArr[0].grupo || '---') : 'MÚLTIPLE') : '---';
   const primerMatricula = itemsArr.length > 0 ? (itemsArr.length === 1 ? (itemsArr[0].matricula || '---') : 'MÚLTIPLE') : '---';
   const nombreRecibo = itemsArr.length === 1 ? primerNombre : `${itemsArr.length} Pacientes en Recibo`;
 
-  // ---------- Forma de pago ----------
   const fp = String(formaPago || '').trim().toLowerCase();
   const isEfectivo = fp.startsWith('efectivo');
   const isCheque = fp.startsWith('cheque');
   const isTarjeta = fp.includes('tarjeta');
   const marca = (activo) => `<span class="rcb-chk">${activo ? 'X' : '&nbsp;'}</span>`;
 
-  // ---------- Fecha formal: "Ciudad de México a 13 de Octubre de 2026" ----------
   const mesesCap = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
   const crudo = String(fechaTexto || '').trim();
   const mf = crudo.match(/^.*?\ba\s+(\d{1,2})\s+de\s+([A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+)\s+de\s+(\d{4})\s*$/);
@@ -510,17 +519,15 @@ function construirEstructuraReciboInstitucional(folio, fechaTexto, formaPago, it
     fechaHtml = `Ciudad de México a <span class="rcb-u">${hoy.getDate()}</span> de <span class="rcb-u rcb-u-mes">${mesesCap[hoy.getMonth()]}</span> de <span class="rcb-u">${hoy.getFullYear()}</span>`;
   }
 
-  // ---------- Imagotipo oficial del colegio (vectorizado del sello, negro puro, sin imágenes externas) ----------
   const IMAGOTIPO_PATH = 'M561.4,123.6L559.5,121.9L556.0,121.3L546.0,121.6L541.5,120.9L539.1,121.5L530.1,128.8L525.7,134.6L521.3,137.3L513.5,145.2L505.5,151.0L499.5,153.9L493.5,159.0L484.0,163.2L471.5,170.6L458.0,176.8L447.5,179.3L435.8,187.1L432.0,185.6L427.5,185.4L415.0,187.8L399.0,192.8L393.5,193.4L387.0,192.7L379.5,194.6L373.5,197.1L364.5,197.6L355.0,199.3L340.0,200.6L328.0,203.0L322.0,202.6L316.0,204.2L308.0,203.5L296.5,203.7L288.5,205.7L283.0,206.3L265.0,206.0L259.0,208.5L255.6,209.2L254.5,210.2L254.4,212.4L257.8,216.5L259.1,220.0L258.9,222.4L257.0,223.6L251.1,221.2L244.5,216.1L236.5,214.0L234.5,214.3L232.9,215.6L232.4,217.0L234.5,221.4L243.1,229.9L247.9,232.4L249.4,234.0L249.9,237.0L247.9,239.0L245.0,238.4L235.0,229.9L220.6,222.3L217.0,219.7L212.5,219.4L210.0,220.3L208.7,224.0L210.6,227.6L218.4,232.0L222.6,236.0L227.2,239.2L234.5,242.8L240.8,250.5L246.5,252.8L247.1,254.4L246.3,255.5L240.8,252.8L236.5,252.6L232.0,250.8L226.9,245.9L223.2,244.1L220.0,241.0L216.2,239.9L210.0,234.2L205.0,233.3L201.3,230.6L195.0,227.9L192.5,227.6L190.8,228.4L189.9,231.0L191.4,237.5L199.9,241.0L203.1,244.1L212.5,250.2L218.1,256.0L226.4,260.4L228.4,263.5L228.3,265.2L227.4,265.8L223.6,265.6L220.4,263.2L216.2,261.6L213.4,259.1L206.2,254.6L202.8,249.6L196.0,247.3L190.0,241.2L183.0,237.0L176.0,235.0L174.0,235.6L171.6,237.5L170.6,239.5L170.8,240.9L177.8,250.5L182.1,254.0L195.9,262.8L201.0,267.7L210.5,271.4L219.5,276.3L223.0,279.0L227.2,284.2L231.5,287.4L238.5,290.3L249.8,298.8L254.5,300.7L260.4,305.2L261.8,307.0L261.5,309.4L259.0,311.1L256.0,311.3L253.0,310.4L246.0,306.1L229.5,294.2L221.5,290.6L212.6,283.3L208.7,278.3L201.9,272.8L200.0,271.8L192.0,269.9L185.1,266.5L180.3,262.3L173.6,258.7L164.7,249.4L156.5,248.5L154.5,249.1L152.9,250.6L151.4,255.0L153.6,258.5L159.4,261.5L163.2,265.0L167.5,265.8L170.5,267.2L174.5,271.2L180.2,275.4L187.0,277.9L198.7,287.6L208.5,294.7L213.0,297.0L217.6,300.5L224.5,302.1L231.5,306.8L236.6,311.4L245.0,315.8L256.6,325.5L261.4,327.4L262.8,329.0L263.4,331.5L262.7,333.9L261.4,335.4L259.0,335.5L251.6,331.2L247.8,326.9L241.7,325.9L238.8,322.4L235.5,319.9L221.0,311.6L212.5,304.9L207.7,303.2L199.7,296.8L194.0,291.0L188.5,288.8L179.8,282.6L175.1,281.2L170.0,275.1L161.3,268.8L156.0,267.3L149.5,263.1L138.0,260.6L135.5,262.1L134.4,265.0L134.4,267.0L135.7,269.5L139.7,272.8L141.9,276.1L152.5,283.6L163.0,288.1L168.3,293.4L177.9,298.2L183.2,302.5L184.6,304.5L184.7,306.3L183.4,307.1L178.1,306.8L174.9,302.8L166.5,299.3L159.5,293.5L153.0,290.6L140.0,281.3L135.1,279.7L125.9,274.2L121.5,273.7L116.4,278.2L115.9,280.0L116.5,281.9L129.5,295.5L134.8,299.6L135.6,302.3L133.9,303.6L131.5,303.2L127.2,298.3L119.5,294.4L108.0,292.9L105.9,293.8L105.2,296.0L105.9,298.5L113.7,306.5L116.8,311.5L117.2,315.0L115.4,317.4L112.5,318.0L106.0,313.8L99.0,311.9L96.4,312.7L95.7,315.5L97.3,320.4L105.8,327.2L107.7,332.0L107.1,333.8L105.5,334.6L99.5,331.3L96.4,331.6L95.3,333.1L94.9,335.5L96.5,340.5L99.2,344.3L103.5,346.4L107.6,349.9L117.5,355.8L125.8,363.5L129.9,365.9L133.1,369.0L145.0,376.6L149.1,379.9L153.5,381.8L159.0,385.5L165.1,391.1L172.0,395.2L178.0,400.8L184.5,404.0L198.0,412.1L212.5,424.1L222.5,429.6L242.0,444.2L255.9,452.8L258.9,456.8L262.5,456.9L266.0,455.7L274.0,450.6L283.0,447.4L291.0,441.6L302.0,436.4L324.5,419.5L364.0,396.5L370.5,391.2L376.5,388.1L381.5,384.2L394.0,377.1L402.0,371.0L418.8,361.1L428.5,354.5L435.9,347.5L439.0,342.0L441.2,329.0L440.5,319.5L441.8,307.5L441.5,301.0L442.4,294.5L442.0,279.5L442.4,272.5L440.5,250.0L441.5,236.5L441.0,220.0L442.5,209.5L443.8,205.5L446.5,202.8L451.5,201.2L457.0,197.6L463.0,196.1L478.9,187.9L483.1,183.8L490.5,178.7L500.5,174.9L510.0,168.6L526.4,162.0L533.5,153.8L543.9,146.9L557.3,130.0L561.1,126.7L561.7,125.0ZM235.5,366.2L237.5,364.9L239.4,365.1L244.1,369.1L249.0,370.7L256.5,375.2L258.9,378.0L258.5,381.4L256.0,383.0L251.2,381.9L247.9,377.6L240.3,374.3L235.8,368.4ZM118.1,340.7L119.6,339.5L122.0,339.4L129.5,343.6L139.5,351.6L146.5,354.9L159.0,362.1L165.0,367.3L169.3,369.4L178.6,377.4L193.2,387.2L197.5,389.3L202.0,393.8L206.4,396.3L209.7,399.4L215.5,402.1L219.3,405.5L227.5,410.9L239.0,415.2L247.8,421.3L252.2,426.4L257.4,430.3L258.8,432.5L258.5,434.8L256.5,435.7L250.5,434.0L246.0,435.6L243.6,434.9L238.0,428.7L230.1,425.6L222.1,419.3L213.9,410.4L208.8,406.6L203.5,404.4L193.6,397.2L185.5,389.7L180.0,387.5L174.9,383.9L170.0,382.4L166.8,379.9L162.5,378.3L158.8,374.5L147.6,360.2L139.0,359.0L131.5,355.6L122.2,345.9L118.3,343.7L117.6,342.5ZM184.7,332.5L189.0,332.8L191.9,333.7L195.2,336.4L200.0,338.3L212.5,349.1L224.3,353.9L226.6,358.0L227.0,362.2L225.0,362.5L220.0,358.2L215.3,357.4L207.0,350.1L201.0,346.6L195.5,344.6L185.8,335.7ZM124.6,317.5L126.5,317.6L130.2,321.0L135.0,324.1L141.5,326.6L146.5,330.7L155.0,333.2L161.9,336.8L169.4,345.7L175.5,351.4L180.5,354.0L184.1,356.9L188.0,357.7L192.0,359.6L196.7,364.3L202.5,365.9L209.0,372.1L224.5,379.1L232.0,386.7L239.0,389.8L242.7,392.6L249.5,394.3L254.9,397.6L258.8,403.0L259.3,405.0L258.7,407.3L257.4,408.3L249.6,408.4L244.5,404.3L242.0,399.6L237.0,400.3L232.9,396.7L229.0,395.9L226.0,394.4L214.9,382.7L207.9,377.2L204.0,374.9L199.5,374.4L194.6,372.9L190.3,367.2L182.1,364.6L175.0,358.1L155.5,345.0L145.4,336.9L135.5,332.6L126.0,322.4L124.4,319.5ZM187.8,308.5L189.5,308.5L200.1,315.1L204.5,316.1L210.5,318.7L230.0,335.1L239.6,340.5L245.4,341.6L249.5,344.9L255.0,348.0L257.6,351.5L258.0,356.2L255.5,357.6L252.5,357.4L245.6,353.4L239.3,346.4L234.0,345.8L225.1,340.5L221.8,337.1L217.0,334.4L210.5,328.3L197.5,319.8L191.2,314.0L188.0,309.9ZM443.1,83.5L440.0,80.0L436.3,77.5L433.5,76.5L430.6,77.3L429.1,82.9L427.9,83.9L421.5,82.2L416.6,79.2L415.2,79.2L415.5,80.7L419.8,84.7L428.6,91.1L429.7,94.9L429.1,95.9L427.5,96.2L423.5,95.3L419.0,92.0L412.5,88.7L408.3,84.4L403.0,81.1L397.5,78.6L392.6,77.4L392.8,78.8L401.1,86.6L410.8,94.1L411.7,96.9L409.5,98.5L395.5,89.3L390.8,83.5L386.0,82.0L379.9,77.9L371.0,76.0L372.7,82.9L371.4,84.5L369.5,84.3L360.5,77.4L354.5,74.6L349.8,71.2L341.5,69.0L339.6,67.7L337.2,58.0L329.9,35.1L325.2,30.5L319.0,22.6L313.1,18.6L308.9,14.6L297.0,7.4L289.0,6.3L278.0,3.4L258.0,3.8L248.0,5.6L233.5,12.2L223.5,19.5L212.3,32.0L209.3,41.0L206.0,46.5L202.2,59.5L199.6,64.5L197.0,66.6L182.0,66.5L172.5,64.6L159.0,64.4L150.5,62.9L138.5,63.7L125.0,62.6L115.5,63.9L104.5,63.5L98.1,64.5L96.8,66.1L95.0,80.5L95.4,107.5L94.5,113.5L94.5,141.0L93.0,161.5L93.6,173.5L92.2,183.5L92.8,189.5L90.6,205.5L86.3,210.8L75.0,217.7L66.5,225.3L60.2,229.8L53.8,237.3L30.6,258.5L26.4,266.0L14.3,282.5L11.8,288.5L7.0,296.0L3.6,303.0L3.6,306.9L5.2,308.4L7.5,308.9L11.5,308.3L18.5,308.9L22.8,307.1L43.6,277.5L47.3,270.6L55.9,263.5L63.2,253.6L72.8,246.3L79.6,238.4L96.0,225.6L102.5,221.9L110.1,215.7L117.0,212.0L134.5,204.7L138.5,201.9L147.5,199.5L162.0,192.4L166.0,191.7L170.5,189.9L176.0,189.4L187.5,183.4L203.5,181.1L209.5,181.2L214.5,179.7L222.5,179.3L228.5,176.2L243.0,173.4L263.0,173.6L271.1,168.8L272.3,166.0L271.9,161.6L273.5,160.3L280.0,164.1L285.2,164.1L285.7,162.4L283.5,159.0L271.7,149.0L270.9,147.1L272.1,145.6L275.0,146.2L280.0,149.0L294.5,160.2L302.4,162.1L303.7,161.2L304.5,158.4L306.0,157.9L313.5,161.7L317.5,162.7L319.5,162.2L321.0,160.9L321.9,156.6L323.1,155.4L331.0,156.9L332.0,156.5L332.2,151.1L333.6,149.4L336.0,149.5L342.5,152.2L346.0,152.5L346.6,147.0L348.6,144.9L350.9,145.1L357.5,150.6L363.0,152.5L364.9,151.3L366.4,147.1L367.6,145.9L375.4,146.9L376.2,146.5L372.7,140.6L372.7,139.4L373.6,138.7L378.5,138.7L392.3,143.1L393.0,142.6L392.8,141.7L388.8,136.5L389.1,134.9L390.6,134.4L398.5,138.2L404.6,139.0L407.6,134.0L414.5,132.4L414.7,130.9L413.0,126.9L414.1,125.1L418.0,124.1L423.1,125.0L421.8,121.5L422.7,119.6L427.5,119.0L433.4,120.6L434.8,120.1L434.9,118.0L433.3,113.5L433.5,111.7L435.0,110.9L439.4,111.8L440.9,110.8L438.1,102.1L438.5,101.1L441.8,99.9L442.7,98.4L440.7,92.0L443.7,86.5ZM346.1,91.0L348.9,90.9L362.0,97.7L364.0,99.6L366.0,102.9L369.4,103.7L370.6,104.6L371.8,107.0L371.8,108.7L370.6,109.2L365.0,105.1L356.6,102.6L350.2,96.9L346.1,91.8ZM294.7,28.1L295.7,29.5L296.2,33.5L297.4,35.9L305.9,42.6L308.7,47.0L310.0,55.0L308.2,64.0L311.8,74.0L312.5,80.0L311.9,83.9L306.9,89.5L303.4,96.0L301.0,98.8L292.5,103.1L286.9,103.9L284.7,106.8L282.0,108.5L272.0,111.1L269.0,110.8L264.5,109.2L256.0,110.6L252.6,110.1L251.2,108.9L250.2,105.0L247.9,102.2L244.5,100.0L238.5,97.9L235.7,94.5L231.1,79.0L228.7,73.5L230.4,65.5L229.3,58.5L229.9,55.0L236.9,44.5L241.8,40.0L246.3,34.2L255.0,30.0L268.5,28.0L282.5,28.9L288.0,30.1Z';
   const svgImagotipo = (clase) => `
     <svg class="${clase}" viewBox="0 0 565.0 460.5" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
       <path fill="#000000" fill-rule="evenodd" d="${IMAGOTIPO_PATH}"/>
     </svg>`;
 
-  // ---------- AUTO-SHRINK de la lista de vacunas ----------
-  const ALTO_MM = 64;     // alto útil de la lista dentro de cada recibo (con margen de seguridad)
-  const ANCHO_MM = 107;   // ancho de la columna de lista (56% del ancho útil)
-  const PT = 0.3528;      // milímetros por punto tipográfico
+  const ALTO_MM = 64;
+  const ANCHO_MM = 107;
+  const PT = 0.3528;
   const n = itemsArr.length;
   const textos = itemsArr.map(it => `${it.cantidad || 1} - ${it.concepto || ''} (${it.nombre || ''})`);
   const largos = textos.map(t => t.length);
@@ -547,14 +554,11 @@ function construirEstructuraReciboInstitucional(folio, fechaTexto, formaPago, it
     return { cols, fs: 4, anchoImp, rowMin, porCol, cabe: false };
   };
 
-  // Prefiere 1 columna con letra legible (>= 5.5 pt); si no, la opción que quepa con mayor tamaño;
-  // si nada cabe (carritos extremos), usa 3 columnas y la lista recorta en silencio (nunca crece el recibo).
   const candidatos = [1, 2, 3].map(evaluar);
   const ajuste = candidatos.find(c => c.cabe && c.fs >= 5.5)
     || candidatos.filter(c => c.cabe).sort((a, b) => b.fs - a.fs)[0]
     || candidatos[2];
 
-  // Jeringa (SVG negro puro) que sustituye la palabra "influenza" en el concepto
   const JERINGA = '<svg class="rcb-jer" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 2l4 4"/><path d="M17 7l3-3"/><path d="M19 9l-8.7 8.7a2.5 2.5 0 0 1-3.5 0l-.5-.5a2.5 2.5 0 0 1 0-3.5L15 5"/><path d="M9 11l4 4"/><path d="M5 19l-3 3"/><path d="M14 4l6 6"/></svg>';
   const conceptoHtml = (c) => esc(c).replace(/influenza/gi, JERINGA);
 
@@ -572,7 +576,6 @@ function construirEstructuraReciboInstitucional(folio, fechaTexto, formaPago, it
   }
   const vars = `--rf:${ajuste.fs};--cols:${ajuste.cols};--filas:${ajuste.porCol};--rowmin:${ajuste.rowMin}mm;--impw:${ajuste.anchoImp}mm`;
 
-  // ---------- Sello oficial (centro derecha) ----------
   const selloOficial = `
         <div class="rcb-sello">
           ${svgImagotipo('rcb-sello-icono')}
@@ -586,7 +589,6 @@ function construirEstructuraReciboInstitucional(folio, fechaTexto, formaPago, it
           </div>
         </div>`;
 
-  // ---------- Una copia completa (se usa dos veces, idéntica) ----------
   const copia = (etiqueta) => `
     <section class="rcb-copia" style="${vars}">
       <div class="rcb-cab">
@@ -643,14 +645,20 @@ function construirEstructuraReciboInstitucional(folio, fechaTexto, formaPago, it
 }
 
 // ==========================================
-// GUARDAR E IMPRIMIR RECIBOS
+// FUNCIÓN PRINCIPAL CORREGIDA: GUARDAR E IMPRIMIR RECIBO
+// Aplica Control de Concurrencia, Desacoplamiento de Impresión y Restablecimiento Seguro
 // ==========================================
 async function confirmarGuardarRecibo() {
+  const btnGuardar = document.getElementById('btnGuardarRegistro');
+  if (!btnGuardar) return;
+
+  // 1. VALIDACIÓN INICIAL DE CONTENIDO
   if (carrito.length === 0) {
-    Swal.fire('Atención', 'El recibo está vacío. Agregue al menos un paciente.', 'warning');
+    await Swal.fire('Atención', 'El recibo está vacío. Agregue al menos un paciente.', 'warning');
     return;
   }
 
+  // 2. MODAL DE CONFIRMACIÓN INICIAL
   const confirmacionGuardar = await Swal.fire({
     title: '¿Deseas guardar este registro?',
     text: 'Asegúrate de que los datos del paciente y el desglose del recibo sean correctos.',
@@ -664,68 +672,57 @@ async function confirmarGuardarRecibo() {
 
   if (!confirmacionGuardar.isConfirmed) return;
 
-  const folioVenta = await obtenerSiguienteFolioVenta();
-  const formaPago = document.getElementById('forma_pago').value;
-  const fechaActual = new Date().toISOString();
-  
-  const emailUsuario = usuarioActual?.email || 'auxiliar.caja@colegiociudad.edu.mx';
-  const aliasVendedor = obtenerNombreCorto(emailUsuario);
-
-  const inserts = carrito.map(item => ({
-    folio: folioVenta,
-    matricula: item.matricula,
-    nombre: item.nombre,
-    familia: item.familia,
-    seccion: item.seccion,
-    grupo: item.grupo,
-    concepto: item.concepto,
-    cantidad: item.cantidad,
-    importe: item.importe,
-    total: item.subtotal,
-    forma_pago: formaPago,
-    fecha: fechaActual,
-    created_at: fechaActual,
-    estado: 'Activo',
-    tipo_movimiento: 'INGRESO',
-    monto_reembolsado: 0.00,
-    usuario_email: emailUsuario,
-    vendedor: aliasVendedor,
-    estado_aplicacion: 'Pendiente'
-  }));
-
-  const totalGral = carrito.reduce((acc, curr) => acc + curr.subtotal, 0);
-  const ahora = new Date();
-  const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
-  const fechaTxt = `Ciudad de México a ${ahora.getDate()} de ${meses[ahora.getMonth()]} de ${ahora.getFullYear()}`;
-
-  if (!supabaseClient) {
-    const pregImpresionDemo = await Swal.fire({
-      title: '¡Modo Demo!',
-      text: `Se guardaría el Folio ${folioVenta} con ${carrito.length} registros. ¿Deseas imprimir el recibo ahora?`,
-      icon: 'question',
-      showCancelButton: true,
-      confirmButtonColor: '#1259a7',
-      cancelButtonColor: '#6c757d',
-      confirmButtonText: 'Sí, imprimir',
-      cancelButtonText: 'No, finalizar'
-    });
-
-    if (pregImpresionDemo.isConfirmed) {
-      const printArea = document.getElementById('print-area');
-      if (printArea) {
-        printArea.innerHTML = construirEstructuraReciboInstitucional(folioVenta, fechaTxt, formaPago, carrito, totalGral);
-      }
-      window.print();
-    }
-
-    resetearFormularioVenta();
-    return;
-  }
+  // 3. CONTROL DE CONCURRENCIA: Bloqueo inmediato del botón y cambio visual
+  const contenidoOriginalBtn = btnGuardar.innerHTML;
+  btnGuardar.disabled = true;
+  btnGuardar.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Guardando...`;
 
   try {
-    const { error } = await supabaseClient.from('historial_cobros').insert(inserts);
-    if (error) throw error;
+    const folioVenta = await obtenerSiguienteFolioVenta();
+    const formaPagoSelect = document.getElementById('forma_pago');
+    const formaPago = formaPagoSelect ? formaPagoSelect.value : 'Efectivo';
+    
+    // Actualizar visualización en tiempo real
+    actualizarFormaPagoTicket();
 
+    const fechaActual = new Date().toISOString();
+    const emailUsuario = usuarioActual?.email || 'auxiliar.caja@colegiociudad.edu.mx';
+    const aliasVendedor = obtenerNombreCorto(emailUsuario);
+
+    const inserts = carrito.map(item => ({
+      folio: folioVenta,
+      matricula: item.matricula,
+      nombre: item.nombre,
+      familia: item.familia,
+      seccion: item.seccion,
+      grupo: item.grupo,
+      concepto: item.concepto,
+      cantidad: item.cantidad,
+      importe: item.importe,
+      total: item.subtotal,
+      forma_pago: formaPago,
+      fecha: fechaActual,
+      created_at: fechaActual,
+      estado: 'Activo',
+      tipo_movimiento: 'INGRESO',
+      monto_reembolsado: 0.00,
+      usuario_email: emailUsuario,
+      vendedor: aliasVendedor,
+      estado_aplicacion: 'Pendiente'
+    }));
+
+    const totalGral = carrito.reduce((acc, curr) => acc + curr.subtotal, 0);
+    const ahora = new Date();
+    const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+    const fechaTxt = `Ciudad de México a ${ahora.getDate()} de ${meses[ahora.getMonth()]} de ${ahora.getFullYear()}`;
+
+    // 4. PERSISTENCIA EN BASE DE DATOS (Supabase / Modo Demo)
+    if (supabaseClient) {
+      const { error } = await supabaseClient.from('historial_cobros').insert(inserts);
+      if (error) throw error;
+    }
+
+    // 5. MODAL DE CONFIRMACIÓN DE ÉXITO E IMPRESIÓN
     const pregImpresion = await Swal.fire({
       title: '¡Éxito!',
       text: `El recibo ${folioVenta} ha sido guardado correctamente por ${aliasVendedor}. ¿Deseas imprimir el recibo ahora?`,
@@ -737,20 +734,33 @@ async function confirmarGuardarRecibo() {
       cancelButtonText: 'No, finalizar'
     });
 
+    // 6. DESACOPLAMIENTO ASÍNCRONO DE IMPRESIÓN (Solución al UI Freeze)
     if (pregImpresion.isConfirmed) {
       const printArea = document.getElementById('print-area');
       if (printArea) {
         printArea.innerHTML = construirEstructuraReciboInstitucional(folioVenta, fechaTxt, formaPago, carrito, totalGral);
       }
-      window.print();
+      
+      // setTimeout a 350ms permite que el modal SweetAlert2 cierre su ciclo CSS antes de bloquear el hilo con window.print()
+      setTimeout(() => {
+        window.print();
+      }, 350);
     }
 
-    await obtenerSiguienteFolioVenta();
-    cargarHistorial();
+    if (supabaseClient) {
+      await obtenerSiguienteFolioVenta();
+      await cargarHistorial();
+    }
+    
     resetearFormularioVenta();
+
   } catch (e) {
     console.error("Error al guardar recibo:", e);
-    Swal.fire('Error', 'No se pudo guardar el registro en la base de datos: ' + e.message, 'error');
+    await Swal.fire('Error', 'No se pudo guardar el registro en la base de datos: ' + e.message, 'error');
+  } finally {
+    // 7. RESTABLECIMIENTO GARANTIZADO DEL BOTÓN
+    btnGuardar.disabled = false;
+    btnGuardar.innerHTML = contenidoOriginalBtn;
   }
 }
 
