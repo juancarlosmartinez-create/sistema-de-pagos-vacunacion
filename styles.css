@@ -240,7 +240,7 @@ button,
   box-shadow: 0 2px 0 #1e3a8a !important;
 }
 
-/* BOTÓN GUARDAR REGISTRO (3D VERDE COMPACTO) */
+/* BOTÓN GUARDAR REGISTRO (3D VERDE COMPACTO) Y ESTADO DESHABILITADO */
 #btnGuardarRegistro {
   display: inline-flex !important;
   align-items: center !important;
@@ -262,15 +262,22 @@ button,
   letter-spacing: 0.5px !important;
 }
 
-#btnGuardarRegistro:hover {
+#btnGuardarRegistro:hover:not(:disabled) {
   transform: translateY(-2px) !important;
   box-shadow: 0 6px 0 #005c14, 0 6px 12px rgba(0, 200, 83, 0.45) !important;
   background: linear-gradient(180deg, #00e676 0%, #00a844 100%) !important;
 }
 
-#btnGuardarRegistro:active {
+#btnGuardarRegistro:active:not(:disabled) {
   transform: translateY(2px) !important;
   box-shadow: 0 2px 0 #005c14 !important;
+}
+
+#btnGuardarRegistro:disabled {
+  opacity: 0.7 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+  box-shadow: none !important;
 }
 
 /* BOTÓN CANCELAR VENTA ACTUAL (3D ROJO COMPACTO) */
@@ -397,7 +404,7 @@ button,
 }
 
 .fila-reembolsada-total {
-  background-color: #f8fafc !important;
+  background-color: #f8f9fa !important;
   opacity: 0.8;
 }
 
@@ -450,11 +457,6 @@ button,
 
 /* =========================================================
    ESTILOS DE IMPRESIÓN INSTITUCIONAL VECTORIAL (NEGRO PURO)
-   Dos copias simétricas al 50% en UNA hoja carta vertical.
-   Todo en #000000. Prefijo .rcb-* (recibo CCM).
-   Nota: cada regla lleva el prefijo "#print-area .rcb-hoja" para
-   ganar en especificidad a la regla global "#print-area * { display: revert }"
-   (que se conserva porque la usan el corte de caja y las observaciones).
    ========================================================= */
 @media print {
   @page {
@@ -492,7 +494,7 @@ button,
     display: revert !important;
   }
 
-  /* ---------- HOJA CARTA: 268 mm de alto útil (279.4 - 8 de márgenes - holgura) ---------- */
+  /* ---------- HOJA CARTA: 268 mm de alto útil ---------- */
   #print-area .rcb-hoja {
     display: flex !important;
     flex-direction: column;
@@ -519,7 +521,7 @@ button,
     box-shadow: none;
   }
 
-  /* ---------- CADA COPIA = EXACTAMENTE 50% (134 mm + 134 mm) ---------- */
+  /* ---------- CADA COPIA = EXACTAMENTE 50% ---------- */
   #print-area .rcb-hoja .rcb-copia {
     display: flex !important;
     flex-direction: column;
@@ -532,12 +534,11 @@ button,
     background: #ffffff;
   }
 
-  /* Línea de corte entre ambas copias */
   #print-area .rcb-hoja .rcb-copia:first-child {
     border-bottom: 1px dashed #000000;
   }
 
-  /* ---------- 1. ENCABEZADO ---------- */
+  /* ---------- ENCABEZADO ---------- */
   #print-area .rcb-hoja .rcb-cab {
     display: flex !important;
     justify-content: space-between;
@@ -622,7 +623,7 @@ button,
     line-height: 1.25;
   }
 
-  /* ---------- 2. BLOQUE DEL ALUMNO: líneas negras continuas de extremo a extremo ---------- */
+  /* ---------- BLOQUE ALUMNO ---------- */
   #print-area .rcb-hoja .rcb-alumno {
     flex: 0 0 auto;
     margin-top: 2mm;
@@ -673,7 +674,7 @@ button,
     text-align: left;
   }
 
-  /* ---------- 3. CUERPO: lista de vacunas + sello (centro derecha) ---------- */
+  /* ---------- CUERPO Y VACUNAS ---------- */
   #print-area .rcb-hoja .rcb-cuerpo {
     position: relative;
     flex: 1 1 auto;
@@ -681,7 +682,6 @@ button,
     margin-top: 3mm;
   }
 
-  /* AUTO-SHRINK: --rf (pt), --cols, --filas y --rowmin los calcula el constructor en app.js */
   #print-area .rcb-hoja .rcb-lista {
     display: grid !important;
     grid-auto-flow: column;
@@ -733,7 +733,7 @@ button,
     white-space: nowrap;
   }
 
-  /* SELLO OFICIAL: bloque absoluto, centro derecha */
+  /* SELLO OFICIAL */
   #print-area .rcb-hoja .rcb-sello {
     display: flex !important;
     flex-direction: column;
@@ -785,7 +785,7 @@ button,
     font-weight: 700;
   }
 
-  /* ---------- 4. FORMA DE PAGO Y TOTAL ---------- */
+  /* ---------- FORMA PAGO Y TOTAL ---------- */
   #print-area .rcb-hoja .rcb-pie {
     display: flex !important;
     justify-content: flex-end;
@@ -828,7 +828,7 @@ button,
     line-height: 1.25;
   }
 
-  /* ---------- 5. FECHA FORMAL (abajo izquierda) + etiqueta de copia ---------- */
+  /* ---------- BASE Y FECHA ---------- */
   #print-area .rcb-hoja .rcb-base {
     display: flex !important;
     justify-content: space-between;
