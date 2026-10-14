@@ -1472,191 +1472,158 @@ function exportarExcel() {
   document.body.removeChild(link);
 }
 // ==========================================
-// REPORTE CONSOLIDADO DE INGRESOS (IMPRESIÓN ADMIN)
-// ==========================================
+// ================== PARCHE FINAL: REPORTE ADMIN (10 columnas) ==================
 
-// Misma lógica de filtrado que filtrarTabla(), pero devolviendo el arreglo
+// --- Fechas locales seguras (sin toISOString / split('T')) ---
+function fechaLocalISO(valor) {
+  if (!valor) return '';
+  if (typeof valor === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(valor)) return valor;
+  const d = valor instanceof Date ? valor : new Date(valor);
+  if (isNaN(d.getTime())) return '';
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${dd}`; // fecha LOCAL, no UTC
+}
+
+function fechaLocalMX(valor) {
+  const iso = fechaLocalISO(valor);
+  if (!iso) return '';
+  const [y, m, d] = iso.split('-'); // split sobre 'YYYY-MM-DD', seguro
+  return `${d}/${m}/${y}`;
+}
+
+function formatoMoneda(n) {
+  return Number(n || 0).toLocaleString('es-MX', { style: 'currency', currency: 'MXN' });
+}
+
+function escapeHTML(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ));
+}
+
+// --- Devoluciones / egresos ---
+function esEgreso(r) {
+  return String(r.tipo_movimiento || '').toUpperCase() === 'EGRESO'
+      || String(r.folio || '').toUpperCase().startsWith('R-');
+}
+
+// --- Filtro: fechas + texto + forma de pago (igual que filtrarTabla) ---
 function obtenerRegistrosFiltradosAdmin() {
-  const query = (document.getElementById('filterInput')?.value || '').toLowerCase().trim();
-  const fp = document.getElementById('filterPago')?.value || '';
-  const fechaInicio = document.getElementById('filterFechaInicio')?.value || '';
-  const fechaFin = document.getElementById('filterFechaFin')?.value || '';
+  const ini   = document.getElementById('filterFechaInicio')?.value || '';
+  const fin   = document.getElementById('filterFechaFin')?.value || '';
+  const texto = (document.getElementById('filterInput')?.value || '').trim().toLowerCase();
+  const pago  = document.getElementById('filterPago')?.value || '';
 
-  return historialMemoria.filter(item => {
-    const matchTexto = !query ||
-      (item.folio && item.folio.toLowerCase().includes(query)) ||
-      (item.folio_referencia && item.folio_referencia.toLowerCase().includes(query)) ||
-      (item.nombre && item.nombre.toLowerCase().includes(query)) ||
-      (item.familia && item.familia.toLowerCase().includes(query)) ||
-      (item.concepto && item.concepto.toLowerCase().includes(query)) ||
-      (item.matricula && item.matricula.toLowerCase().includes(query)) ||
-      (item.vendedor && item.vendedor.toLowerCase().includes(query)) ||
-      (item.usuario_email && item.usuario_email.toLowerCase().includes(query));
+  return (historialMemoria || []).filter(r => {
+    // 1) Fechas
+    const f = fechaLocalISO(r.fecha ?? r.fecha_hora ?? r.created_at);
+    if (!f) return false;
+    if (ini && f < ini) return false;
+    if (fin && f > fin) return false;
 
-    const matchPago = !fp || item.forma_pago === fp;
+    // 2) Forma de pago (vacío = todas)
+    if (pago && String(r.forma_pago ?? r.pago ?? '').toLowerCase() !== pago.toLowerCase()) return false;
 
-    let matchFecha = true;
-    const fechaRaw = item.fecha || item.created_at;
-    if (fechaRaw) {
-      const fechaStr = new Date(fechaRaw).toISOString().split('T')[0];
-      if (fechaInicio && fechaStr < fechaInicio) matchFecha = false;
-      if (fechaFin && fechaStr > fechaFin) matchFecha = false;
+    // 3) Texto libre
+    if (texto) {
+      const pajar = [
+        r.folio, r.matricula, r.paciente, r.familia,
+        r.seccion_grupo ?? r.seccion ?? r.grupo, r.vendedor
+      ].map(v => String(v ?? '').toLowerCase()).join(' ');
+      if (!pajar.includes(texto)) return false;
     }
-
-    return matchTexto && matchPago && matchFecha;
+    return true;
   });
 }
 
-// El path del imagotipo es local a construirEstructuraReciboInstitucional();
-// se extrae de ahí para reutilizar exactamente el mismo vector negro.
-function obtenerSvgPathImagotipo() {
-  try {
-    const html = construirEstructuraReciboInstitucional('', '', 'Efectivo', [], 0);
-    const m = html.match(/<path[^>]*\sd="([^"]+)"/);
-    return m ? m[1] : '';
-  } catch (e) {
-    console.error('No se pudo obtener el imagotipo:', e);
-    return '';
-  }
-}
-
+// --- Impresión ---
 function imprimirReporte() {
-  const printArea = document.getElementById('print-area');
-  if (!printArea) return;
+  const registros = obtenerRegistrosFiltradosAdmin();
+  const area = document.getElementById('print-area');
 
-  const esc = (v) => String(v === undefined || v === null ? '' : v)
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  const dinero = (n) => (n < 0 ? '-' : '') + '$' +
-    Math.abs(n).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  const fmtFechaInput = (s) => {
-    const p = String(s).split('-');
-    return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : s;
-  };
-
-  // 1. Fechas y registros filtrados (sin cancelados), de más antiguo a más reciente
-  const fechaInicio = document.getElementById('filterFechaInicio')?.value || '';
-  const fechaFin = document.getElementById('filterFechaFin')?.value || '';
-
-  const registros = obtenerRegistrosFiltradosAdmin()
-    .filter(item => item.estado !== 'Cancelado' && item.estado !== 'CANCELADO')
-    .sort((a, b) => new Date(a.fecha || a.created_at) - new Date(b.fecha || b.created_at));
-
-  if (registros.length === 0) {
-    Swal.fire('Atención', 'No hay registros en el filtro actual para imprimir.', 'warning');
+  if (!registros.length) {
+    alert('No hay registros con los filtros actuales.');
     return;
   }
 
-  let rangoTxt = 'Todo el historial';
-  if (fechaInicio && fechaFin) rangoTxt = `Del ${fmtFechaInput(fechaInicio)} al ${fmtFechaInput(fechaFin)}`;
-  else if (fechaInicio) rangoTxt = `Desde el ${fmtFechaInput(fechaInicio)}`;
-  else if (fechaFin) rangoTxt = `Hasta el ${fmtFechaInput(fechaFin)}`;
+  const ini  = document.getElementById('filterFechaInicio')?.value || '';
+  const fin  = document.getElementById('filterFechaFin')?.value || '';
+  const pago = document.getElementById('filterPago')?.value || '';
+  const texto = (document.getElementById('filterInput')?.value || '').trim();
 
-  // 2. Filas y totales (misma lógica de KPIs: neto = ingresos - devoluciones)
-  let bruto = 0;
-  let devoluciones = 0;
-  let filasHtml = '';
+  let totalIngresos = 0;
+  let totalDevoluciones = 0;
 
-  registros.forEach(item => {
-    const esEgreso = item.tipo_movimiento === 'EGRESO' || (item.folio && item.folio.startsWith('R-'));
-    const cantidad = parseInt(item.cantidad, 10) || 1;
-    const importe = parseFloat(item.importe) || 0;
-    let subtotal = item.total !== undefined && item.total !== null ? parseFloat(item.total) : cantidad * importe;
+  const filas = registros.map(r => {
+    const egreso  = esEgreso(r);
+    const cant    = Number(r.cantidad ?? r.cant ?? 0);
+    const importe = Number(r.importe ?? r.precio_unitario ?? 0);
+    const totalAbs = Math.abs(Number(r.total ?? cant * importe));
+    const signo   = egreso ? -1 : 1;
 
-    if (esEgreso) {
-      subtotal = -Math.abs(subtotal);
-      devoluciones += Math.abs(subtotal);
-    } else {
-      bruto += subtotal;
-    }
+    if (egreso) totalDevoluciones += totalAbs; else totalIngresos += totalAbs;
 
-    const fObj = new Date(item.fecha || item.created_at);
-    const fechaTxt = isNaN(fObj.getTime())
-      ? '—'
-      : fObj.toLocaleDateString('es-MX') + ' ' + fObj.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
-    const vendedor = item.vendedor || obtenerNombreCorto(item.usuario_email || item.created_by || '');
-
-    filasHtml += `
-      <tr>
-        <td>${esc(fechaTxt)}</td>
-        <td>${esc(item.folio || '—')}</td>
-        <td>${esc(item.matricula || '---')}</td>
-        <td class="rpt-admin-izq">${esc(item.nombre || '')}</td>
-        <td class="rpt-admin-izq">${esc(item.familia || '---')}</td>
-        <td>${esc(item.seccion || '')} / ${esc(item.grupo || '')}</td>
-        <td>${cantidad}</td>
-        <td class="rpt-admin-der">${dinero(esEgreso ? subtotal : importe)}</td>
-        <td class="rpt-admin-der"><b>${dinero(subtotal)}</b></td>
-        <td>${esc(vendedor)}</td>
+    return `
+      <tr${egreso ? ' class="rpt-admin-egreso"' : ''}>
+        <td>${escapeHTML(fechaLocalMX(r.fecha ?? r.fecha_hora ?? r.created_at))}</td>
+        <td>${escapeHTML(r.folio)}</td>
+        <td>${escapeHTML(r.matricula)}</td>
+        <td>${escapeHTML(r.paciente)}</td>
+        <td>${escapeHTML(r.familia)}</td>
+        <td>${escapeHTML(r.seccion_grupo ?? r.seccion ?? r.grupo)}</td>
+        <td class="rpt-admin-num">${cant}</td>
+        <td class="rpt-admin-num">${formatoMoneda(Math.abs(importe) * signo)}</td>
+        <td class="rpt-admin-num">${formatoMoneda(totalAbs * signo)}</td>
+        <td>${escapeHTML(r.vendedor)}</td>
       </tr>`;
-  });
+  }).join('');
 
-  const granTotalNeto = bruto - devoluciones;
+  const granTotalNeto = totalIngresos - totalDevoluciones;
 
-  // 3. Encabezado institucional
-  const svgPath = obtenerSvgPathImagotipo();
-  const logoSvg = svgPath
-    ? `<svg class="rpt-admin-logo" viewBox="0 0 565.0 460.5" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill="#000000" fill-rule="evenodd" d="${svgPath}"/></svg>`
-    : '';
+  const filtrosActivos = [
+    texto ? `Búsqueda: "${escapeHTML(texto)}"` : '',
+    pago  ? `Forma de pago: ${escapeHTML(pago)}` : ''
+  ].filter(Boolean).join(' · ');
 
-  const ahora = new Date();
-  const emitidoPor = obtenerNombreCorto(usuarioActual?.email);
-  const emitidoTxt = ahora.toLocaleDateString('es-MX') + ' ' + ahora.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
-
-  printArea.innerHTML = `
-    <div class="rpt-admin-hoja">
-      <div class="rpt-admin-cab">
-        <div class="rpt-admin-marca">
-          ${logoSvg}
-          <div class="rpt-admin-colegio"><span>Colegio</span><span>Ciudad de México</span></div>
-        </div>
-        <div class="rpt-admin-titulo">REPORTE CONSOLIDADO DE INGRESOS</div>
-        <div class="rpt-admin-meta">
-          <div class="rpt-admin-plantel">Plantel Polanco</div>
-          <div class="rpt-admin-rango">${esc(rangoTxt)}</div>
-        </div>
+  area.innerHTML = `
+    <div class="rpt-admin-wrap">
+      <div class="rpt-admin-header">
+        <h2 class="rpt-admin-title">Reporte consolidado de ingresos</h2>
+        <div class="rpt-admin-sub">Colegio Ciudad de México · Módulo de vacunación</div>
+        <div class="rpt-admin-sub">Periodo: ${escapeHTML(fechaLocalMX(ini) || 'Inicio')} al ${escapeHTML(fechaLocalMX(fin) || 'Hoy')}</div>
+        ${filtrosActivos ? `<div class="rpt-admin-sub">${filtrosActivos}</div>` : ''}
       </div>
-
-      <table class="rpt-admin-tabla">
-        <colgroup>
-          <col style="width:11%"><col style="width:7%"><col style="width:8%"><col style="width:20%"><col style="width:12%">
-          <col style="width:12%"><col style="width:5%"><col style="width:8%"><col style="width:9%"><col style="width:8%">
-        </colgroup>
+      <table class="rpt-admin-table">
         <thead>
           <tr>
             <th>Fecha</th><th>Folio</th><th>Matrícula</th><th>Paciente</th><th>Familia</th>
             <th>Sección/Gpo</th><th>Cant.</th><th>Importe</th><th>Total</th><th>Vendedor</th>
           </tr>
         </thead>
-        <tbody>${filasHtml}</tbody>
+        <tbody>${filas}</tbody>
         <tfoot>
-          <tr class="rpt-admin-fila-sub">
-            <td colspan="8" class="rpt-admin-der">Ingresos brutos</td>
-            <td class="rpt-admin-der">${dinero(bruto)}</td><td></td>
+          <tr>
+            <td colspan="8" class="rpt-admin-num">Total ingresos</td>
+            <td class="rpt-admin-num">${formatoMoneda(totalIngresos)}</td><td></td>
           </tr>
-          <tr class="rpt-admin-fila-sub">
-            <td colspan="8" class="rpt-admin-der">Devoluciones / reembolsos</td>
-            <td class="rpt-admin-der">${dinero(-devoluciones)}</td><td></td>
+          <tr>
+            <td colspan="8" class="rpt-admin-num">(-) Devoluciones</td>
+            <td class="rpt-admin-num">${formatoMoneda(-totalDevoluciones)}</td><td></td>
           </tr>
-          <tr class="rpt-admin-fila-total">
-            <td colspan="8" class="rpt-admin-der">GRAN TOTAL NETO A ENTREGAR</td>
-            <td class="rpt-admin-der">${dinero(granTotalNeto)}</td><td></td>
+          <tr>
+            <td colspan="8" class="rpt-admin-num"><strong>GRAN TOTAL NETO A ENTREGAR</strong></td>
+            <td class="rpt-admin-num"><strong>${formatoMoneda(granTotalNeto)}</strong></td><td></td>
           </tr>
         </tfoot>
       </table>
+    </div>`;
 
-      <div class="rpt-admin-pie">
-        <span>Registros: ${registros.length}</span>
-        <span>Emitido por: ${esc(emitidoPor)} — ${esc(emitidoTxt)}</span>
-      </div>
-    </div>
-  `;
-
-  // 4. Impresión desacoplada para no bloquear la interfaz
-  setTimeout(() => {
-    window.print();
-  }, 350);
+  const limpiar = () => { area.innerHTML = ''; window.removeEventListener('afterprint', limpiar); };
+  window.addEventListener('afterprint', limpiar);
+  requestAnimationFrame(() => setTimeout(() => window.print(), 50));
 }
-
 
 // ==========================================
 // MÓDULO OBSERVACIONES Y APRENDIZAJE
