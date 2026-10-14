@@ -1508,8 +1508,57 @@ function esEgreso(r) {
   return String(r.tipo_movimiento || '').toUpperCase() === 'EGRESO'
       || String(r.folio || '').toUpperCase().startsWith('R-');
 }
+// ==========================================
+// MÓDULO DE REPORTE ADMINISTRATIVO (9 COLUMNAS)
+// ==========================================
 
-// --- Filtro: fechas + texto + forma de pago (igual que filtrarTabla) ---
+function fechaLocalISO(valor) {
+  if (!valor) return '';
+  if (typeof valor === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(valor)) return valor;
+  const d = valor instanceof Date ? valor : new Date(valor);
+  if (isNaN(d.getTime())) return '';
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${dd}`;
+}
+
+function fechaLocalMX(valor) {
+  const iso = fechaLocalISO(valor);
+  if (!iso) return '';
+  const [y, m, d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+function formatoMoneda(n) {
+  return Number(n || 0).toLocaleString('es-MX', { style: 'currency', currency: 'MXN' });
+}
+
+function escapeHTML(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ));
+}
+
+function esEgreso(r) {
+  return String(r.tipo_movimiento || '').toUpperCase() === 'EGRESO'
+      || String(r.folio || '').toUpperCase().startsWith('R-');
+}
+
+function obtenerSeccionLimpia(r) {
+  const sec = String(r.seccion || '').trim();
+  if (sec && sec !== '---' && sec !== 'null' && sec !== 'undefined') {
+    return sec;
+  }
+
+  const texto = `${r.concepto || ''} ${r.nombre || ''} ${r.matricula || ''}`.toUpperCase();
+  if (texto.includes('EMPLEAD') || texto.includes('PERSONAL')) return 'EMPLEADO';
+  if (texto.includes('ABUEL')) return 'ABUELO (A)';
+  if (texto.includes('HERMAN')) return 'HERMANO (A)';
+  if (texto.includes('NANA')) return 'NANA';
+  return 'EXTERNO';
+}
+
 function obtenerRegistrosFiltradosAdmin() {
   const ini   = document.getElementById('filterFechaInicio')?.value || '';
   const fin   = document.getElementById('filterFechaFin')?.value || '';
@@ -1517,20 +1566,19 @@ function obtenerRegistrosFiltradosAdmin() {
   const pago  = document.getElementById('filterPago')?.value || '';
 
   return (historialMemoria || []).filter(r => {
-    // 1) Fechas
-    const f = fechaLocalISO(r.fecha ?? r.fecha_hora ?? r.created_at);
+    if (r.estado === 'Cancelado' || r.estado === 'CANCELADO') return false;
+
+    const f = fechaLocalISO(r.fecha || r.created_at);
     if (!f) return false;
     if (ini && f < ini) return false;
     if (fin && f > fin) return false;
 
-    // 2) Forma de pago (vacío = todas)
-    if (pago && String(r.forma_pago ?? r.pago ?? '').toLowerCase() !== pago.toLowerCase()) return false;
+    if (pago && String(r.forma_pago || '').toLowerCase() !== pago.toLowerCase()) return false;
 
-    // 3) Texto libre
     if (texto) {
       const pajar = [
-        r.folio, r.matricula, r.paciente, r.familia,
-        r.seccion_grupo ?? r.seccion ?? r.grupo, r.vendedor
+        r.folio, r.folio_referencia, r.matricula, r.nombre, r.familia,
+        r.seccion, r.grupo, r.concepto, r.vendedor, r.usuario_email
       ].map(v => String(v ?? '').toLowerCase()).join(' ');
       if (!pajar.includes(texto)) return false;
     }
@@ -1538,45 +1586,45 @@ function obtenerRegistrosFiltradosAdmin() {
   });
 }
 
-// --- Impresión ---
 function imprimirReporte() {
   const registros = obtenerRegistrosFiltradosAdmin();
   const area = document.getElementById('print-area');
 
   if (!registros.length) {
-    alert('No hay registros con los filtros actuales.');
+    Swal.fire('Atención', 'No hay registros que coincidan con los filtros seleccionados.', 'info');
     return;
   }
 
-  const ini  = document.getElementById('filterFechaInicio')?.value || '';
-  const fin  = document.getElementById('filterFechaFin')?.value || '';
-  const pago = document.getElementById('filterPago')?.value || '';
+  const ini   = document.getElementById('filterFechaInicio')?.value || '';
+  const fin   = document.getElementById('filterFechaFin')?.value || '';
+  const pago  = document.getElementById('filterPago')?.value || '';
   const texto = (document.getElementById('filterInput')?.value || '').trim();
 
   let totalIngresos = 0;
   let totalDevoluciones = 0;
 
   const filas = registros.map(r => {
-    const egreso  = esEgreso(r);
-    const cant    = Number(r.cantidad ?? r.cant ?? 0);
-    const importe = Number(r.importe ?? r.precio_unitario ?? 0);
-    const totalAbs = Math.abs(Number(r.total ?? cant * importe));
-    const signo   = egreso ? -1 : 1;
+    const egreso   = esEgreso(r);
+    const cant     = Number(r.cantidad || 1);
+    const importe  = Number(r.importe || 0);
+    const totalAbs = Math.abs(Number(r.total !== undefined ? r.total : (cant * importe)));
+    const signo    = egreso ? -1 : 1;
+    const vendedor = r.vendedor || obtenerNombreCorto(r.usuario_email);
 
-    if (egreso) totalDevoluciones += totalAbs; else totalIngresos += totalAbs;
+    if (egreso) totalDevoluciones += totalAbs;
+    else totalIngresos += totalAbs;
 
     return `
       <tr${egreso ? ' class="rpt-admin-egreso"' : ''}>
-        <td>${escapeHTML(fechaLocalMX(r.fecha ?? r.fecha_hora ?? r.created_at))}</td>
-        <td>${escapeHTML(r.folio)}</td>
-        <td>${escapeHTML(r.matricula)}</td>
-        <td>${escapeHTML(r.paciente)}</td>
-        <td>${escapeHTML(r.familia)}</td>
-        <td>${escapeHTML(r.seccion_grupo ?? r.seccion ?? r.grupo)}</td>
+        <td>${escapeHTML(fechaLocalMX(r.fecha || r.created_at))}</td>
+        <td><strong>${escapeHTML(r.folio || '—')}</strong></td>
+        <td>${escapeHTML(r.matricula || '---')}</td>
+        <td>${escapeHTML(r.nombre || '—')}</td>
+        <td>${escapeHTML(r.familia || '---')}</td>
+        <td>${escapeHTML(obtenerSeccionLimpia(r))}</td>
         <td class="rpt-admin-num">${cant}</td>
-        <td class="rpt-admin-num">${formatoMoneda(Math.abs(importe) * signo)}</td>
         <td class="rpt-admin-num">${formatoMoneda(totalAbs * signo)}</td>
-        <td>${escapeHTML(r.vendedor)}</td>
+        <td>${escapeHTML(vendedor)}</td>
       </tr>`;
   }).join('');
 
@@ -1590,31 +1638,41 @@ function imprimirReporte() {
   area.innerHTML = `
     <div class="rpt-admin-wrap">
       <div class="rpt-admin-header">
-        <h2 class="rpt-admin-title">Reporte consolidado de ingresos</h2>
-        <div class="rpt-admin-sub">Colegio Ciudad de México · Módulo de vacunación</div>
+        <h2 class="rpt-admin-title">REPORTE CONSOLIDADO DE INGRESOS</h2>
+        <div class="rpt-admin-sub">Colegio Ciudad de México · Módulo de Vacunación</div>
         <div class="rpt-admin-sub">Periodo: ${escapeHTML(fechaLocalMX(ini) || 'Inicio')} al ${escapeHTML(fechaLocalMX(fin) || 'Hoy')}</div>
         ${filtrosActivos ? `<div class="rpt-admin-sub">${filtrosActivos}</div>` : ''}
       </div>
       <table class="rpt-admin-table">
         <thead>
           <tr>
-            <th>Fecha</th><th>Folio</th><th>Matrícula</th><th>Paciente</th><th>Familia</th>
-            <th>Sección/Gpo</th><th>Cant.</th><th>Importe</th><th>Total</th><th>Vendedor</th>
+            <th>Fecha</th>
+            <th>Folio</th>
+            <th>Matrícula</th>
+            <th>Paciente</th>
+            <th>Familia</th>
+            <th>Sección</th>
+            <th class="rpt-admin-num">Cant.</th>
+            <th class="rpt-admin-num">Total</th>
+            <th>Vendedor</th>
           </tr>
         </thead>
         <tbody>${filas}</tbody>
         <tfoot>
           <tr>
-            <td colspan="8" class="rpt-admin-num">Total ingresos</td>
-            <td class="rpt-admin-num">${formatoMoneda(totalIngresos)}</td><td></td>
+            <td colspan="7" class="rpt-admin-num">Total Ingresos</td>
+            <td class="rpt-admin-num">${formatoMoneda(totalIngresos)}</td>
+            <td></td>
           </tr>
           <tr>
-            <td colspan="8" class="rpt-admin-num">(-) Devoluciones</td>
-            <td class="rpt-admin-num">${formatoMoneda(-totalDevoluciones)}</td><td></td>
+            <td colspan="7" class="rpt-admin-num">(-) Devoluciones</td>
+            <td class="rpt-admin-num">${formatoMoneda(-totalDevoluciones)}</td>
+            <td></td>
           </tr>
           <tr>
-            <td colspan="8" class="rpt-admin-num"><strong>GRAN TOTAL NETO A ENTREGAR</strong></td>
-            <td class="rpt-admin-num"><strong>${formatoMoneda(granTotalNeto)}</strong></td><td></td>
+            <td colspan="7" class="rpt-admin-num"><strong>GRAN TOTAL NETO A ENTREGAR</strong></td>
+            <td class="rpt-admin-num"><strong>${formatoMoneda(granTotalNeto)}</strong></td>
+            <td></td>
           </tr>
         </tfoot>
       </table>
